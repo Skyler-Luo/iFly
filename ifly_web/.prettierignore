@@ -1,0 +1,50 @@
+# 依赖目录
+node_modules/
+dist/
+build/
+
+# 生成的文件
+*.min.js
+*.min.css
+
+# 日志文件
+*.log
+logs/
+
+# 临时文件
+.tmp/
+.temp/
+
+# IDE文件
+.vscode/
+.idea/
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 特定文件类型
+*.svg
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.woff
+*.woff2
+*.ttf
+*.eot
+
+# 配置文件
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# 环境变量文件
+.env
+.env.local
+.env.*.local
+
+# 构建输出
+public/
+coverage/

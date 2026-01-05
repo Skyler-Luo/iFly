@@ -1,0 +1,343 @@
+/**
+ * iFly 设计系统 - 动画样式模块
+ * 定义可复用的入场动画、过渡效果和动画工具类
+ * Requirements: 6.3, 6.4
+ */
+
+/* ===== 关键帧动画定义 ===== */
+
+/* 淡入动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 向上滑入动画 */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 向下滑入动画 */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 向左滑入动画 */
+@keyframes slideLeft {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 向右滑入动画 */
+@keyframes slideRight {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 缩放淡入动画 */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 脉冲动画 (用于加载状态) */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* 旋转动画 (用于加载指示器) */
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===== 动画工具类 ===== */
+
+/* 淡入效果 */
+.fade-in {
+  animation: fadeIn var(--animation-duration-normal, 300ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
+}
+
+.fade-in-fast {
+  animation: fadeIn var(--animation-duration-fast, 200ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
+}
+
+.fade-in-slow {
+  animation: fadeIn var(--animation-duration-slow, 500ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
+}
+
+/* 向上滑入效果 */
+.slide-up {
+  animation: slideUp var(--animation-duration-normal, 300ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
+}
+
+.slide-up-fast {
+  animation: slideUp var(--animation-duration-fast, 200ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
+}
+
+.slide-up-slow {
+  animation: slideUp var(--animation-duration-slow, 500ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
+}
+
+/* 向下滑入效果 */
+.slide-down {
+  animation: slideDown var(--animation-duration-normal, 300ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
+}
+
+/* 向左滑入效果 */
+.slide-left {
+  animation: slideLeft var(--animation-duration-normal, 300ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
+}
+
+/* 向右滑入效果 */
+.slide-right {
+  animation: slideRight var(--animation-duration-normal, 300ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
+}
+
+/* 缩放淡入效果 */
+.scale-in {
+  animation: scaleIn var(--animation-duration-normal, 300ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1)) forwards;
+}
+
+/* 脉冲效果 */
+.pulse {
+  animation: pulse 2s var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1)) infinite;
+}
+
+/* 旋转效果 */
+.rotate {
+  animation: rotate 1s linear infinite;
+}
+
+/* ===== 动画延迟工具类 (用于列表项依次入场) ===== */
+
+.animation-delay-1 {
+  animation-delay: 50ms;
+}
+
+.animation-delay-2 {
+  animation-delay: 100ms;
+}
+
+.animation-delay-3 {
+  animation-delay: 150ms;
+}
+
+.animation-delay-4 {
+  animation-delay: 200ms;
+}
+
+.animation-delay-5 {
+  animation-delay: 250ms;
+}
+
+.animation-delay-6 {
+  animation-delay: 300ms;
+}
+
+/* ===== 初始状态类 (配合动画使用) ===== */
+
+/* 初始隐藏状态，配合入场动画使用 */
+.animate-on-enter {
+  opacity: 0;
+}
+
+.animate-on-enter.is-visible {
+  opacity: 1;
+}
+
+/* ===== 过渡效果工具类 ===== */
+
+.transition-all {
+  transition: all var(--animation-duration-normal, 300ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.transition-opacity {
+  transition: opacity var(--animation-duration-normal, 300ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.transition-transform {
+  transition: transform var(--animation-duration-normal, 300ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.transition-colors {
+  transition: color var(--animation-duration-fast, 200ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1)),
+              background-color var(--animation-duration-fast, 200ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1)),
+              border-color var(--animation-duration-fast, 200ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+/* ===== 悬停动画效果 ===== */
+
+.hover-lift {
+  transition: transform var(--animation-duration-fast, 200ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1)),
+              box-shadow var(--animation-duration-fast, 200ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+}
+
+.hover-scale {
+  transition: transform var(--animation-duration-fast, 200ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* ===== 减少动画偏好支持 (Requirements: 6.4) ===== */
+
+@media (prefers-reduced-motion: reduce) {
+  /* 禁用所有动画 */
+  .fade-in,
+  .fade-in-fast,
+  .fade-in-slow,
+  .slide-up,
+  .slide-up-fast,
+  .slide-up-slow,
+  .slide-down,
+  .slide-left,
+  .slide-right,
+  .scale-in,
+  .pulse,
+  .rotate {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  /* 禁用过渡效果 */
+  .transition-all,
+  .transition-opacity,
+  .transition-transform,
+  .transition-colors,
+  .hover-lift,
+  .hover-scale {
+    transition: none;
+  }
+
+  /* 禁用悬停动画 */
+  .hover-lift:hover,
+  .hover-scale:hover {
+    transform: none;
+  }
+
+  /* 初始状态直接显示 */
+  .animate-on-enter {
+    opacity: 1;
+  }
+
+  /* 全局禁用动画和过渡 */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ===== Vue 过渡组件支持 ===== */
+
+/* 淡入淡出过渡 */
+.v-fade-enter-active,
+.v-fade-leave-active {
+  transition: opacity var(--animation-duration-normal, 300ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.v-fade-enter-from,
+.v-fade-leave-to {
+  opacity: 0;
+}
+
+/* 滑动过渡 */
+.v-slide-up-enter-active,
+.v-slide-up-leave-active {
+  transition: all var(--animation-duration-normal, 300ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.v-slide-up-enter-from,
+.v-slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* 缩放过渡 */
+.v-scale-enter-active,
+.v-scale-leave-active {
+  transition: all var(--animation-duration-normal, 300ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.v-scale-enter-from,
+.v-scale-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+/* 减少动画偏好下禁用 Vue 过渡 */
+@media (prefers-reduced-motion: reduce) {
+  .v-fade-enter-active,
+  .v-fade-leave-active,
+  .v-slide-up-enter-active,
+  .v-slide-up-leave-active,
+  .v-scale-enter-active,
+  .v-scale-leave-active {
+    transition: none;
+  }
+
+  .v-fade-enter-from,
+  .v-fade-leave-to,
+  .v-slide-up-enter-from,
+  .v-slide-up-leave-to,
+  .v-scale-enter-from,
+  .v-scale-leave-to {
+    opacity: 1;
+    transform: none;
+  }
+}
