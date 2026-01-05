@@ -1,4 +1,8 @@
-# ✈️ iFly 飞机订票系统
+<p align="center">
+  <img src="ifly_web/public/favicon.ico" alt="iFly Logo" width="64" height="64">
+</p>
+
+<h1 align="center">✈️ iFly 飞机订票系统</h1>
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python&logoColor=white)
 ![Django](https://img.shields.io/badge/Django-5.1.4-green?logo=django&logoColor=white)
@@ -20,7 +24,6 @@ iFly 是一个功能完善的飞机订票系统，采用前后端分离架构，
 - [项目结构](#-项目结构)
 - [快速开始](#-快速开始)
 - [API 文档](#-api-文档)
-- [开发指南](#-开发指南)
 - [配置说明](#-配置说明)
 - [许可证](#-许可证)
 
@@ -62,7 +65,7 @@ iFly 是一个功能完善的飞机订票系统，采用前后端分离架构，
 | Django REST Framework | 3.15.0 | RESTful API 框架，支持序列化、视图集、权限控制 |
 | SimpleJWT | 5.3.1 | JWT 认证，支持 Token 刷新与验证 |
 | django-filter | 24.1 | 查询过滤器，支持多条件筛选 |
-| drf-yasg | - | 自动生成 Swagger/ReDoc API 文档 |
+| drf-yasg | 1.21.8 | 自动生成 Swagger/ReDoc API 文档 |
 | django-cors-headers | 4.4.0 | 跨域资源共享支持 |
 | Channels | 4.0.0 | WebSocket 支持，用于实时通知推送 |
 | Pillow | 10.3.0 | 图片处理，用于用户头像上传与处理 |
@@ -230,53 +233,6 @@ Authorization: Bearer <jwt>
 | 消息 | `/api/messages/` | 站内消息 |
 | 分析 | `/api/analytics/` | 数据分析 |
 | 管理 | `/api/admin/` | 管理员接口 |
-
-## 💻 开发指南
-
-### 后端开发命令
-
-```bash
-# 启动开发服务器
-python manage.py runserver
-
-# 生成迁移文件
-python manage.py makemigrations
-
-# 执行迁移
-python manage.py migrate
-
-# 创建超级用户
-python manage.py createsuperuser
-
-# 收集静态文件
-python manage.py collectstatic
-
-# 运行测试
-python manage.py test
-```
-
-### 前端开发命令
-
-```bash
-# 启动开发服务器
-npm run serve
-
-# 生产构建
-npm run build
-
-# 代码检查
-npm run lint
-
-# 运行测试
-npm run test
-```
-
-### 代码规范
-
-- Python：遵循 PEP 8，使用 `snake_case`
-- JavaScript/Vue：使用 `camelCase`，组件名使用 `PascalCase`
-- API 响应字段：统一使用 `snake_case`
-- CSS 类名：使用 `kebab-case`
 
 ## ⚙️ 配置说明
 
