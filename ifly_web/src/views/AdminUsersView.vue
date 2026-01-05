@@ -3,28 +3,23 @@
         <h1 class="title">用户管理</h1>
 
         <div class="top-actions">
-            <div class="search-bar">
-                <input type="text" v-model="searchQuery" placeholder="搜索用户名、邮箱、手机号..." />
-                <button @click="handleSearch" class="btn-search">
+            <el-input
+                v-model="searchQuery"
+                placeholder="搜索用户名、邮箱、手机号..."
+                clearable
+                style="width: 300px"
+                @keyup.enter="handleSearch"
+            >
+                <template #prefix>
                     <i class="fas fa-search"></i>
-                </button>
-            </div>
+                </template>
+            </el-input>
 
-            <div class="filter-options">
-                <select v-model="roleFilter">
-                    <option value="">所有角色</option>
-                    <option value="user">普通用户</option>
-                    <option value="vip">VIP用户</option>
-                    <option value="admin">管理员</option>
-                </select>
-
-                <select v-model="statusFilter">
-                    <option value="">所有状态</option>
-                    <option value="active">活跃</option>
-                    <option value="inactive">未激活</option>
-                    <option value="locked">已锁定</option>
-                </select>
-            </div>
+            <el-radio-group v-model="roleFilter" @change="handleSearch">
+                <el-radio-button value="">全部</el-radio-button>
+                <el-radio-button value="user">普通用户</el-radio-button>
+                <el-radio-button value="admin">管理员</el-radio-button>
+            </el-radio-group>
 
             <button @click="showAddUserModal = true" class="btn btn-primary">
                 <i class="fas fa-user-plus"></i> 添加用户
@@ -66,19 +61,10 @@
                             角色
                             <i class="fas" :class="getSortIconClass('role')"></i>
                         </th>
-                        <th @click="sortBy('points')">
-                            积分
-                            <i class="fas" :class="getSortIconClass('points')"></i>
-                        </th>
-                        <th @click="sortBy('status')">
-                            状态
-                            <i class="fas" :class="getSortIconClass('status')"></i>
-                        </th>
                         <th @click="sortBy('registerDate')">
                             注册时间
                             <i class="fas" :class="getSortIconClass('registerDate')"></i>
                         </th>
-                        <th>操作</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -92,48 +78,19 @@
                                 {{ getRoleText(user.role) }}
                             </span>
                         </td>
-                        <td>{{ user.points }}</td>
-                        <td>
-                            <span class="status-badge" :class="'status-' + user.status">
-                                {{ getStatusText(user.status) }}
-                            </span>
-                        </td>
                         <td>{{ formatDate(user.registerDate) }}</td>
-                        <td class="actions-cell">
-                            <button @click="editUser(user)" class="btn-icon">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button @click="openDeleteConfirm(user)" class="btn-icon">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                            <div class="dropdown">
-                                <button class="btn-icon dropdown-toggle">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                                <div class="dropdown-menu">
-                                    <a @click="viewUserOrders(user.id)">查看订单</a>
-                                    <a @click="updateUserStatus(user.id, 'active')"
-                                        v-if="user.status !== 'active'">激活账户</a>
-                                    <a @click="updateUserStatus(user.id, 'locked')"
-                                        v-if="user.status !== 'locked'">锁定账户</a>
-                                    <a @click="resetUserPassword(user.id)">重置密码</a>
-                                    <a @click="adjustUserPoints(user)">调整积分</a>
-                                    <a @click="sendNotification(user.id)">发送通知</a>
-                                </div>
-                            </div>
-                        </td>
                     </tr>
                 </tbody>
             </table>
 
             <div class="pagination">
-                <button @click="prevPage" :disabled="currentPage === 1" class="btn-page">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
-                <button @click="nextPage" :disabled="currentPage === totalPages" class="btn-page">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
+                <el-pagination
+                    v-model:current-page="currentPage"
+                    :page-size="pageSize"
+                    :total="processedUsers.length"
+                    layout="total, prev, pager, next"
+                    background
+                />
             </div>
         </div>
 
@@ -175,31 +132,14 @@
                                 <label>角色</label>
                                 <select v-model="userForm.role" required>
                                     <option value="user">普通用户</option>
-                                    <option value="vip">VIP用户</option>
                                     <option value="admin">管理员</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label>状态</label>
-                                <select v-model="userForm.status" required>
-                                    <option value="active">活跃</option>
-                                    <option value="inactive">未激活</option>
-                                    <option value="locked">已锁定</option>
                                 </select>
                             </div>
                         </div>
 
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>积分</label>
-                                <input type="number" v-model="userForm.points" min="0" />
-                            </div>
-
-                            <div class="form-group">
-                                <label>真实姓名</label>
-                                <input type="text" v-model="userForm.realName" />
-                            </div>
+                        <div class="form-group">
+                            <label>真实姓名</label>
+                            <input type="text" v-model="userForm.realName" />
                         </div>
 
                         <div class="form-group">
@@ -233,41 +173,7 @@
             </div>
         </div>
 
-        <!-- 调整积分弹窗 -->
-        <div v-if="showPointsModal" class="modal">
-            <div class="modal-content modal-sm">
-                <div class="modal-header">
-                    <h2>调整积分</h2>
-                    <button @click="showPointsModal = false" class="close-btn">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <p>用户: {{ selectedUser?.username }}</p>
-                    <p>当前积分: {{ selectedUser?.points }}</p>
 
-                    <div class="form-group">
-                        <label>积分变更</label>
-                        <div class="points-adjust">
-                            <select v-model="pointsAdjustType">
-                                <option value="add">增加</option>
-                                <option value="subtract">减少</option>
-                                <option value="set">设置为</option>
-                            </select>
-                            <input type="number" v-model="pointsAdjustValue" min="0" required />
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>变更原因</label>
-                        <textarea v-model="pointsAdjustReason" rows="2" placeholder="请输入积分变更原因"></textarea>
-                    </div>
-
-                    <div class="form-actions">
-                        <button @click="showPointsModal = false" class="btn btn-secondary">取消</button>
-                        <button @click="submitPointsAdjust" class="btn btn-primary">确认</button>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- 发送通知弹窗 -->
         <div v-if="showNotificationModal" class="modal">
@@ -321,14 +227,13 @@ export default {
             error: null,
             searchQuery: '',
             roleFilter: '',
-            statusFilter: '',
             sortKey: '',
             sortDirection: 'asc',
             currentPage: 1,
-            pageSize: 5,
+            pageSize: 8,
             showAddUserModal: false,
             showDeleteConfirm: false,
-            showPointsModal: false,
+            showNotificationModal: false,
             selectedUser: null,
             isEditing: false,
             userForm: {
@@ -337,18 +242,19 @@ export default {
                 email: '',
                 phone: '',
                 role: 'user',
-                status: 'active',
-                points: 0,
                 realName: '',
                 address: '',
             },
-            pointsAdjustType: 'add',
-            pointsAdjustValue: 0,
-            pointsAdjustReason: '',
+            notificationForm: {
+                title: '',
+                content: '',
+                type: 'system'
+            }
         }
     },
     computed: {
-        filteredUsers() {
+        // 过滤和排序后的用户（不分页）
+        processedUsers() {
             let filtered = this.users;
             if (this.searchQuery) {
                 const query = this.searchQuery.toLowerCase();
@@ -361,11 +267,8 @@ export default {
             if (this.roleFilter) {
                 filtered = filtered.filter(user => user.role === this.roleFilter);
             }
-            if (this.statusFilter) {
-                filtered = filtered.filter(user => user.status === this.statusFilter);
-            }
             if (this.sortKey) {
-                filtered = filtered.sort((a, b) => {
+                filtered = [...filtered].sort((a, b) => {
                     const aValue = a[this.sortKey];
                     const bValue = b[this.sortKey];
                     if (this.sortDirection === 'asc') {
@@ -375,12 +278,16 @@ export default {
                     }
                 });
             }
+            return filtered;
+        },
+        // 分页后的用户
+        filteredUsers() {
             const start = (this.currentPage - 1) * this.pageSize;
             const end = start + this.pageSize;
-            return filtered.slice(start, end);
+            return this.processedUsers.slice(start, end);
         },
         totalPages() {
-            return Math.ceil(this.filteredUsers.length / this.pageSize);
+            return Math.ceil(this.processedUsers.length / this.pageSize) || 1;
         }
     },
     methods: {
@@ -393,31 +300,28 @@ export default {
                 const params = {};
                 if (this.searchQuery) params.search = this.searchQuery;
                 if (this.roleFilter) params.role = this.roleFilter;
-                if (this.statusFilter) params.status = this.statusFilter;
 
                 const response = await api.admin.users.getList(params);
-                if (Array.isArray(response.data)) {
-                    this.users = response.data;
-                } else {
-                    console.warn('API返回的用户数据不是数组，使用空数组');
-                    this.users = [];
-                }
+                // 处理响应数据
+                const data = Array.isArray(response) ? response : (response?.results || []);
+                
+                // 映射后端字段到前端字段
+                this.users = data.map(user => ({
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    phone: user.phone || '',
+                    role: user.role || 'user',
+                    registerDate: user.date_joined,
+                    realName: user.real_name || '',
+                    address: user.address || ''
+                }));
 
-                console.log('获取到用户数据:', this.users);
-
-                // 如果返回的数据为空，使用模拟数据
-                if (!this.users || this.users.length === 0) {
-                    console.warn('API返回的用户数据为空，使用默认数据');
-                    this.useDefaultData();
-                }
+                console.log('获取到用户数据:', this.users.length, '条');
             } catch (error) {
                 console.error('获取用户数据失败:', error);
                 this.error = '获取用户数据失败，请稍后再试';
-
-                // 确保users是数组
                 this.users = [];
-                // API调用失败，使用模拟数据
-                this.useDefaultData();
             } finally {
                 this.isLoading = false;
             }
@@ -426,25 +330,46 @@ export default {
         // 添加用户
         async addUser() {
             try {
-                const response = await api.admin.users.create(this.userForm);
-                this.users.push(response.data);
+                // 转换前端字段到后端字段
+                const payload = {
+                    username: this.userForm.username,
+                    password: this.userForm.password,
+                    email: this.userForm.email,
+                    phone: this.userForm.phone,
+                    role: this.userForm.role,
+                    real_name: this.userForm.realName,
+                    address: this.userForm.address
+                };
+                await api.admin.users.create(payload);
                 this.closeModal();
-                this.fetchUsers(); // 重新获取所有用户数据
+                this.fetchUsers();
             } catch (error) {
                 console.error('添加用户失败:', error);
-                alert('添加用户失败，请稍后再试');
+                alert('添加用户失败: ' + (error.message || '请稍后再试'));
             }
         },
 
         // 更新用户
         async updateUser() {
             try {
-                await api.admin.users.update(this.selectedUser.id, this.userForm);
+                // 转换前端字段到后端字段
+                const payload = {
+                    username: this.userForm.username,
+                    email: this.userForm.email,
+                    phone: this.userForm.phone,
+                    role: this.userForm.role,
+                    real_name: this.userForm.realName,
+                    address: this.userForm.address
+                };
+                if (this.userForm.password) {
+                    payload.password = this.userForm.password;
+                }
+                await api.admin.users.update(this.selectedUser.id, payload);
                 this.closeModal();
-                this.fetchUsers(); // 重新获取所有用户数据
+                this.fetchUsers();
             } catch (error) {
                 console.error('更新用户失败:', error);
-                alert('更新用户失败，请稍后再试');
+                alert('更新用户失败: ' + (error.message || '请稍后再试'));
             }
         },
 
@@ -460,25 +385,11 @@ export default {
             }
         },
 
-        // 更新用户状态
-        async updateUserStatus(userId, status) {
-            try {
-                await api.admin.users.updateStatus(userId, status);
-                const index = this.users.findIndex(user => user.id === userId);
-                if (index !== -1) {
-                    this.users[index].status = status;
-                }
-            } catch (error) {
-                console.error('更新用户状态失败:', error);
-                alert('更新用户状态失败，请稍后再试');
-            }
-        },
-
         // 重置用户密码
         async resetUserPassword(userId) {
             try {
                 await api.admin.users.resetPassword(userId);
-                alert('密码重置邮件已发送');
+                alert('密码已重置');
             } catch (error) {
                 console.error('重置密码失败:', error);
                 alert('重置密码失败，请稍后再试');
@@ -498,56 +409,31 @@ export default {
             }
         },
 
-        // 调整用户积分
-        async adjustUserPointsSubmit() {
-            if (!this.selectedUser) return;
-
-            let pointsChange = parseInt(this.pointsAdjustValue);
-            if (isNaN(pointsChange) || pointsChange < 0) {
-                alert('请输入有效的积分值');
-                return;
-            }
-
-            const data = {
-                type: this.pointsAdjustType,
-                points: pointsChange,
-                reason: this.pointsAdjustReason
-            };
-
-            try {
-                await api.admin.users.adjustPoints(this.selectedUser.id, data);
-
-                // 更新本地用户数据
-                const index = this.users.findIndex(user => user.id === this.selectedUser.id);
-                if (index !== -1) {
-                    if (this.pointsAdjustType === 'add') {
-                        this.users[index].points += pointsChange;
-                    } else if (this.pointsAdjustType === 'subtract') {
-                        this.users[index].points = Math.max(0, this.users[index].points - pointsChange);
-                    } else if (this.pointsAdjustType === 'set') {
-                        this.users[index].points = pointsChange;
-                    }
-                }
-
-                this.showPointsModal = false;
-            } catch (error) {
-                console.error('调整积分失败:', error);
-                alert('调整积分失败，请稍后再试');
+        // 发送通知
+        sendNotification(userId) {
+            const user = this.users.find(u => u.id === userId);
+            if (user) {
+                this.selectedUser = user;
+                this.notificationForm = { title: '', content: '', type: 'system' };
+                this.showNotificationModal = true;
             }
         },
 
-        // 发送通知
-        async sendNotification(userId) {
-            // 这里可以添加发送通知的弹窗和API调用
-            const message = prompt('请输入要发送的通知内容:');
-            if (!message) return;
+        // 提交通知
+        async submitNotification() {
+            if (!this.selectedUser || !this.notificationForm.content) return;
 
             try {
-                await api.admin.users.sendNotification(userId, { message });
+                await api.admin.users.sendNotification(this.selectedUser.id, {
+                    message: this.notificationForm.content,
+                    title: this.notificationForm.title,
+                    type: this.notificationForm.type
+                });
                 alert('通知已发送');
+                this.showNotificationModal = false;
             } catch (error) {
                 console.error('发送通知失败:', error);
-                alert('发送通知失败，请稍后再试');
+                alert('发送通知失败: ' + (error.message || '请稍后再试'));
             }
         },
 
@@ -565,15 +451,6 @@ export default {
             this.fetchUsers();
         },
 
-        // 调整用户积分按钮点击
-        adjustUserPoints(user) {
-            this.selectedUser = user;
-            this.pointsAdjustValue = 0;
-            this.pointsAdjustType = 'add';
-            this.pointsAdjustReason = '';
-            this.showPointsModal = true;
-        },
-
         // 关闭模态窗口
         closeModal() {
             this.showAddUserModal = false;
@@ -584,8 +461,6 @@ export default {
                 email: '',
                 phone: '',
                 role: 'user',
-                status: 'active',
-                points: 0,
                 realName: '',
                 address: '',
             };
@@ -616,20 +491,9 @@ export default {
         getRoleText(role) {
             const roles = {
                 'user': '普通用户',
-                'vip': 'VIP用户',
                 'admin': '管理员'
             };
             return roles[role] || role;
-        },
-
-        // 状态文本
-        getStatusText(status) {
-            const statuses = {
-                'active': '活跃',
-                'inactive': '未激活',
-                'locked': '已锁定'
-            };
-            return statuses[status] || status;
         },
 
         // 排序图标
@@ -646,63 +510,7 @@ export default {
                 this.sortKey = key;
                 this.sortDirection = 'asc';
             }
-        },
-
-        // 上一页
-        prevPage() {
-            if (this.currentPage > 1) {
-                this.currentPage--;
-            }
-        },
-
-        // 下一页
-        nextPage() {
-            if (this.currentPage < this.totalPages) {
-                this.currentPage++;
-            }
-        },
-
-        // 如果API调用失败，使用默认数据
-        useDefaultData() {
-            this.users = [
-                {
-                    id: 1,
-                    username: 'zhangwei',
-                    email: 'zhangwei@example.com',
-                    phone: '13800138001',
-                    role: 'user',
-                    points: 2560,
-                    status: 'active',
-                    registerDate: '2022-12-15',
-                    realName: '张伟',
-                    address: '北京市海淀区中关村大街1号'
-                },
-                {
-                    id: 2,
-                    username: 'liming',
-                    email: 'liming@example.com',
-                    phone: '13900139002',
-                    role: 'vip',
-                    points: 5800,
-                    status: 'active',
-                    registerDate: '2023-01-20',
-                    realName: '李明',
-                    address: '上海市浦东新区陆家嘴金融中心'
-                },
-                {
-                    id: 3,
-                    username: 'wangjing',
-                    email: 'wangjing@example.com',
-                    phone: '13700137003',
-                    role: 'user',
-                    points: 1200,
-                    status: 'inactive',
-                    registerDate: '2023-03-05',
-                    realName: '王静',
-                    address: '广州市天河区珠江新城'
-                }
-            ];
-        },
+        }
     },
     mounted() {
         this.fetchUsers();
@@ -711,7 +519,296 @@ export default {
 </script>
 
 <style scoped>
-/* ... existing styles ... */
+.admin-users {
+    padding: 20px 40px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.title {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #3f51b5;
+    padding-bottom: 10px;
+}
+
+.top-actions {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 20px;
+}
+
+.btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.btn i {
+    margin-right: 8px;
+}
+
+.btn-primary {
+    background: #3f51b5;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #303f9f;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.btn-secondary {
+    background: #f5f5f5;
+    color: #333;
+}
+
+.btn-secondary:hover {
+    background: #e0e0e0;
+}
+
+.btn-danger {
+    background: #f44336;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #d32f2f;
+}
+
+.data-table-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.data-table th {
+    background: #f9f9f9;
+    color: #333;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+}
+
+.data-table th i {
+    margin-left: 5px;
+    font-size: 12px;
+}
+
+.data-table th:hover {
+    background: #f0f0f0;
+}
+
+.data-table tbody tr:hover {
+    background: #f9f9f9;
+}
+
+.role-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.role-user {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.role-admin {
+    background: #fce4ec;
+    color: #c2185b;
+}
+
+.actions-cell {
+    white-space: nowrap;
+    display: flex;
+    gap: 5px;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px 8px;
+}
+
+.dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: white;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    padding: 5px 0;
+    min-width: 150px;
+    z-index: 10;
+    display: none;
+}
+
+.dropdown:hover .dropdown-menu {
+    display: block;
+}
+
+.dropdown-menu a {
+    display: block;
+    padding: 8px 15px;
+    color: #333;
+    text-decoration: none;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.dropdown-menu a:hover {
+    background: #f5f5f5;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+    border-top: 1px solid #eee;
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-sm {
+    max-width: 400px;
+}
+
+.modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    font-size: 18px;
+    color: #333;
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+}
+
+.close-btn:hover {
+    color: #333;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+    color: #555;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
 .loading-container {
     display: flex;
     flex-direction: column;

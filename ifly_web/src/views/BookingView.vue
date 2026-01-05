@@ -7,8 +7,7 @@
                 <el-steps :active="currentStep" finish-status="success" simple>
                     <el-step title="确认航班" icon="el-icon-plane"></el-step>
                     <el-step title="乘客信息" icon="el-icon-user"></el-step>
-                    <el-step title="选择座位" icon="el-icon-tickets"></el-step>
-                    <el-step title="支付订单" icon="el-icon-wallet"></el-step>
+                    <el-step title="确认订单" icon="el-icon-document-checked"></el-step>
                 </el-steps>
             </div>
         </div>
@@ -49,93 +48,15 @@
                     <div class="section-action">
                         <el-button @click="prevStep" icon="el-icon-arrow-left">返回</el-button>
                         <el-button type="primary" @click="validateAndNextStep">
-                            继续选择座位 <i class="el-icon-arrow-right"></i>
+                            继续确认订单 <i class="el-icon-arrow-right"></i>
                         </el-button>
                     </div>
                 </div>
 
-                <!-- 步骤3: 座位选择 -->
+                <!-- 步骤3: 确认订单 -->
                 <div v-show="currentStep === 2">
                     <div class="section-title">
-                        <h2>座位选择</h2>
-                        <div class="cabin-type">{{ cabinLabel }}</div>
-                    </div>
-
-                    <div class="seat-selection-container">
-                        <div class="seat-map-legend">
-                            <div class="legend-item">
-                                <div class="seat-icon available"></div>
-                                <span>可选座位</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="seat-icon selected"></div>
-                                <span>已选座位</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="seat-icon occupied"></div>
-                                <span>已售座位</span>
-                            </div>
-                        </div>
-
-                        <div class="aircraft-cabin">
-                            <div class="cabin-header">
-                                <div class="cabin-exit left">出口</div>
-                                <div class="cabin-name">{{ cabinLabel }}</div>
-                                <div class="cabin-exit right">出口</div>
-                            </div>
-
-                            <div class="seat-map">
-                                <div class="aisle-label">
-                                    <span v-for="col in columns" :key="col">{{ col }}</span>
-                                </div>
-
-                                <div v-for="row in rows" :key="row" class="seat-row">
-                                    <div class="row-label">{{ row }}</div>
-
-                                    <div class="row-seats">
-                                        <template v-for="col in columns" :key="`${row}-${col}`">
-                                            <div v-if="col === 'C' || col === 'D'" class="aisle"></div>
-
-                                            <div class="seat" :class="getSeatClass(row, col)"
-                                                @click="toggleSeat(row, col)">
-                                                {{ row }}{{ col }}
-                                            </div>
-                                        </template>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="selected-seats-summary">
-                            <h3>已选座位</h3>
-                            <div v-if="selectedSeats.length > 0" class="seats-list">
-                                <div v-for="(seat, index) in selectedSeats" :key="index" class="seat-assignment">
-                                    <div class="passenger-name">乘客 {{ index + 1 }}: {{ passengers[index].name ||
-                                        `乘客${index + 1}` }}</div>
-                                    <div class="seat-number">{{ seat }}</div>
-                                    <el-button size="small" type="danger" icon="el-icon-delete" circle
-                                        @click="removeSeat(index)"></el-button>
-                                </div>
-                            </div>
-                            <div v-else class="no-seats-selected">
-                                <i class="el-icon-warning-outline"></i>
-                                <span>尚未选择座位</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="section-action">
-                        <el-button @click="prevStep"><i class="el-icon-arrow-left"></i> 返回</el-button>
-                        <el-button type="primary" @click="nextStep" :disabled="selectedSeats.length !== passengerCount">
-                            继续支付 <i class="el-icon-arrow-right"></i>
-                        </el-button>
-                    </div>
-                </div>
-
-                <!-- 步骤4: 支付 -->
-                <div v-show="currentStep === 3">
-                    <div class="section-title">
-                        <h2>确认订单并支付</h2>
+                        <h2>确认订单信息</h2>
                     </div>
 
                     <div class="order-summary">
@@ -159,7 +80,7 @@
                                         <div class="passenger-id">{{ getIdTypeLabel(passenger.idType) }}: {{
                                             passenger.idNumber }}</div>
                                     </div>
-                                    <div class="passenger-seat">座位: {{ selectedSeats[index] }}</div>
+                                    <div class="passenger-note">座位将在值机时分配</div>
                                 </div>
                             </div>
 
@@ -201,41 +122,17 @@
                         </div>
                     </div>
 
-                    <div class="payment-options">
-                        <h3>支付方式</h3>
-                        <el-radio-group v-model="paymentMethod">
-                            <el-radio value="alipay">
-                                <div class="payment-option">
-                                    <img src="https://picsum.photos/id/17/30/30" alt="支付宝" />
-                                    <span>支付宝</span>
-                                </div>
-                            </el-radio>
-                            <el-radio value="wechat">
-                                <div class="payment-option">
-                                    <img src="https://picsum.photos/id/18/30/30" alt="微信支付" />
-                                    <span>微信支付</span>
-                                </div>
-                            </el-radio>
-                            <el-radio value="creditcard">
-                                <div class="payment-option">
-                                    <img src="https://picsum.photos/id/19/30/30" alt="信用卡" />
-                                    <span>信用卡</span>
-                                </div>
-                            </el-radio>
-                        </el-radio-group>
-
-                        <div class="payment-agreement">
-                            <el-checkbox v-model="agreementChecked">我已阅读并同意</el-checkbox>
-                            <el-button link>《购票协议》</el-button>和
-                            <el-button link>《隐私政策》</el-button>
-                        </div>
+                    <div class="booking-agreement">
+                        <el-checkbox v-model="agreementChecked">我已阅读并同意</el-checkbox>
+                        <el-button link>《购票协议》</el-button>和
+                        <el-button link>《隐私政策》</el-button>
                     </div>
 
                     <div class="section-action">
                         <el-button @click="prevStep"><i class="el-icon-arrow-left"></i> 返回</el-button>
                         <el-button type="primary" @click="submitOrder" :loading="isSubmitting"
-                            :disabled="!agreementChecked || !paymentMethod">
-                            确认支付 ¥{{ totalPrice }}
+                            :disabled="!agreementChecked">
+                            提交订单并支付 ¥{{ totalPrice }}
                         </el-button>
                     </div>
                 </div>
@@ -243,18 +140,18 @@
         </div>
 
         <!-- 订单成功弹窗 -->
-        <el-dialog title="订单提交成功" v-model="orderSuccessVisible" width="400px" :show-close="false"
+        <el-dialog title="订单创建成功" v-model="orderSuccessVisible" width="400px" :show-close="false"
             :close-on-click-modal="false" :close-on-press-escape="false">
             <div class="success-dialog">
                 <div class="success-icon">
                     <i class="el-icon-success"></i>
                 </div>
-                <h2>订单提交成功</h2>
+                <h2>订单创建成功</h2>
                 <p>您的订单号: {{ orderNumber }}</p>
-                <p>订单详情已发送至您的邮箱</p>
+                <p>请前往支付页面完成付款</p>
                 <div class="dialog-footer">
-                    <el-button type="primary" @click="goToOrderDetail">查看订单详情</el-button>
-                    <el-button @click="goToHome">返回首页</el-button>
+                    <el-button type="primary" @click="goToPayment">立即支付</el-button>
+                    <el-button @click="goToOrderDetail">稍后支付</el-button>
                 </div>
             </div>
         </el-dialog>
@@ -266,6 +163,7 @@ import FlightSummary from '@/components/flights/FlightSummary.vue'
 import PassengerList from '@/components/booking/PassengerList.vue'
 import ContactForm from '@/components/ContactForm.vue'
 import api from '@/services/api'
+import tokenManager from '@/utils/tokenManager'
 
 export default {
     name: 'BookingView',
@@ -283,10 +181,6 @@ export default {
             passengerCount: 0,
             passengers: [],
             activePassengers: [0],
-            selectedSeats: [],
-            occupiedSeats: [],
-            columns: ['A', 'B', 'C', 'D', 'E', 'F'],
-            rows: Array.from({ length: 30 }, (_, i) => i + 1),
             contactInfo: {
                 name: '',
                 phone: '',
@@ -497,12 +391,6 @@ export default {
                     console.log('获取到航班数据，ID:', this.flight.id);
                     console.log('处理后的航班数据:', this.flight);
 
-                    // 确保数据已经更新到视图
-                    this.$nextTick(() => {
-                        console.log('视图更新后的航班数据:', this.flight);
-                        this.initSeatMap();
-                    });
-
                     this.isLoading = false;
                 })
                 .catch(error => {
@@ -510,131 +398,6 @@ export default {
                     this.$message.error('获取航班数据失败，请稍后重试');
                     this.isLoading = false;
                 });
-        },
-
-        initSeatMap() {
-            // 如果没有航班数据，不进行初始化
-            if (!this.flight) return;
-
-            // 确保存在有效的航班ID
-            const flightId = this.flight.id;
-            if (!flightId) {
-                console.error('航班ID不存在，无法获取座位信息');
-                this.$message.warning('无法获取座位信息，将使用默认座位布局');
-                this.generateRandomOccupiedSeats();
-                return;
-            }
-
-            // 更新座位行列信息
-            // 根据舱位类别确定显示的座位范围
-            if (this.cabinClass === 'economy') {
-                // 经济舱通常在后部
-                this.rows = Array.from({ length: 20 }, (_, i) => i + 11);
-            } else if (this.cabinClass === 'business') {
-                // 商务舱通常在中部
-                this.rows = Array.from({ length: 5 }, (_, i) => i + 6);
-            } else if (this.cabinClass === 'first') {
-                // 头等舱通常在前部
-                this.rows = Array.from({ length: 5 }, (_, i) => i + 1);
-            }
-
-            console.log('正在获取座位信息，航班ID:', flightId);
-
-            // 简化的座位数据处理逻辑
-            api.flights.getAvailableSeats(flightId)
-                .then(response => {
-                    console.log('座位数据响应:', response);
-                    this.occupiedSeats = [];
-
-                    try {
-                        // 尝试解析不同格式的座位数据
-                        if (response && response.seat_map && Array.isArray(response.seat_map)) {
-                            // 标准格式
-                            response.seat_map.forEach(row => {
-                                if (Array.isArray(row)) {
-                                    row.forEach(seat => {
-                                        if (seat && seat.taken && seat.seat) {
-                                            this.occupiedSeats.push(seat.seat);
-                                        }
-                                    });
-                                }
-                            });
-                        } else if (response && response.seats && Array.isArray(response.seats)) {
-                            // 备选格式1
-                            response.seats.forEach(seat => {
-                                if (seat && seat.occupied) {
-                                    this.occupiedSeats.push(seat.id || `${seat.row}${seat.column}`);
-                                }
-                            });
-                        } else if (response && response.occupied_seats && Array.isArray(response.occupied_seats)) {
-                            // 备选格式2
-                            this.occupiedSeats = [...response.occupied_seats];
-                        } else if (response && response.data) {
-                            // 尝试从response.data中获取座位数据
-                            const data = response.data;
-
-                            if (data.seat_map && Array.isArray(data.seat_map)) {
-                                // 标准格式
-                                data.seat_map.forEach(row => {
-                                    if (Array.isArray(row)) {
-                                        row.forEach(seat => {
-                                            if (seat && seat.taken && seat.seat) {
-                                                this.occupiedSeats.push(seat.seat);
-                                            }
-                                        });
-                                    }
-                                });
-                            } else if (data.seats && Array.isArray(data.seats)) {
-                                // 备选格式1
-                                data.seats.forEach(seat => {
-                                    if (seat && seat.occupied) {
-                                        this.occupiedSeats.push(seat.id || `${seat.row}${seat.column}`);
-                                    }
-                                });
-                            } else if (data.occupied_seats && Array.isArray(data.occupied_seats)) {
-                                // 备选格式2
-                                this.occupiedSeats = [...data.occupied_seats];
-                            } else {
-                                console.warn('返回的座位数据格式不匹配任何预期格式，使用随机座位', response);
-                                this.generateRandomOccupiedSeats();
-                                return;
-                            }
-                        } else {
-                            console.warn('返回的座位数据格式不匹配任何预期格式，使用随机座位', response);
-                            this.generateRandomOccupiedSeats();
-                            return;
-                        }
-
-                        console.log('已加载座位图，占用座位:', this.occupiedSeats);
-                    } catch (err) {
-                        console.error('解析座位数据出错', err);
-                        this.generateRandomOccupiedSeats();
-                    }
-                })
-                .catch(error => {
-                    console.error('获取座位信息失败', error);
-                    this.$message.warning('获取座位信息失败，将使用默认座位布局');
-                    this.generateRandomOccupiedSeats(); // 使用随机座位作为后备
-                });
-        },
-
-        // 生成随机占用座位（作为API调用失败的后备方案）
-        generateRandomOccupiedSeats() {
-            // 模拟一些已占用的座位
-            const totalSeats = this.rows.length * this.columns.length;
-            const occupiedCount = Math.round(totalSeats * 0.7); // 假设70%的座位已被占用
-
-            this.occupiedSeats = [];
-            for (let i = 0; i < occupiedCount; i++) {
-                const row = this.rows[Math.floor(Math.random() * this.rows.length)];
-                const colIndex = Math.floor(Math.random() * this.columns.length);
-                const col = this.columns[colIndex];
-                const seat = `${row}${col}`;
-
-                if (!this.occupiedSeats.includes(seat)) {
-                    this.occupiedSeats.push(seat);
-                }
-            }
         },
 
         formatDate(date) {
@@ -879,46 +642,6 @@ export default {
             }
         },
 
-        getSeatClass(row, col) {
-            const seatId = `${row}${col}`;
-            if (this.selectedSeats.includes(seatId)) {
-                return 'selected';
-            }
-            if (this.occupiedSeats.includes(seatId)) {
-                return 'occupied';
-            }
-            return 'available';
-        },
-
-        toggleSeat(row, col) {
-            const seatId = `${row}${col}`;
-
-            // 如果座位已被占用，不做任何操作
-            if (this.occupiedSeats.includes(seatId)) {
-                return;
-            }
-
-            const seatIndex = this.selectedSeats.indexOf(seatId);
-
-            if (seatIndex > -1) {
-                // 取消选择
-                this.selectedSeats.splice(seatIndex, 1);
-            } else {
-                // 如果已选座位数量已达到乘客数量，替换最早选择的座位
-                if (this.selectedSeats.length >= this.passengerCount) {
-                    this.selectedSeats.shift();
-                }
-                // 添加新选择的座位
-                this.selectedSeats.push(seatId);
-            }
-        },
-
-        removeSeat(index) {
-            if (index >= 0 && index < this.selectedSeats.length) {
-                this.selectedSeats.splice(index, 1);
-            }
-        },
-
         submitOrder() {
             if (this.isSubmitting) {
                 return;
@@ -926,8 +649,7 @@ export default {
             this.isSubmitting = true;
 
             // 检查用户是否已登录
-            const token = localStorage.getItem('token');
-            if (!token) {
+            if (!tokenManager.isAuthenticated()) {
                 this.isSubmitting = false;
                 this.$message.error('请先登录后再提交订单');
 
@@ -942,7 +664,6 @@ export default {
                         flightId: this.flight.id,
                         cabinClass: this.cabinClass,
                         passengerCount: this.passengerCount,
-                        selectedSeats: this.selectedSeats,
                         passengers: this.passengers,
                         contactInfo: this.contactInfo,
                         paymentMethod: this.paymentMethod
@@ -959,20 +680,17 @@ export default {
                 return;
             }
 
-            // 构建订单数据
+            // 构建订单数据（座位将在值机时分配）
             const orderData = {
                 flight_id: this.flight.id,
                 cabin_class: this.cabinClass,
-                seat_numbers: this.selectedSeats,
-                passengers: this.passengers.map((p, idx) => ({
+                passengers: this.passengers.map((p) => ({
                     name: p.name,
                     gender: p.gender,
                     id_type: p.idType,
                     id_number: p.idNumber,
-                    // 确保日期格式正确 (YYYY-MM-DD)
                     birth_date: this.formatStandardDate(p.birthDate),
-                    phone: p.phone,
-                    seat_number: this.selectedSeats[idx]
+                    phone: p.phone
                 })),
                 contact_info: {
                     name: this.contactInfo.name,
@@ -980,7 +698,6 @@ export default {
                     email: this.contactInfo.email
                 },
                 payment_method: this.paymentMethod,
-                // 确保所有价格字段都转换为字符串
                 total_price: String(parseFloat(this.totalPrice)),
                 cabin_price: String(parseFloat(this.cabinPrice)),
                 base_price: String(parseFloat(this.flight.price || 0)),
@@ -1009,11 +726,6 @@ export default {
                 });
             }
 
-            if (!orderData.seat_numbers || orderData.seat_numbers.length !== orderData.passengers.length) {
-                isValid = false;
-                errors.push("座位数量与乘客数量不匹配");
-            }
-
             if (!isValid) {
                 this.isSubmitting = false;
                 const errorMsg = `提交数据验证失败: ${errors.join(', ')}`;
@@ -1040,8 +752,63 @@ export default {
                     this.isSubmitting = false;
                     console.error('订单提交失败', error);
 
-                    // 获取更详细的错误信息
-                    let errorMessage = '订单提交失败，请稍后重试';
+                    // 获取错误信息
+                    const errorData = error.data || error.response?.data;
+                    const errorMessage = errorData?.detail || errorData?.message || error.message;
+                    
+                    // 检查是否是航班已过期或已取消的错误
+                    const flightExpiredKeywords = ['已过起飞时间', '已起飞', '已取消', '无法预订'];
+                    const isFlightExpired = flightExpiredKeywords.some(keyword => 
+                        errorMessage && errorMessage.includes(keyword)
+                    );
+                    
+                    if (isFlightExpired) {
+                        // 航班已过期，显示友好提示并引导返回搜索
+                        this.$confirm(
+                            '该航班已过起飞时间或已取消，无法继续预订。请重新搜索其他航班。',
+                            '航班不可预订',
+                            {
+                                confirmButtonText: '重新搜索',
+                                cancelButtonText: '返回首页',
+                                type: 'warning'
+                            }
+                        ).then(() => {
+                            // 返回航班搜索页面
+                            this.$router.push({
+                                path: '/flights',
+                                query: {
+                                    departure_city: this.flight?.departure_city || this.flight?.departureCity,
+                                    arrival_city: this.flight?.arrival_city || this.flight?.arrivalCity
+                                }
+                            });
+                        }).catch(() => {
+                            // 返回首页
+                            this.$router.push('/');
+                        });
+                        return;
+                    }
+
+                    // 检查是否是座位已被占用的错误
+                    if (errorMessage && errorMessage.includes('座位') && errorMessage.includes('已被占用')) {
+                        this.$confirm(
+                            '您选择的座位已被其他乘客预订，请重新选择座位。',
+                            '座位已被占用',
+                            {
+                                confirmButtonText: '重新选座',
+                                cancelButtonText: '取消',
+                                type: 'warning'
+                            }
+                        ).then(() => {
+                            // 返回选座步骤并刷新座位图
+                            this.currentStep = 1;
+                            this.selectedSeats = [];
+                            this.fetchSeatMap();
+                        }).catch(() => {});
+                        return;
+                    }
+
+                    // 其他错误的处理
+                    let displayMessage = '订单提交失败，请稍后重试';
                     if (error.response) {
                         // 服务器返回了错误响应
                         const status = error.response.status;
@@ -1052,9 +819,9 @@ export default {
                         console.log('错误响应数据:', data);
 
                         if (status === 401) {
-                            errorMessage = '您的登录已过期，请重新登录';
+                            displayMessage = '您的登录已过期，请重新登录';
                             // 清除无效的token
-                            localStorage.removeItem('token');
+                            tokenManager.clearToken();
 
                             // 提示用户重新登录
                             this.$confirm('您的登录已过期，需要重新登录才能提交订单，是否立即登录?', '登录已过期', {
@@ -1083,13 +850,13 @@ export default {
                             });
                             return;
                         } else if (status === 500) {
-                            errorMessage = '服务器内部错误，请联系客服或稍后再试';
+                            displayMessage = '服务器内部错误，请联系客服或稍后再试';
                         } else if (data && data.detail) {
-                            errorMessage = `订单提交失败: ${data.detail}`;
+                            displayMessage = `订单提交失败: ${data.detail}`;
                         } else if (data && data.message) {
-                            errorMessage = `订单提交失败: ${data.message}`;
+                            displayMessage = `订单提交失败: ${data.message}`;
                         } else if (data && typeof data === 'string') {
-                            errorMessage = `订单提交失败: ${data}`;
+                            displayMessage = `订单提交失败: ${data}`;
                         }
 
                         // 针对常见错误给出更具体的提示
@@ -1111,13 +878,13 @@ export default {
                                 }
 
                                 if (errorDetails.length > 0) {
-                                    errorMessage = `请求数据错误: ${errorDetails.join('; ')}`;
+                                    displayMessage = `请求数据错误: ${errorDetails.join('; ')}`;
                                 }
                             }
                         }
                     }
 
-                    this.$message.error(errorMessage);
+                    this.$message.error(displayMessage);
 
                     // 如果是API连接问题，提供重试选项
                     if (error.message === 'Network Error' || error.code === 'ECONNABORTED') {
@@ -1165,6 +932,13 @@ export default {
         goToOrderDetail() {
             this.$router.push({
                 name: 'orderDetail',
+                params: { orderId: this.orderNumber }
+            });
+        },
+
+        goToPayment() {
+            this.$router.push({
+                name: 'payment',
                 params: { orderId: this.orderNumber }
             });
         },
@@ -1224,19 +998,24 @@ export default {
 
 <style scoped>
 .booking-view {
-    padding: 20px;
-    min-height: 100vh;
+    padding: 0;
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
 }
 
 .booking-header {
     background: linear-gradient(135deg, #00468c, #0076c6);
     color: white;
-    padding: 30px;
+    padding: 30px 40px;
     text-align: center;
-    margin-bottom: 30px;
-    border-radius: 8px;
+    margin-bottom: 0;
+    border-radius: 0;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .booking-header h1 {
@@ -1252,19 +1031,20 @@ export default {
 }
 
 .steps-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding-top: 20px;
+    width: 100%;
+    padding: 20px 40px 0;
+    box-sizing: border-box;
 }
 
 .booking-container {
-    max-width: 1000px;
-    margin: 0 auto;
+    width: 100%;
+    padding: 30px 40px 40px;
     background: white;
-    padding: 30px;
-    border-radius: 8px;
+    border-radius: 0;
     box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-    margin-bottom: 40px;
+    margin-bottom: 0;
+    box-sizing: border-box;
+    flex: 1;
 }
 
 .loading-container {
@@ -1538,190 +1318,246 @@ export default {
 }
 
 .seat-selection-container {
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    padding: 20px;
+    background: #f5f7fa;
+    border-radius: 12px;
+    padding: 24px;
 }
 
+/* 图例 */
 .seat-map-legend {
     display: flex;
     justify-content: center;
-    gap: 20px;
+    gap: 28px;
     margin-bottom: 20px;
 }
 
 .legend-item {
     display: flex;
     align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #666;
 }
 
-.seat-icon {
-    width: 24px;
-    height: 24px;
-    border-radius: 4px;
-    margin-right: 8px;
-}
-
-.seat-icon.available {
-    background-color: #fff;
-    border: 1px solid #ddd;
-}
-
-.seat-icon.selected {
-    background-color: #0076c6;
-    border: 1px solid #0076c6;
-}
-
-.seat-icon.occupied {
-    background-color: #f5f5f5;
-    border: 1px solid #ddd;
+.legend-seat {
+    width: 26px;
+    height: 32px;
     position: relative;
 }
 
-.seat-icon.occupied::after {
-    content: "×";
+.legend-seat .seat-back {
+    width: 100%;
+    height: 16px;
+    border-radius: 5px 5px 2px 2px;
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #999;
-    font-size: 18px;
+    top: 0;
 }
 
+.legend-seat .seat-bottom {
+    width: 100%;
+    height: 16px;
+    border-radius: 2px 2px 5px 5px;
+    position: absolute;
+    bottom: 0;
+}
+
+.legend-seat.available .seat-back {
+    background: linear-gradient(180deg, #52c41a 0%, #389e0d 100%);
+}
+.legend-seat.available .seat-bottom {
+    background: linear-gradient(180deg, #73d13d 0%, #52c41a 100%);
+}
+
+.legend-seat.selected .seat-back {
+    background: linear-gradient(180deg, #1890ff 0%, #096dd9 100%);
+}
+.legend-seat.selected .seat-bottom {
+    background: linear-gradient(180deg, #40a9ff 0%, #1890ff 100%);
+}
+
+.legend-seat.occupied .seat-back {
+    background: linear-gradient(180deg, #bfbfbf 0%, #8c8c8c 100%);
+}
+.legend-seat.occupied .seat-bottom {
+    background: linear-gradient(180deg, #d9d9d9 0%, #bfbfbf 100%);
+}
+
+/* 机舱 */
 .aircraft-cabin {
-    background-color: white;
-    border-radius: 8px;
+    background: white;
+    border-radius: 12px;
     padding: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     margin-bottom: 20px;
 }
 
 .cabin-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #eee;
+    text-align: center;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #f0f0f0;
 }
 
-.cabin-exit {
-    padding: 3px 8px;
-    background-color: #ffebee;
-    color: #e53935;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.cabin-name {
-    font-size: 18px;
+.cabin-label {
+    font-size: 16px;
     font-weight: 600;
-    color: #333;
+    color: #1890ff;
 }
 
+/* 座位图 */
 .seat-map {
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-.aisle-label {
-    display: flex;
-    margin-bottom: 10px;
-}
-
-.aisle-label span {
-    width: 30px;
-    height: 30px;
+.column-labels {
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-bottom: 10px;
+}
+
+.row-number-placeholder {
+    width: 32px;
+}
+
+.columns-row {
+    display: flex;
+    align-items: center;
+}
+
+.column-label {
+    width: 42px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
     font-weight: 600;
     color: #666;
+    margin: 0 2px;
 }
 
 .seat-row {
     display: flex;
+    justify-content: center;
     align-items: center;
     margin-bottom: 8px;
 }
 
-.row-label {
-    width: 30px;
-    height: 30px;
+.row-number {
+    width: 32px;
     display: flex;
-    justify-content: center;
     align-items: center;
-    font-weight: 600;
-    color: #666;
-    margin-right: 10px;
-}
-
-.row-seats {
-    display: flex;
-}
-
-.seat {
-    width: 30px;
-    height: 30px;
-    display: flex;
     justify-content: center;
-    align-items: center;
-    border-radius: 4px;
-    margin: 0 2px;
     font-size: 12px;
+    font-weight: 500;
+    color: #999;
+}
+
+.seats-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+.aisle-space {
+    width: 28px;
+}
+
+/* 3D座位样式 */
+.seat-3d {
+    width: 42px;
+    height: 46px;
+    margin: 0 2px;
+    position: relative;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
-.seat.available {
-    background-color: white;
-    border: 1px solid #ddd;
-    color: #666;
+.seat-3d:hover:not(.occupied) {
+    transform: translateY(-3px);
 }
 
-.seat.available:hover {
-    background-color: #e3f2fd;
-    border-color: #0076c6;
+.seat-3d .seat-back {
+    width: 100%;
+    height: 24px;
+    border-radius: 6px 6px 2px 2px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: all 0.2s;
 }
 
-.seat.selected {
-    background-color: #0076c6;
-    border: 1px solid #0076c6;
+.seat-3d .seat-bottom {
+    width: 100%;
+    height: 22px;
+    border-radius: 2px 2px 6px 6px;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.seat-3d .seat-label {
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* 可选座位 */
+.seat-3d.available .seat-back {
+    background: linear-gradient(180deg, #52c41a 0%, #389e0d 100%);
+    box-shadow: 0 2px 6px rgba(82, 196, 26, 0.3);
+}
+.seat-3d.available .seat-bottom {
+    background: linear-gradient(180deg, #73d13d 0%, #52c41a 100%);
     color: white;
 }
+.seat-3d.available:hover .seat-back {
+    box-shadow: 0 4px 10px rgba(82, 196, 26, 0.4);
+}
 
-.seat.occupied {
-    background-color: #f5f5f5;
-    border: 1px solid #ddd;
-    color: #999;
+/* 已选座位 */
+.seat-3d.selected .seat-back {
+    background: linear-gradient(180deg, #1890ff 0%, #096dd9 100%);
+    box-shadow: 0 3px 8px rgba(24, 144, 255, 0.4);
+}
+.seat-3d.selected .seat-bottom {
+    background: linear-gradient(180deg, #40a9ff 0%, #1890ff 100%);
+    color: white;
+}
+.seat-3d.selected {
+    transform: translateY(-3px);
+}
+
+/* 已占用座位 */
+.seat-3d.occupied {
     cursor: not-allowed;
-    position: relative;
+    opacity: 0.7;
+}
+.seat-3d.occupied .seat-back {
+    background: linear-gradient(180deg, #bfbfbf 0%, #8c8c8c 100%);
+}
+.seat-3d.occupied .seat-bottom {
+    background: linear-gradient(180deg, #d9d9d9 0%, #bfbfbf 100%);
+    color: #999;
 }
 
-.seat.occupied::after {
-    content: "×";
-    position: absolute;
-    font-size: 18px;
-}
-
-.aisle {
-    width: 15px;
-}
-
+/* 已选座位摘要 */
 .selected-seats-summary {
-    background-color: white;
-    border-radius: 8px;
+    background: white;
+    border-radius: 12px;
     padding: 20px;
-    margin-top: 20px;
 }
 
 .selected-seats-summary h3 {
-    margin-top: 0;
-    margin-bottom: 15px;
-    font-size: 18px;
+    margin: 0 0 16px 0;
+    font-size: 15px;
     color: #333;
+    font-weight: 600;
 }
 
 .seats-list {
@@ -1734,20 +1570,22 @@ export default {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px;
-    background-color: #f5f5f5;
-    border-radius: 4px;
+    padding: 12px 16px;
+    background: #f9f9f9;
+    border-radius: 8px;
 }
 
 .passenger-name {
     font-weight: 500;
+    color: #333;
 }
 
-.seat-number {
+.seat-badge {
     font-weight: 600;
-    color: #0076c6;
-    padding: 2px 8px;
-    background-color: #e3f2fd;
+    font-size: 14px;
+    color: #1890ff;
+    padding: 4px 12px;
+    background: #e6f7ff;
     border-radius: 4px;
 }
 
@@ -1755,12 +1593,9 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: 24px;
     color: #999;
-}
-
-.no-seats-selected i {
-    margin-right: 5px;
+    font-size: 14px;
 }
 
 .order-summary {
@@ -1890,7 +1725,8 @@ export default {
     border-radius: 4px;
 }
 
-.payment-agreement {
+.payment-agreement,
+.booking-agreement {
     margin-top: 20px;
     display: flex;
     align-items: center;

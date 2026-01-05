@@ -118,14 +118,19 @@ export default {
 }
 
 .auth-background {
-    width: 100%;
-    min-height: 100vh;
+    width: calc(100% + 10%);
+    min-height: calc(100vh - 60px - 30px);
+    margin-left: -5%;
+    margin-right: -5%;
+    margin-top: -10px;
+    margin-bottom: -10px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: linear-gradient(135deg, #0a1128 0%, #1a2980 50%, #304090 100%);
     position: relative;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 .auth-background::before {

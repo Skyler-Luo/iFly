@@ -95,7 +95,8 @@ class UserAPITest(APITestCase):
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('token', response.data)
-        self.assertEqual(response.data['username'], 'testuser')
+        self.assertIn('user', response.data)
+        self.assertEqual(response.data['user']['username'], 'testuser')
 
 
 class PassengerAPITest(APITestCase):
@@ -157,3 +158,81 @@ class PassengerAPITest(APITestCase):
         resp_import = self.client.post(import_url, {'file': file}, format='multipart')
         self.assertEqual(resp_import.status_code, status.HTTP_200_OK)
         self.assertIn('created', resp_import.data)
+
+
+class UserProfileAPITest(APITestCase):
+    """测试用户个人资料API (Requirements 5.1)"""
+    
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpassword123',
+            phone='13800138000'
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+
+    def test_get_profile(self):
+        """测试获取个人资料"""
+        url = reverse('profile')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['username'], 'testuser')
+        self.assertEqual(response.data['email'], 'test@example.com')
+
+    def test_update_profile(self):
+        """测试更新个人资料"""
+        url = reverse('profile-update')
+        data = {
+            'email': 'newemail@example.com',
+            'phone': '13900139000',
+            'real_name': '张三',
+            'gender': 'male'
+        }
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, 'newemail@example.com')
+        self.assertEqual(self.user.phone, '13900139000')
+        self.assertEqual(self.user.real_name, '张三')
+
+    def test_change_password(self):
+        """测试修改密码 (Requirements 5.2)"""
+        url = reverse('change-password')
+        data = {
+            'old_password': 'testpassword123',
+            'new_password': 'newpassword456',
+            'new_password2': 'newpassword456'
+        }
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('token', response.data)
+        
+        # 验证新密码可以登录
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('newpassword456'))
+
+    def test_change_password_wrong_old_password(self):
+        """测试修改密码时旧密码错误 (Requirements 5.4)"""
+        url = reverse('change-password')
+        data = {
+            'old_password': 'wrongpassword',
+            'new_password': 'newpassword456',
+            'new_password2': 'newpassword456'
+        }
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('old_password', response.data)
+
+    def test_change_password_mismatch(self):
+        """测试修改密码时两次输入不一致"""
+        url = reverse('change-password')
+        data = {
+            'old_password': 'testpassword123',
+            'new_password': 'newpassword456',
+            'new_password2': 'differentpassword'
+        }
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

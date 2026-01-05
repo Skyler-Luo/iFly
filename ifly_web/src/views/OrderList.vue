@@ -34,6 +34,16 @@
                         <div class="order-info">
                             <div class="order-number">订单号: {{ order.orderNumber }}</div>
                             <div class="order-time">下单时间: {{ formatDateTime(order.createdAt) }}</div>
+                            <div class="remaining-time" v-if="order.status === 'pending' && getRemainingSeconds(order) > 0">
+                                <span class="remaining-label">剩余支付时间:</span>
+                                <CountdownTimer 
+                                    :remaining-seconds="getRemainingSeconds(order)"
+                                    :warning-threshold="300"
+                                    :show-icon="false"
+                                    :auto-countdown="true"
+                                    @timeout="handleOrderTimeout(order)"
+                                />
+                            </div>
                         </div>
                         <div class="order-status" :class="getStatusClass(order.status)">
                             {{ getStatusText(order.status) }}
@@ -72,7 +82,7 @@
                                 @click.stop="goToPayment(order.id)">
                                 继续支付
                             </el-button>
-                            <el-button type="primary" plain size="mini" @click.stop="goToOrderDetail(order.id)">
+                            <el-button type="primary" size="mini" @click.stop="goToOrderDetail(order.id)">
                                 查看详情
                             </el-button>
                         </div>
@@ -91,9 +101,13 @@
 <script>
 import api from '@/services/api'
 import { ElMessage } from 'element-plus'
+import CountdownTimer from '@/components/CountdownTimer.vue'
 
 export default {
     name: 'OrderList',
+    components: {
+        CountdownTimer
+    },
     data() {
         return {
             isLoading: true,
@@ -185,24 +199,26 @@ export default {
                 // 构建订单数据结构
                 const transformedOrder = {
                     id: order.id,
-                    orderNumber: order.order_number || `ORD${Math.random().toString().substring(2, 10).toUpperCase()}`,
+                    orderNumber: order.order_number || '--',
                     status: order.status,
                     createdAt: new Date(order.created_at),
                     paidAt: order.paid_at ? new Date(order.paid_at) : null,
                     ticketedAt: order.ticketed_at ? new Date(order.ticketed_at) : null,
                     completedAt: order.completed_at ? new Date(order.completed_at) : null,
-                    totalAmount: parseFloat(order.total_amount),
+                    totalAmount: parseFloat(order.total_amount || order.total_price || 0),
+                    remainingTime: order.remaining_time || 0,
                     passengers: [],
                     tickets: []
                 };
 
-                // 处理乘客信息
+                // 处理乘客信息（从后端返回的 passengers 字段）
                 if (order.passengers && Array.isArray(order.passengers)) {
                     transformedOrder.passengers = order.passengers.map(passenger => ({
                         id: passenger.id,
                         name: passenger.name,
                         idType: passenger.id_type,
-                        idNumber: passenger.id_number
+                        idNumber: passenger.id_number,
+                        phone: passenger.phone
                     }));
                 }
 
@@ -299,6 +315,29 @@ export default {
 
         goToHome() {
             this.$router.push('/');
+        },
+
+        getRemainingSeconds(order) {
+            // 优先使用后端返回的剩余时间
+            if (order.remainingTime && order.remainingTime > 0) {
+                return order.remainingTime;
+            }
+            
+            // 后备方案：本地计算（订单创建后30分钟内需支付）
+            if (!order || !order.createdAt) return 0;
+            
+            const createdAt = new Date(order.createdAt);
+            const now = new Date();
+            const paymentDeadline = new Date(createdAt.getTime() + 30 * 60 * 1000);
+            const remainingMs = paymentDeadline - now;
+            
+            return remainingMs > 0 ? Math.floor(remainingMs / 1000) : 0;
+        },
+
+        handleOrderTimeout(order) {
+            ElMessage.warning(`订单 ${order.orderNumber} 支付时间已过期`);
+            // 刷新订单列表
+            this.fetchOrders();
         }
     }
 };
@@ -306,21 +345,24 @@ export default {
 
 <style scoped>
 .order-list-view {
-    padding: 20px;
+    padding: 0;
     background-color: #f5f7fa;
     min-height: 100vh;
+    width: 100%;
 }
 
 .header-banner {
     background: linear-gradient(135deg, #00468c, #0076c6);
     color: white;
-    padding: 25px;
-    border-radius: 8px;
-    margin-bottom: 20px;
+    padding: 25px 40px;
+    border-radius: 0;
+    margin-bottom: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 4px 12px rgba(0, 71, 140, 0.15);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .header-banner h1 {
@@ -335,8 +377,9 @@ export default {
 }
 
 .order-list-container {
-    max-width: 1000px;
-    margin: 0 auto;
+    width: 100%;
+    padding: 20px 40px;
+    box-sizing: border-box;
 }
 
 .loading-container,
@@ -399,6 +442,18 @@ export default {
 .order-time {
     font-size: 14px;
     color: #666;
+}
+
+.remaining-time {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 5px;
+    font-size: 14px;
+}
+
+.remaining-label {
+    color: #909399;
 }
 
 .order-status {

@@ -1,24 +1,26 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
+
+import tokenManager from '@/utils/tokenManager'
+
+// 核心页面直接导入（首屏加载）
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
-import FlightResults from '../views/FlightResults.vue'
-import BookingView from '../views/BookingView.vue'
-import OrderDetail from '../views/OrderDetail.vue'
-import UserProfileView from '../views/UserProfileView.vue'
-import NotificationView from '../views/NotificationView.vue'
-import HelpCenterView from '../views/HelpCenterView.vue'
-import PromotionCenterView from '../views/PromotionCenterView.vue'
-import PromotionDetailView from '../views/PromotionDetailView.vue'
-import PointsCenterView from '../views/PointsCenterView.vue'
-import PointsHistoryView from '../views/PointsHistoryView.vue'
-import PointsExchangeView from '../views/PointsExchangeView.vue'
-import PointsTasksView from '../views/PointsTasksView.vue'
-import AdminDashboardView from '../views/AdminDashboardView.vue'
-import AdminFlightsView from '../views/AdminFlightsView.vue'
-import AdminUsersView from '../views/AdminUsersView.vue'
-import AdminPromotionsView from '../views/AdminPromotionsView.vue'
-import DebugView from '../views/Debug.vue'
+
+// 其他页面使用懒加载
+const BookingView = () => import('../views/BookingView.vue')
+const FlightResults = () => import('../views/FlightResults.vue')
+const OrderDetail = () => import('../views/OrderDetail.vue')
+const UserProfileView = () => import('../views/UserProfileView.vue')
+const NotificationView = () => import('../views/NotificationView.vue')
+
+// 管理页面懒加载
+const AdminDashboardView = () => import('../views/AdminDashboardView.vue')
+const AdminFlightsView = () => import('../views/AdminFlightsView.vue')
+const AdminUsersView = () => import('../views/AdminUsersView.vue')
+
+// 错误页面懒加载
+const ForbiddenView = () => import('../views/error/ForbiddenView.vue')
 
 const routes = [
   {
@@ -54,18 +56,34 @@ const routes = [
   {
     path: '/orders',
     name: 'orderList',
-    component: () => import(/* webpackChunkName: "orders" */ '../views/OrderList.vue'),
+    component: () =>
+      import(/* webpackChunkName: "orders" */ '../views/OrderList.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/payment/:orderId',
     name: 'payment',
-    component: () => import(/* webpackChunkName: "payment" */ '../views/PaymentView.vue')
+    component: () =>
+      import(/* webpackChunkName: "payment" */ '../views/PaymentView.vue')
+  },
+  {
+    path: '/checkin',
+    name: 'checkin-search',
+    component: () =>
+      import(/* webpackChunkName: "checkin" */ '../views/CheckinView.vue')
   },
   {
     path: '/checkin/:ticketId',
     name: 'checkin',
-    component: () => import(/* webpackChunkName: "checkin" */ '../views/CheckinView.vue')
+    component: () =>
+      import(/* webpackChunkName: "checkin" */ '../views/CheckinView.vue')
+  },
+  {
+    path: '/reschedule/:ticketId',
+    name: 'reschedule',
+    component: () =>
+      import(/* webpackChunkName: "reschedule" */ '../views/RescheduleView.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/profile',
@@ -80,53 +98,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/help',
-    name: 'helpCenter',
-    component: HelpCenterView
-  },
-  {
-    path: '/help/category/:categoryId',
-    name: 'helpCategory',
-    component: () => import(/* webpackChunkName: "helpCategory" */ '../views/HelpCenterView.vue')
-  },
-  {
     path: '/flight-status',
     name: 'flightStatus',
-    component: () => import(/* webpackChunkName: "flightStatus" */ '../views/FlightStatusView.vue')
-  },
-  {
-    path: '/promotions',
-    name: 'promotions',
-    component: PromotionCenterView
-  },
-  {
-    path: '/promotions/:id',
-    name: 'promotionDetail',
-    component: PromotionDetailView
-  },
-  {
-    path: '/points',
-    name: 'pointsCenter',
-    component: PointsCenterView,
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/points/history',
-    name: 'pointsHistory',
-    component: PointsHistoryView,
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/points/exchange',
-    name: 'pointsExchange',
-    component: PointsExchangeView,
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/points/tasks',
-    name: 'pointsTasks',
-    component: PointsTasksView,
-    meta: { requiresAuth: true }
+    component: () =>
+      import(
+        /* webpackChunkName: "flightStatus" */ '../views/FlightStatusView.vue'
+      )
   },
   // 管理员路由
   {
@@ -144,13 +121,19 @@ const routes = [
   {
     path: '/admin/flights/:flightId/passengers',
     name: 'adminFlightPassengers',
-    component: () => import(/* webpackChunkName: "adminFlightPassengers" */ '../views/AdminFlightPassengersView.vue'),
+    component: () =>
+      import(
+        /* webpackChunkName: "adminFlightPassengers" */ '../views/AdminFlightPassengersView.vue'
+      ),
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/admin/flights/:flightId/pricing',
     name: 'adminFlightPricing',
-    component: () => import(/* webpackChunkName: "adminFlightPricing" */ '../views/AdminFlightPricingView.vue'),
+    component: () =>
+      import(
+        /* webpackChunkName: "adminFlightPricing" */ '../views/AdminFlightPricingView.vue'
+      ),
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
@@ -162,104 +145,134 @@ const routes = [
   {
     path: '/admin/users/:userId/orders',
     name: 'adminUserOrders',
-    component: () => import(/* webpackChunkName: "adminUserOrders" */ '../views/AdminUserOrdersView.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true }
-  },
-  {
-    path: '/admin/promotions',
-    name: 'adminPromotions',
-    component: AdminPromotionsView,
-    meta: { requiresAuth: true, requiresAdmin: true }
-  },
-  {
-    path: '/admin/promotions/:promoId/usage',
-    name: 'adminPromotionUsage',
-    component: () => import(/* webpackChunkName: "adminPromotionUsage" */ '../views/AdminPromotionUsageView.vue'),
+    component: () =>
+      import(
+        /* webpackChunkName: "adminUserOrders" */ '../views/AdminUserOrdersView.vue'
+      ),
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/admin/orders',
     name: 'adminOrders',
-    component: () => import(/* webpackChunkName: "adminOrders" */ '../views/AdminOrdersView.vue'),
+    component: () =>
+      import(
+        /* webpackChunkName: "adminOrders" */ '../views/AdminOrdersView.vue'
+      ),
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/admin/settings',
     name: 'adminSettings',
-    component: () => import(/* webpackChunkName: "adminSettings" */ '../views/AdminSettingsView.vue'),
+    component: () =>
+      import(
+        /* webpackChunkName: "adminSettings" */ '../views/AdminSettingsView.vue'
+      ),
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   // 新增数据可视化路由
   {
     path: '/admin/visualization',
     name: 'adminVisualization',
-    component: () => import(/* webpackChunkName: "adminVisualization" */ '../views/AdminDataVisualizationView.vue'),
+    component: () =>
+      import(
+        /* webpackChunkName: "adminVisualization" */ '../views/AdminDataVisualizationView.vue'
+      ),
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/admin/business-intelligence',
     name: 'adminBusinessIntelligence',
-    component: () => import(/* webpackChunkName: "adminBusinessIntelligence" */ '../views/AdminBusinessIntelligenceView.vue'),
+    component: () =>
+      import(
+        /* webpackChunkName: "adminBusinessIntelligence" */ '../views/AdminBusinessIntelligenceView.vue'
+      ),
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/admin/analytics/flights',
     name: 'adminFlightAnalytics',
-    component: () => import(/* webpackChunkName: "adminFlightAnalytics" */ '../views/AdminFlightAnalyticsView.vue'),
+    component: () =>
+      import(
+        /* webpackChunkName: "adminFlightAnalytics" */ '../views/AdminFlightAnalyticsView.vue'
+      ),
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/admin/analytics/revenue',
     name: 'adminRevenueAnalytics',
-    component: () => import(/* webpackChunkName: "adminRevenueAnalytics" */ '../views/AdminRevenueView.vue'),
+    component: () =>
+      import(
+        /* webpackChunkName: "adminRevenueAnalytics" */ '../views/AdminRevenueView.vue'
+      ),
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/admin/logs',
     name: 'adminSystemLogs',
-    component: () => import(/* webpackChunkName: "adminSystemLogs" */ '../views/AdminSystemLogsView.vue'),
+    component: () =>
+      import(
+        /* webpackChunkName: "adminSystemLogs" */ '../views/AdminSystemLogsView.vue'
+      ),
     meta: { requiresAuth: true, requiresAdmin: true }
   },
-  // 添加调试页面路由
+  // 错误页面路由
   {
-    path: '/debug',
-    name: 'debug',
-    component: DebugView
+    path: '/403',
+    name: 'forbidden',
+    component: ForbiddenView,
+    meta: {
+      title: '权限不足',
+      description: '您无权访问此页面'
+    }
   }
 ]
 
 const router = createRouter({
   history: createWebHashHistory(),
-  routes
+  routes,
+  // 每次导航到新页面时滚动到顶部
+  scrollBehavior(to, from, savedPosition) {
+    // 如果有保存的位置（浏览器后退/前进），恢复到该位置
+    if (savedPosition) {
+      return savedPosition
+    }
+    // 否则滚动到页面顶部
+    return { top: 0, left: 0 }
+  }
 })
 
-// 全局前置守卫
-// 暂时注释掉登录检测，因为还没有接入API
-/*
+// 路由守卫 - 使用安全的认证机制
 router.beforeEach((to, from, next) => {
   // 检查路由是否需要登录权限
   if (to.matched.some(record => record.meta.requiresAuth)) {
-    // 检查用户是否已登录
-    if (!localStorage.getItem('token')) {
-      // 未登录，重定向到登录页
+    // 检查用户是否已登录且token未过期
+    if (!tokenManager.isAuthenticated()) {
+      // 未登录或token已过期，重定向到登录页
       next({
         path: '/login',
         query: { redirect: to.fullPath } // 保存要访问的路径，便于登录后重定向
       })
-    } else {
-      // 已登录，允许访问
-      next()
+      return
     }
+
+    // 检查管理员路由权限
+    if (to.matched.some(record => record.meta.requiresAdmin)) {
+      if (!tokenManager.isAdmin()) {
+        // 非管理员用户，重定向到403页面或首页
+        next({
+          path: '/403',
+          query: { message: '权限不足，无法访问管理页面' }
+        })
+        return
+      }
+    }
+
+    // 已登录且权限足够，允许访问
+    next()
   } else {
     // 不需要登录权限的路由，直接放行
     next()
   }
-})
-*/
-
-// 临时放行所有路由
-router.beforeEach((to, from, next) => {
-  next()
 })
 
 export default router

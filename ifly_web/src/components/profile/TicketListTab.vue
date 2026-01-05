@@ -28,7 +28,7 @@
                         <span class="ticket-number">票号: {{ ticket.ticket_number }}</span>
                         <span class="order-date">订单号: {{ ticket.order_number }}</span>
                     </div>
-                    <el-tag :type="getStatusType(ticket.status)">{{ getStatusText(ticket.status) }}</el-tag>
+                    <el-tag :type="getStatusType(ticket.frontend_status)">{{ getStatusText(ticket.frontend_status) }}</el-tag>
                 </div>
 
                 <div class="flight-info">
@@ -82,24 +82,24 @@
                 </div>
 
                 <div class="barcode-section">
-                    <img :src="ticket.barcode_url || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAABkCAYAAAA8AQ3AAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABYklEQVR4nO3VMQ0AMAzAsJU/6YHoMS2yEeTJ7O4AEzj+AcAisIBMYAGZwAIygQVkAgvIBBaQCSwgE1hAJrCATGABmcACMoEFZAILyAQWkAksIBNYQCawgExgAZnAAjKBBWQCC8gEFpAJLCATWEAmsIBMYAGZwAIygQVkAgvIBBaQCSwgE1hAJrCATGABmcACMoEFZAILyAQWkAksIBNYQCawgExgAZnAAjKBBWQCC8gEFpAJLCATWEAmsIBMYAGZwAIygQVkAgvIBBaQCSwgE1hAJrCATGABmcACMoEFZAILyAQWkAksIBNYQCawgExgAZnAAjKBBWQCC8gEFpAJLCATWEAmsIBMYAGZwAIygQVkAgvIBBaQCSwgE1hAJrCATGABmcACMoEFZAILyAQWkAksIBNYQCawgExgAZnAAjKBBWQCC8gEFpAJLCATWEAmsIBMYAGZwAIygQVkAgvIBBaQCSzg8gCHzQN3JA6KqQAAAABJRU5ErkJggg=='"
+                    <img :src="ticket.barcode_url || defaultBarcodeUrl"
                         class="barcode-image" />
                 </div>
 
                 <div class="ticket-footer">
-                    <div class="flight-status" v-if="ticket.status === 'UNUSED'">
+                    <div class="flight-status" v-if="ticket.frontend_status === 'UNUSED'">
                         <div class="countdown" v-if="getFlightCountdown(ticket.flight_info.departure_time)">
                             距离起飞还有: {{ getFlightCountdown(ticket.flight_info.departure_time) }}
                         </div>
                     </div>
 
                     <div class="actions">
-                        <el-button v-if="ticket.status === 'UNUSED' && canCheckin(ticket.flight_info.departure_time)"
+                        <el-button v-if="ticket.frontend_status === 'UNUSED' && canCheckin(ticket.flight_info.departure_time)"
                             type="primary" size="small" @click="goToCheckin(ticket.id)">
                             在线值机
                         </el-button>
 
-                        <el-button v-if="ticket.status === 'UNUSED'" type="danger" size="small"
+                        <el-button v-if="ticket.frontend_status === 'UNUSED'" type="danger" size="small"
                             @click="handleRefund(ticket)" plain>
                             申请退票
                         </el-button>
@@ -113,7 +113,7 @@
         </div>
 
         <!-- 分页 -->
-        <div class="pagination-container">
+        <div class="pagination-container" v-if="totalTickets > 0">
             <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :page-sizes="[5, 10, 20]"
                 layout="total, sizes, prev, pager, next" :total="totalTickets" @size-change="handleSizeChange"
                 @current-change="handleCurrentChange" />
@@ -149,7 +149,7 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowRight } from '@element-plus/icons-vue'
-// import api from '@/services/api' // 暂时不使用API
+import api from '@/services/api'
 
 export default {
     name: 'TicketListTab',
@@ -168,112 +168,11 @@ export default {
         const refundDialogVisible = ref(false)
         const currentTicket = ref(null)
         const updateInterval = ref(null)
+        const defaultBarcodeUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAABkCAYAAAA8AQ3AAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABYklEQVR4nO3VMQ0AMAzAsJU/6YHoMS2yEeTJ7O4AEzj+AcAisIBMYAGZwAIygQVkAgvIBBaQCSwgE1hAJrCATGABmcACMoEFZAILyAQWkAksIBNYQCawgExgAZnAAjKBBWQCC8gEFpAJLCATWEAmsIBMYAGZwAIygQVkAgvIBBaQCSwgE1hAJrCATGABmcACMoEFZAILyAQWkAksIBNYQCawgExgAZnAAjKBBWQCC8gEFpAJLCATWEAmsIBMYAGZwAIygQVkAgvIBBaQCSwgE1hAJrCATGABmcACMoEFZAILyAQWkAksIBNYQCawgExgAZnAAjKBBWQCC8gEFpAJLCATWEAmsIBMYAGZwAIygQVkAgvIBBaQCSwgE1hAJrCATGABmcACMoEFZAILyAQWkAksIBNYQCawgExgAZnAAjKBBWQCC8gEFpAJLCATWEAmsIBMYAGZwAIygQVkAgvIBBaQCSzg8gCHzQN3JA6KqQAAAABJRU5ErkJggg=='
 
         // 获取机票列表
-        const fetchTickets = () => {
+        const fetchTickets = async () => {
             loading.value = true
-
-            // 使用模拟数据（因为API尚未接入）
-            setTimeout(() => {
-                const mockTickets = [
-                    {
-                        id: 1,
-                        ticket_number: 'TK20240610001',
-                        order_number: 'ORD202406200001',
-                        status: 'UNUSED',
-                        flight_info: {
-                            airline: '东方航空',
-                            flight_number: 'MU5137',
-                            departure_city: '上海',
-                            departure_airport: '虹桥国际机场',
-                            departure_terminal: 'T2',
-                            departure_time: '2024-07-10 08:30:00',
-                            arrival_city: '北京',
-                            arrival_airport: '首都国际机场',
-                            arrival_terminal: 'T3',
-                            arrival_time: '2024-07-10 10:40:00'
-                        },
-                        seat_info: {
-                            cabin_class: '经济舱',
-                            seat_number: '14A'
-                        },
-                        passenger_info: {
-                            name: '张三',
-                            id_card: '310000********0000'
-                        },
-                        barcode_url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAABkCAYAAAA8AQ3AAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABYklEQVR4nO3VMQ0AMAzAsJU/6YHoMS2yEeTJ7O4AEzj+AcAisIBMYAGZwAIygQVkAgvIBBaQCSwgE1hAJrCATGABmcACMoEFZAILyAQWkAksIBNYQCawgExgAZnAAjKBBWQCC8gEFpAJLCATWEAmsIBMYAGZwAIygQVkAgvIBBaQCSwgE1hAJrCATGABmcACMoEFZAILyAQWkAksIBNYQCawgExgAZnAAjKBBWQCC8gEFpAJLCATWEAmsIBMYAGZwAIygQVkAgvIBBaQCSwgE1hAJrCATGABmcACMoEFZAILyAQWkAksIBNYQCawgExgAZnAAjKBBWQCC8gEFpAJLCATWEAmsIBMYAGZwAIygQVkAgvIBBaQCSwgE1hAJrCATGABmcACMoEFZAILyAQWkAksIBNYQCawgExgAZnAAjKBBWQCC8gEFpAJLCATWEAmsIBMYAGZwAIygQVkAgvIBBaQCSzg8gCHzQN3JA6KqQAAAABJRU5ErkJggg==',
-                        order_id: 1
-                    },
-                    {
-                        id: 2,
-                        ticket_number: 'TK20240610002',
-                        order_number: 'ORD202406200001',
-                        status: 'UNUSED',
-                        flight_info: {
-                            airline: '东方航空',
-                            flight_number: 'MU5137',
-                            departure_city: '上海',
-                            departure_airport: '虹桥国际机场',
-                            departure_terminal: 'T2',
-                            departure_time: '2024-07-10 08:30:00',
-                            arrival_city: '北京',
-                            arrival_airport: '首都国际机场',
-                            arrival_terminal: 'T3',
-                            arrival_time: '2024-07-10 10:40:00'
-                        },
-                        seat_info: {
-                            cabin_class: '经济舱',
-                            seat_number: '14B'
-                        },
-                        passenger_info: {
-                            name: '李四',
-                            id_card: 'P12345678'
-                        },
-                        barcode_url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAABkCAYAAAA8AQ3AAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABYklEQVR4nO3VMQ0AMAzAsJU/6YHoMS2yEeTJ7O4AEzj+AcAisIBMYAGZwAIygQVkAgvIBBaQCSwgE1hAJrCATGABmcACMoEFZAILyAQWkAksIBNYQCawgExgAZnAAjKBBWQCC8gEFpAJLCATWEAmsIBMYAGZwAIygQVkAgvIBBaQCSwgE1hAJrCATGABmcACMoEFZAILyAQWkAksIBNYQCawgExgAZnAAjKBBWQCC8gEFpAJLCATWEAmsIBMYAGZwAIygQVkAgvIBBaQCSwgE1hAJrCATGABmcACMoEFZAILyAQWkAksIBNYQCawgExgAZnAAjKBBWQCC8gEFpAJLCATWEAmsIBMYAGZwAIygQVkAgvIBBaQCSwgE1hAJrCATGABmcACMoEFZAILyAQWkAksIBNYQCawgExgAZnAAjKBBWQCC8gEFpAJLCATWEAmsIBMYAGZwAIygQVkAgvIBBaQCSzg8gCHzQN3JA6KqQAAAABJRU5ErkJggg==',
-                        order_id: 1
-                    },
-                    {
-                        id: 3,
-                        ticket_number: 'TK20240615001',
-                        order_number: 'ORD202406190002',
-                        status: 'UNUSED',
-                        flight_info: {
-                            airline: '南方航空',
-                            flight_number: 'CZ3456',
-                            departure_city: '广州',
-                            departure_airport: '白云国际机场',
-                            departure_terminal: 'T1',
-                            departure_time: '2024-07-15 14:20:00',
-                            arrival_city: '成都',
-                            arrival_airport: '双流国际机场',
-                            arrival_terminal: 'T2',
-                            arrival_time: '2024-07-15 16:45:00'
-                        },
-                        seat_info: {
-                            cabin_class: '经济舱',
-                            seat_number: '23C'
-                        },
-                        passenger_info: {
-                            name: '张三',
-                            id_card: '310000********0000'
-                        },
-                        barcode_url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAABkCAYAAAA8AQ3AAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABYklEQVR4nO3VMQ0AMAzAsJU/6YHoMS2yEeTJ7O4AEzj+AcAisIBMYAGZwAIygQVkAgvIBBaQCSwgE1hAJrCATGABmcACMoEFZAILyAQWkAksIBNYQCawgExgAZnAAjKBBWQCC8gEFpAJLCATWEAmsIBMYAGZwAIygQVkAgvIBBaQCSwgE1hAJrCATGABmcACMoEFZAILyAQWkAksIBNYQCawgExgAZnAAjKBBWQCC8gEFpAJLCATWEAmsIBMYAGZwAIygQVkAgvIBBaQCSwgE1hAJrCATGABmcACMoEFZAILyAQWkAksIBNYQCawgExgAZnAAjKBBWQCC8gEFpAJLCATWEAmsIBMYAGZwAIygQVkAgvIBBaQCSzg8gCHzQN3JA6KqQAAAABJRU5ErkJggg==',
-                        order_id: 2
-                    }
-                ]
-
-                // 根据筛选条件过滤
-                if (ticketStatus.value) {
-                    tickets.value = mockTickets.filter(ticket => ticket.status === ticketStatus.value)
-                } else {
-                    tickets.value = mockTickets
-                }
-
-                totalTickets.value = tickets.value.length
-                loading.value = false
-            }, 500)
-
-            /* 实际API调用代码（暂时注释掉）
             try {
                 const params = {
                     page: currentPage.value,
@@ -285,15 +184,25 @@ export default {
                 }
 
                 const response = await api.tickets.getAll(params)
-                tickets.value = response.results
-                totalTickets.value = response.count
+                
+                // 处理分页响应数据
+                if (response.results) {
+                    // DRF 分页格式
+                    tickets.value = response.results
+                    totalTickets.value = response.count || 0
+                } else if (Array.isArray(response)) {
+                    // 非分页格式
+                    tickets.value = response
+                    totalTickets.value = response.length
+                }
             } catch (error) {
                 console.error('获取机票列表失败:', error)
                 ElMessage.error('获取机票列表失败，请稍后重试')
+                tickets.value = []
+                totalTickets.value = 0
             } finally {
                 loading.value = false
             }
-            */
         }
 
         // 格式化日期
@@ -417,37 +326,22 @@ export default {
         }
 
         // 确认退票
-        const confirmRefund = () => {
+        const confirmRefund = async () => {
             if (!currentTicket.value || !currentTicket.value.id) return
 
             refunding.value = true
-
-            // 模拟退票（因为API尚未接入）
-            setTimeout(() => {
-                // 找到对应机票并修改状态
-                const index = tickets.value.findIndex(ticket => ticket.id === currentTicket.value.id)
-                if (index !== -1) {
-                    tickets.value[index].status = 'REFUNDED'
-                }
-
-                ElMessage.success('退票申请已提交，请等待处理')
-                refundDialogVisible.value = false
-                refunding.value = false
-            }, 500)
-
-            /* 实际API调用代码（暂时注释掉）
             try {
                 await api.tickets.refund(currentTicket.value.id)
                 ElMessage.success('退票申请已提交，请等待处理')
                 refundDialogVisible.value = false
+                // 重新获取机票列表
                 fetchTickets()
             } catch (error) {
                 console.error('退票申请失败:', error)
-                ElMessage.error('退票申请失败，请稍后重试')
+                ElMessage.error(error.message || '退票申请失败，请稍后重试')
             } finally {
                 refunding.value = false
             }
-            */
         }
 
         // 定时刷新倒计时
@@ -478,6 +372,7 @@ export default {
             refundDialogVisible,
             refunding,
             currentTicket,
+            defaultBarcodeUrl,
             formatDate,
             formatTime,
             getStatusText,

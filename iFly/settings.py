@@ -19,7 +19,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # 密钥配置，用于加密
-SECRET_KEY = "django-insecure-lk0(ob9&$+3#ka64^@s%#vmz687=^2a#qx-mfoc#32!e-!nhp1"
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-lk0(ob9&$+3#ka64^@s%#vmz687=^2a#qx-mfoc#32!e-!nhp1')
 
 # 调试模式
 DEBUG = True
@@ -46,16 +46,13 @@ INSTALLED_APPS = [
     "debug_toolbar",
     "rest_framework.authtoken",
     
-    # 自定义应用
+    # 自定义应用 - 核心应用
     "accounts",
     "flight",
     "booking",
     "payments",
-    "support",
     "notifications",
     "analytics",
-    "promotions",
-    "points",
     "core",
     "user_messages",  # 消息应用
     "admin_api",  # 管理员API
@@ -74,6 +71,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.http.ConditionalGetMiddleware",
     'core.middleware.SystemLogMiddleware',  # 系统操作日志中间件
+    'core.middleware.FlightStatusUpdateMiddleware',  # 航班状态自动更新
 ]
 
 # debug-toolbar 中间件
@@ -91,6 +89,11 @@ DEBUG_TOOLBAR_PANELS = [
     'debug_toolbar.panels.logging.LoggingPanel',
     'debug_toolbar.panels.redirects.RedirectsPanel',
 ]
+
+# 允许在测试时跳过 debug_toolbar 检查
+DEBUG_TOOLBAR_CONFIG = {
+    'IS_RUNNING_TESTS': False,
+}
 
 # 允许访问 Django 开发服务器的 IP 地址
 INTERNAL_IPS = ['127.0.0.1']
@@ -171,6 +174,12 @@ REST_FRAMEWORK = {
     ]
 }
 
+# 测试环境禁用限流
+import sys
+if 'test' in sys.argv:
+    REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = []
+    REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {}
+
 # 配置 JWT
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=100),
@@ -195,14 +204,6 @@ CORS_ALLOW_METHODS = [
 
 # 允许跨域携带认证信息（如果使用 JWT / Session 认证）
 CORS_ALLOW_CREDENTIALS = True
-
-# Channels 配置
-ASGI_APPLICATION = "iFly.asgi.application"
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
-    }
-}
 
 # 语言配置
 LANGUAGE_CODE = "zh-Hans"
@@ -260,130 +261,76 @@ SILENCED_SYSTEM_CHECKS = ["security.W019"]
 # 处理 JavaScript 文件时使用正确的 MIME 类型
 mimetypes.add_type("application/javascript", ".js")
 
-# # 反爬虫配置
-# CRAWLER_DETECTION = {
-#     'ENABLED': True,
-#     'RATE_LIMIT': {
-#         'ENABLED': True,
-#         'RATE': '100/hour',  # 每小时最多100次请求
-#     },
-#     'USER_AGENT_BLACKLIST': [
-#         'bot',
-#         'spider',
-#         'crawler',
-#         'scraper',
-#     ],
-#     'IP_BLACKLIST': [],  # 可以添加需要封禁的IP
-#     'REQUEST_TIMEOUT': 30,  # 请求超时时间（秒）
-# }
+# CORS 配置 - 开发环境使用
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 
-# # 缓存配置
-# CACHES = {
-#     'default': {
-#         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-#         'LOCATION': 'unique-snowflake',
-#     }
-# }
-
-# # 使用缓存作为会话后端
-# SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-# SESSION_CACHE_ALIAS = "default"
-
-# # 使用Redis作为缓存后端
-# CACHE_TTL = 60 * 15  # 15分钟
-# CACHE_MIDDLEWARE_ANONYMOUS_ONLY = True  # 只缓存匿名用户的页面
-
-# # 验证码配置
-# CAPTCHA_LENGTH = 4  # 验证码长度
-# CAPTCHA_TIMEOUT = 1  # 验证码过期时间（分钟）
-# CAPTCHA_IMAGE_SIZE = (160, 50)  # 验证码图片大小
-# CAPTCHA_FONT_SIZE = 28  # 验证码字体大小
-# CAPTCHA_BACKGROUND_COLOR = '#ffffff'  # 验证码背景颜色
-# CAPTCHA_FOREGROUND_COLOR = '#001a33'  # 验证码前景颜色
-# CAPTCHA_NOISE_FUNCTIONS = ('captcha.helpers.noise_dots',)  # 验证码噪点函数
-# CAPTCHA_CHALLENGE_FUNCT = 'captcha.helpers.math_challenge'  # 使用数学运算作为验证码
-# CAPTCHA_FONT_PATH = None  # 使用默认字体
-# CAPTCHA_LETTER_ROTATION = (-35, 35)  # 字母旋转角度范围
-# CAPTCHA_NOISE_DOTS = 3  # 噪点数量
-# CAPTCHA_NOISE_LINES = 1  # 噪线数量
-# CAPTCHA_FLITE_PATH = None  # 不使用语音验证码
-
-# # CORS 配置
-# CORS_ALLOW_ALL_ORIGINS = True
-# CORS_ALLOW_CREDENTIALS = True
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:5173",
-#     "http://127.0.0.1:5173",
-# ]
-# CORS_ALLOWED_METHODS = [
-#     'DELETE',
-#     'GET',
-#     'OPTIONS',
-#     'PATCH',
-#     'POST',
-#     'PUT',
-# ]
-# CORS_ALLOWED_HEADERS = [
-#     'accept',
-#     'accept-encoding',
-#     'authorization',
-#     'content-type',
-#     'dnt',
-#     'origin',
-#     'user-agent',
-#     'x-csrftoken',
-#     'x-requested-with',
-# ]
-
-# # 添加或更新日志配置
-# LOGGING = {
-#     'version': 1,
-#     'disable_existing_loggers': False,
-#     'formatters': {
-#         'verbose': {
-#             'format': '{levelname} {asctime} {module} {message}',
-#             'style': '{',
-#         },
-#         'simple': {
-#             'format': '{levelname} {message}',
-#             'style': '{',
-#         },
-#     },
-#     'handlers': {
-#         'console': {
-#             'level': 'INFO',
-#             'class': 'logging.StreamHandler',
-#             'formatter': 'verbose',
-#         },
-#         'file': {
-#             'level': 'INFO',
-#             'class': 'logging.FileHandler',
-#             'filename': os.path.join(BASE_DIR, 'debug.log'),
-#             'formatter': 'verbose',
-#         },
-#     },
-#     'loggers': {
-#         'django': {
-#             'handlers': ['console', 'file'],
-#             'level': 'INFO',
-#             'propagate': True,
-#         },
-#         'comments': {
-#             'handlers': ['console', 'file'],
-#             'level': 'INFO',
-#             'propagate': True,
-#         },
-#     },
-#     'root': {
-#         'handlers': ['console', 'file'],
-#         'level': 'INFO',
-#     },
-# }
-
-# 天气API配置
-OPENWEATHER_API_KEY = os.environ.get('OPENWEATHER_API_KEY', 'f7979f2a78a5e1534dccb5918e1c3dbd')
-# AMAP_API_KEY = os.environ.get('AMAP_API_KEY', '3dc2b36f4f2c2e84c5abb26161b6e4d5')
-# AMAP_SECRET_KEY = os.environ.get('AMAP_SECRET_KEY', '620a0ecc572f6f79a156e24759c86314')
-
-# 天气缓存过期时间 (分钟)
-WEATHER_CACHE_EXPIRY = 60  # 默认缓存1小时
+# 日志配置
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'django.log'),
+            'maxBytes': 1024*1024*5,  # 5MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'error.log'),
+            'maxBytes': 1024*1024*5,  # 5MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file', 'error_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['error_file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'accounts': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'flight': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'booking': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

@@ -116,4 +116,63 @@ def create_flight_notification(user, flight, status_change, additional_info=None
     if additional_info:
         message += f" {additional_info}"
     
-    return create_notification(user, title, message, 'flight') 
+    return create_notification(user, title, message, 'flight')
+
+
+def create_reschedule_notification(user, original_ticket, new_ticket, reschedule_log):
+    """
+    创建改签成功的通知
+    
+    Args:
+        user: 用户对象或用户ID
+        original_ticket: 原机票对象
+        new_ticket: 新机票对象
+        reschedule_log: 改签记录对象
+        
+    Returns:
+        Notification: 创建的通知对象
+    """
+    original_flight = reschedule_log.original_flight
+    new_flight = reschedule_log.new_flight
+    
+    title = '机票改签成功'
+    message = (
+        f'您的机票已成功改签。'
+        f'原航班: {original_flight.flight_number} ({original_flight.departure_city}-{original_flight.arrival_city})，'
+        f'新航班: {new_flight.flight_number} ({new_flight.departure_city}-{new_flight.arrival_city})，'
+        f'新座位: {new_ticket.seat_number}。'
+    )
+    
+    # 添加差价信息
+    price_diff = reschedule_log.price_difference
+    if price_diff > 0:
+        message += f' 已补差价: ¥{price_diff}。'
+    elif price_diff < 0:
+        message += f' 退还差价: ¥{abs(price_diff)}。'
+    
+    # 添加手续费信息
+    if reschedule_log.reschedule_fee > 0:
+        message += f' 改签手续费: ¥{reschedule_log.reschedule_fee}。'
+    
+    return create_notification(user, title, message, 'order')
+
+
+def create_timeout_notification(user, order):
+    """
+    创建订单超时取消的通知
+    
+    Args:
+        user: 用户对象或用户ID
+        order: 被取消的订单对象
+        
+    Returns:
+        Notification: 创建的通知对象
+    """
+    title = '订单已超时取消'
+    message = (
+        f'您的订单 {order.order_number} 因超时未支付已自动取消，'
+        f'订单金额: ¥{order.total_price}。'
+        f'如需继续购票，请重新预订。'
+    )
+    
+    return create_notification(user, title, message, 'order')

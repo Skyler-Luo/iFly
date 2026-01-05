@@ -4,11 +4,6 @@
             <div class="footer-section about">
                 <h3>iFly</h3>
                 <p>便捷、快速、安全的在线订票平台，让您的旅程更加轻松愉快。</p>
-                <div class="social-icons">
-                    <a href="#"><i class="el-icon-s-promotion"></i></a>
-                    <a href="#"><i class="el-icon-s-custom"></i></a>
-                    <a href="#"><i class="el-icon-s-platform"></i></a>
-                </div>
             </div>
             <div class="footer-section links">
                 <h3>快速链接</h3>
@@ -16,16 +11,7 @@
                     <li><router-link to="/">首页</router-link></li>
                     <li><router-link to="/flights">航班查询</router-link></li>
                     <li><router-link to="/orders">我的订单</router-link></li>
-                    <li><router-link to="/about">关于我们</router-link></li>
-                </ul>
-            </div>
-            <div class="footer-section support">
-                <h3>支持</h3>
-                <ul>
-                    <li><a href="#">常见问题</a></li>
-                    <li><a href="#">行李规定</a></li>
-                    <li><a href="#">退票政策</a></li>
-                    <li><a href="#">联系我们</a></li>
+                    <li><router-link to="/profile">个人中心</router-link></li>
                 </ul>
             </div>
             <div class="footer-section contact">
@@ -56,8 +42,8 @@ export default {
 .site-footer {
     background-color: #263238;
     color: #f5f5f5;
-    padding-top: 50px;
-    margin-top: 30px;
+    padding-top: 30px;
+    margin-top: 0;
 }
 
 .footer-content {
@@ -65,12 +51,15 @@ export default {
     margin: 0 auto;
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 24px;
     padding: 0 20px;
+    align-items: flex-start;
 }
 
 .footer-section {
-    width: 250px;
+    flex: 1 1 240px;
+    max-width: 320px;
     margin-bottom: 30px;
 }
 
@@ -104,32 +93,7 @@ export default {
     color: #1976d2;
 }
 
-.social-icons {
-    display: flex;
-    margin-top: 15px;
-}
 
-.social-icons a {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background-color: #455a64;
-    margin-right: 10px;
-    transition: all 0.3s ease;
-}
-
-.social-icons a:hover {
-    background-color: #1976d2;
-    transform: translateY(-3px);
-}
-
-.social-icons i {
-    color: white;
-    margin-right: 0;
-}
 
 .footer-section ul {
     list-style: none;
@@ -163,10 +127,11 @@ export default {
 }
 
 .footer-bottom {
-    background-color: #1a2327;
+    background-color: transparent;
     text-align: center;
-    padding: 15px 0;
-    margin-top: 30px;
+    padding: 12px 0 18px;
+    margin-top: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .footer-bottom p {
@@ -190,10 +155,6 @@ export default {
     .footer-section h3::after {
         left: 50%;
         transform: translateX(-50%);
-    }
-
-    .social-icons {
-        justify-content: center;
     }
 
     .footer-section ul li a {

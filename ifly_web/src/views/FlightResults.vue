@@ -164,7 +164,7 @@ export default {
               flightNumber: flight.flight_number || flight.flightNumber,
               airlineName: flight.airline_name || flight.airlineName,
               airlineCode: flight.airline_code || flight.airlineCode,
-              airlineLogo: flight.airline_logo || flight.airlineLogo || `https://picsum.photos/id/${Math.floor(Math.random() * 30)}/40/40`,
+
               departureCity: flight.departure_city || flight.departureCity,
               arrivalCity: flight.arrival_city || flight.arrivalCity,
               departureAirport: flight.departure_airport || flight.departureAirport,
@@ -178,17 +178,16 @@ export default {
               discount: flight.discount || 1,
               availableSeats: flight.available_seats || flight.availableSeats || 0,
               aircraftType: flight.aircraft_type || flight.aircraftType,
-              mealService: flight.meal_service || flight.mealService || false,
-              baggageAllowance: flight.baggage_allowance || flight.baggageAllowance || 20,
+              mealService: flight.meal_service ?? flight.mealService ?? false,
+              baggageAllowance: flight.baggage_allowance ?? flight.baggageAllowance ?? 20,
               businessAvailable: flight.business_available || flight.businessAvailable || false,
               firstAvailable: flight.first_available || flight.firstAvailable || false,
               selectedClass: 'economy',
               showDetails: false,
               directFlight: flight.direct_flight || flight.directFlight || true,
-              punctualityRate: flight.punctuality_rate || flight.punctualityRate || (75 + Math.floor(Math.random() * 20)),
-              wifi: flight.wifi || Math.random() > 0.5,
-              powerOutlet: flight.power_outlet || flight.powerOutlet || Math.random() > 0.3,
-              entertainment: flight.entertainment || Math.random() > 0.4
+              wifi: flight.wifi ?? false,
+              powerOutlet: flight.power_outlet ?? flight.powerOutlet ?? false,
+              entertainment: flight.entertainment ?? false
             }
           })
 
@@ -341,11 +340,8 @@ export default {
       // 折扣得分
       const discountScore = 1 - flight.discount
 
-      // 准点率得分
-      const punctualityScore = flight.punctualityRate / 100
-
       // 综合得分 (权重可调整)
-      return priceScore * 0.4 + timeScore * 0.3 + discountScore * 0.2 + punctualityScore * 0.1
+      return priceScore * 0.5 + timeScore * 0.3 + discountScore * 0.2
     }
 
     const resetFilters = () => {
@@ -447,18 +443,22 @@ export default {
   background-color: #f5f9fc;
   min-height: 100vh;
   padding-bottom: 40px;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .results-header {
   background: linear-gradient(135deg, #00468c, #0076c6);
   color: white;
-  padding: 30px;
+  padding: 30px 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 4px 12px rgba(0, 70, 140, 0.15);
   position: relative;
   overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .results-header::after {
@@ -514,11 +514,14 @@ export default {
 
 .main-content {
   display: flex;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  gap: 25px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 20px 40px;
+  gap: 24px;
   position: relative;
+  align-items: flex-start;
+  box-sizing: border-box;
 }
 
 /* 筛选面板样式 */
@@ -591,6 +594,8 @@ export default {
 /* 航班列表样式 */
 .flights-list-container {
   flex: 1;
+  min-width: 0;
+  max-width: calc(100% - 304px);
   animation: fadeIn 0.8s ease-out;
 }
 
@@ -662,21 +667,7 @@ export default {
   align-items: center;
 }
 
-.airline-logo {
-  width: 50px;
-  height: 50px;
-  background-size: cover;
-  background-position: center;
-  border-radius: 50%;
-  margin-right: 15px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-  border: 2px solid white;
-  transition: transform 0.3s;
-}
 
-.flight-card:hover .airline-logo {
-  transform: scale(1.05);
-}
 
 .airline-name {
   font-weight: 600;
@@ -1010,11 +1001,11 @@ export default {
 @media (max-width: 992px) {
   .main-content {
     flex-direction: column;
+    padding: 20px;
   }
 
-  .filters-panel {
-    width: 100%;
-    position: static;
+  .flights-list-container {
+    max-width: 100%;
   }
 
   .flight-main {
@@ -1030,17 +1021,6 @@ export default {
   .flight-details {
     flex-direction: column;
     gap: 10px;
-  }
-
-  .filters-panel {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1000;
-    border-radius: 0;
-    overflow-y: auto;
   }
 }
 

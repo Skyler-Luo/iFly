@@ -1,9 +1,13 @@
-<template>
+ <template>
     <div class="flight-card"
         :class="{ 'low-seats': flight.availableSeats < 10, 'special-discount': flight.discount < 0.8 }">
         <div class="flight-header">
             <div class="airline-info">
-                <div class="airline-logo" :style="{ backgroundImage: `url(${flight.airlineLogo})` }"></div>
+                <div class="airline-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+                    </svg>
+                </div>
                 <div class="airline-details">
                     <div class="airline-name">{{ flight.airlineName }}</div>
                     <div class="flight-number">{{ flight.flightNumber }}</div>
@@ -68,24 +72,20 @@
                     <span class="label">行李额度:</span>
                     <span>{{ flight.baggageAllowance }}kg</span>
                 </div>
-                <div class="detail-item">
-                    <span class="label">准点率:</span>
-                    <span>{{ flight.punctualityRate }}%</span>
-                </div>
             </div>
 
             <div class="details-section">
                 <h4>舱位选择</h4>
                 <el-radio-group v-model="selectedClass" class="cabin-options" @change="handleClassChange">
-                    <el-radio label="economy" border>
+                    <el-radio value="economy" border>
                         经济舱
                         <span class="cabin-price">¥{{ Math.round(flight.price * flight.discount) }}</span>
                     </el-radio>
-                    <el-radio label="business" border v-if="flight.businessAvailable">
+                    <el-radio value="business" border v-if="flight.businessAvailable">
                         商务舱
                         <span class="cabin-price">¥{{ Math.round(flight.price * flight.discount * 2.5) }}</span>
                     </el-radio>
-                    <el-radio label="first" border v-if="flight.firstAvailable">
+                    <el-radio value="first" border v-if="flight.firstAvailable">
                         头等舱
                         <span class="cabin-price">¥{{ Math.round(flight.price * flight.discount * 4) }}</span>
                     </el-radio>
@@ -149,7 +149,6 @@ export default {
             this.showDetails = !this.showDetails;
         },
         selectFlight() {
-            console.log('FlightCard选择航班，ID:', this.flight.id);
             this.$emit('select', {
                 ...this.flight,
                 selectedClass: this.selectedClass
@@ -163,20 +162,47 @@ export default {
 </script>
 
 <style scoped>
+/* 航班卡片样式 - 使用设计系统变量 (Requirements: 3.2, 3.3, 3.4) */
 .flight-card {
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    background: var(--color-bg-primary, #ffffff);
+    /* 圆角统一为 8-16px 范围 (使用 12px) */
+    border-radius: var(--card-border-radius, 12px);
+    /* 默认阴影使用设计系统变量 */
+    box-shadow: var(--card-shadow-default, 0 4px 12px rgba(0, 0, 0, 0.08));
     margin-bottom: 20px;
-    padding: 15px;
-    transition: all 0.3s ease;
+    padding: 20px;
+    /* 过渡时间在 200-400ms 范围内 */
+    transition: transform var(--card-transition-duration, 300ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1)),
+                box-shadow var(--card-transition-duration, 300ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1)),
+                border-color var(--card-transition-duration, 300ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1)),
+                background-color var(--card-transition-duration, 300ms) var(--animation-easing-smooth, cubic-bezier(0.4, 0, 0.2, 1));
     position: relative;
     overflow: hidden;
+    /* 边框用于悬停高亮效果 */
+    border: 2px solid transparent;
+    /* 硬件加速优化 */
+    will-change: transform, box-shadow, border-color;
+    backface-visibility: hidden;
+    cursor: pointer;
 }
 
+/* 悬停效果 - 边框高亮和背景色变化 (Requirements: 3.2) */
 .flight-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    transform: var(--card-hover-transform, translateY(-4px));
+    box-shadow: var(--card-shadow-hover, 0 8px 24px rgba(0, 0, 0, 0.12)),
+                0 4px 16px rgba(25, 118, 210, 0.1);
+    /* 边框高亮效果 */
+    border-color: var(--color-primary-light, #42a5f5);
+    /* 微妙的背景色变化 */
+    background-color: var(--color-cloud-white, #f8fcff);
+}
+
+/* 点击/激活状态视觉反馈 (Requirements: 3.4) */
+.flight-card:active {
+    transform: var(--card-active-transform, translateY(-2px)) scale(0.99);
+    box-shadow: var(--card-shadow-active, 0 2px 8px rgba(0, 0, 0, 0.1));
+    border-color: var(--color-primary, #1976d2);
+    background-color: rgba(25, 118, 210, 0.02);
 }
 
 .flight-header {
@@ -191,13 +217,21 @@ export default {
     align-items: center;
 }
 
-.airline-logo {
+.airline-icon {
     width: 40px;
     height: 40px;
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
     margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1976d2, #42a5f5);
+    border-radius: 8px;
+    color: white;
+}
+
+.airline-icon svg {
+    width: 24px;
+    height: 24px;
 }
 
 .airline-name {
@@ -214,22 +248,37 @@ export default {
     display: flex;
 }
 
+/* 标签样式 - 使用设计系统变量 (Requirements: 3.3) */
 .tag-warning,
 .tag-success {
-    padding: 2px 8px;
-    border-radius: 4px;
+    padding: 4px 10px;
+    /* 圆角使用设计系统变量 */
+    border-radius: var(--border-radius-sm, 4px);
     font-size: 12px;
     margin-left: 8px;
+    font-weight: var(--font-weight-medium, 500);
+    /* 过渡效果 */
+    transition: all var(--animation-duration-fast, 200ms) var(--animation-easing-smooth, ease);
 }
 
 .tag-warning {
-    background-color: #fdf6ec;
-    color: #e6a23c;
+    background-color: rgba(230, 162, 60, 0.1);
+    color: var(--color-warning-dark, #f57400);
+    border: 1px solid rgba(230, 162, 60, 0.2);
+}
+
+.tag-warning:hover {
+    background-color: rgba(230, 162, 60, 0.15);
 }
 
 .tag-success {
-    background-color: #f0f9eb;
-    color: #67c23a;
+    background-color: rgba(103, 194, 58, 0.1);
+    color: var(--color-success-dark, #388e3c);
+    border: 1px solid rgba(103, 194, 58, 0.2);
+}
+
+.tag-success:hover {
+    background-color: rgba(103, 194, 58, 0.15);
 }
 
 .flight-main {
@@ -330,13 +379,21 @@ export default {
     font-size: 12px;
 }
 
+/* 航班详情区域 - 使用设计系统变量 (Requirements: 3.3) */
 .flight-details {
-    padding: 15px 0 0;
-    border-top: 1px dashed #ebeef5;
+    padding: 20px 0 0;
+    border-top: 1px dashed var(--color-border-light, #ebeef5);
     margin-top: 15px;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 20px;
+    /* 详情区域的微妙背景 */
+    background: var(--color-bg-tertiary, #fafafa);
+    margin-left: -20px;
+    margin-right: -20px;
+    margin-bottom: -20px;
+    padding: 20px;
+    border-radius: 0 0 var(--card-border-radius-sm, 8px) var(--card-border-radius-sm, 8px);
 }
 
 .details-section {
@@ -424,13 +481,37 @@ export default {
     margin-top: 15px;
 }
 
-/* 特殊状态样式 */
+/* 特殊状态样式 - 增强视觉效果 (Requirements: 3.2, 3.3) */
 .flight-card.low-seats {
-    border-left: 3px solid #e6a23c;
+    border-left: 4px solid var(--color-warning, #e6a23c);
+    /* 低座位状态的微妙背景提示 */
+    background: linear-gradient(90deg, rgba(230, 162, 60, 0.03) 0%, transparent 20%);
+}
+
+.flight-card.low-seats:hover {
+    border-left-color: var(--color-warning-dark, #f57400);
+    border-top-color: var(--color-primary-light, #42a5f5);
+    border-right-color: var(--color-primary-light, #42a5f5);
+    border-bottom-color: var(--color-primary-light, #42a5f5);
 }
 
 .flight-card.special-discount {
-    border-left: 3px solid #67c23a;
+    border-left: 4px solid var(--color-success, #67c23a);
+    /* 特惠状态的微妙背景提示 */
+    background: linear-gradient(90deg, rgba(103, 194, 58, 0.03) 0%, transparent 20%);
+}
+
+.flight-card.special-discount:hover {
+    border-left-color: var(--color-success-dark, #388e3c);
+    border-top-color: var(--color-primary-light, #42a5f5);
+    border-right-color: var(--color-primary-light, #42a5f5);
+    border-bottom-color: var(--color-primary-light, #42a5f5);
+}
+
+/* 同时具有两种状态时 */
+.flight-card.low-seats.special-discount {
+    border-left: 4px solid var(--color-success, #67c23a);
+    background: linear-gradient(90deg, rgba(103, 194, 58, 0.03) 0%, rgba(230, 162, 60, 0.02) 10%, transparent 25%);
 }
 
 @media (max-width: 768px) {

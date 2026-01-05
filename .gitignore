@@ -39,8 +39,8 @@ media/
 staticfiles/
 
 *.log
-logs/
 debug.log
+debug.md
 
 .env
 .env.local
@@ -60,3 +60,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+.kiro/
+.hypothesis/

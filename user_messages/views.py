@@ -1,22 +1,28 @@
-from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, status
+"""
+用户消息模块视图定义。
+
+提供消息的 CRUD 操作及标记已读、批量删除等功能。
+"""
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination
 
 from .models import Message
 from .serializers import MessageSerializer
 
+
 class StandardResultsSetPagination(PageNumberPagination):
+    """标准分页配置，默认每页10条记录。"""
+
     page_size = 10
     page_size_query_param = 'page_size'
     max_page_size = 100
 
+
 class MessageViewSet(viewsets.ModelViewSet):
-    """
-    消息API视图集
-    """
+    """消息API视图集，提供消息的增删改查及批量操作功能。"""
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination
@@ -73,4 +79,4 @@ class MessageViewSet(viewsets.ModelViewSet):
             'status': 'success',
             'message': f'成功删除{count}条消息',
             'count': count
-        }) 
+        })

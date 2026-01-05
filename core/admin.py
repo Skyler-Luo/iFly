@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import SystemLog, City, PopularRoute, WeatherCache
+from .models import SystemLog, City, PopularRoute
 
 
 @admin.register(SystemLog)
@@ -18,9 +18,3 @@ class CityAdmin(admin.ModelAdmin):
 class PopularRouteAdmin(admin.ModelAdmin):
     list_display = ('from_city', 'to_city', 'price', 'discount', 'popularity')
     list_filter = ('from_city', 'to_city')
-    
-@admin.register(WeatherCache)
-class WeatherCacheAdmin(admin.ModelAdmin):
-    list_display = ('city', 'temperature', 'description', 'updated_at')
-    list_filter = ('city',)
-    readonly_fields = ('updated_at',) 

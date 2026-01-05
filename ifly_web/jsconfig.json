@@ -17,6 +17,6 @@
     ]
   },
   "exclude": [
-    "src/components/Header.vue"
+    "node_modules"
   ]
 }

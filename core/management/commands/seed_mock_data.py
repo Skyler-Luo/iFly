@@ -11,9 +11,8 @@ from decimal import Decimal
 
 from flight.models import Flight
 from booking.models import Order, Ticket
-from promotions.models import Promotion
 from accounts.models import Passenger
-from core.models import City, PopularRoute, WeatherCache
+from core.models import City, PopularRoute
 
 User = get_user_model()
 
@@ -37,14 +36,8 @@ class Command(BaseCommand):
                 # 添加订单数据
                 self.create_orders()
                 
-                # 添加促销活动数据
-                self.create_promotions()
-                
                 # 添加热门航线数据
                 self.create_popular_routes()
-                
-                # 添加城市天气缓存数据
-                self.create_weather_cache()
                 
             self.stdout.write(self.style.SUCCESS('成功添加所有模拟数据!'))
         except Exception as e:
@@ -262,8 +255,8 @@ class Command(BaseCommand):
                     col = random.choice(['A', 'B', 'C', 'D', 'E', 'F'])
                     seat_number = f"{row}{col}"
                     
-                    # 生成机票号
-                    ticket_number = f"TKT{random.randrange(10000000, 99999999)}"
+                    # 生成机票号（13位纯数字）
+                    ticket_number = Ticket.generate_ticket_number()
                     
                     # 创建机票
                     Ticket.objects.create(
@@ -280,49 +273,6 @@ class Command(BaseCommand):
             self.stdout.write(f'为用户 {user.username} 创建了订单')
                 
         self.stdout.write(self.style.SUCCESS('成功创建模拟订单数据'))
-    
-    def create_promotions(self):
-        """创建促销活动数据"""
-        # 检查是否已有足够的促销活动
-        if Promotion.objects.count() >= 3:
-            self.stdout.write('促销活动数据已足够，跳过创建')
-            return
-            
-        # 参考PromotionCarousel.vue中的模拟数据
-        promotions_data = [
-            {
-                'title': '暑假特惠',
-                'description': '暑期学生订票享受八折优惠，提前预订立享折上折！',
-                'promo_code': 'SUMMER2023',
-                'discount_type': 'percentage',
-                'discount_value': Decimal('0.8'),
-                'start_date': timezone.now() - timedelta(days=10),
-                'end_date': timezone.now() + timedelta(days=80)
-            },
-            {
-                'title': '会员福利',
-                'description': '新注册会员首单立减100元，老会员专享积分双倍！',
-                'promo_code': 'MEMBER100',
-                'discount_type': 'fixed',
-                'discount_value': Decimal('100.00'),
-                'start_date': timezone.now() - timedelta(days=5),
-                'end_date': timezone.now() + timedelta(days=30)
-            },
-            {
-                'title': '早鸟计划',
-                'description': '提前30天预订国际航班，最高可享7折优惠！',
-                'promo_code': 'EARLY30',
-                'discount_type': 'percentage',
-                'discount_value': Decimal('0.7'),
-                'start_date': timezone.now(),
-                'end_date': timezone.now() + timedelta(days=180)
-            }
-        ]
-        
-        for promo_data in promotions_data:
-            Promotion.objects.create(**promo_data)
-            
-        self.stdout.write(self.style.SUCCESS('成功创建促销活动数据'))
     
     def create_popular_routes(self):
         """创建热门航线数据"""
@@ -362,40 +312,3 @@ class Command(BaseCommand):
             )
             
         self.stdout.write(self.style.SUCCESS('成功创建热门航线数据'))
-    
-    def create_weather_cache(self):
-        """创建城市天气缓存数据"""
-        # 检查是否已有足够的天气数据
-        if WeatherCache.objects.count() >= 5:
-            self.stdout.write('天气缓存数据已足够，跳过创建')
-            return
-            
-        # 清除现有数据，确保获取最新天气数据
-        WeatherCache.objects.all().delete()
-        
-        # 为主要城市创建模拟天气数据
-        cities = City.objects.all()[:10]  # 限制为前10个城市
-        
-        # 天气描述
-        descriptions = ['晴朗', '多云', '小雨', '阴天', '雷阵雨', '小雪', '雾']
-        # 图标代码 (开放天气API的图标代码)
-        icons = ['01d', '02d', '03d', '04d', '09d', '10d', '11d', '13d', '50d']
-        
-        for city in cities:
-            # 温度: 5-35度
-            temperature = random.randint(5, 35)
-            # 湿度: 30-90%
-            humidity = random.randint(30, 90)
-            # 风速: 0.5-8.5 m/s
-            wind_speed = Decimal(0.5 + random.random() * 8).quantize(Decimal('0.1'))
-            
-            WeatherCache.objects.create(
-                city=city,
-                temperature=temperature,
-                description=random.choice(descriptions),
-                humidity=humidity,
-                wind_speed=wind_speed,
-                icon=f"https://openweathermap.org/img/wn/{random.choice(icons)}@2x.png"
-            )
-            
-        self.stdout.write(self.style.SUCCESS(f'成功创建{cities.count()}个城市的天气数据')) 

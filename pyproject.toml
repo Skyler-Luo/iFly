@@ -1,0 +1,16 @@
+[tool.pylint.master]
+load-plugins = "pylint_django"
+django-settings-module = "iFly.settings"
+
+[tool.pylint.messages_control]
+disable = [
+    "too-few-public-methods",  # Django Meta 类会触发此警告
+    "no-member",  # Django ORM 动态属性会触发误报
+]
+
+[tool.pylint.format]
+max-line-length = 100
+
+[tool.pylint.design]
+max-args = 10
+max-locals = 20

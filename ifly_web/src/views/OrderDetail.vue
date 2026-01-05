@@ -16,7 +16,7 @@
                     <span class="value">{{ formatDate(order.createdAt) }}</span>
                 </div>
                 <div class="actions">
-                    <el-button type="primary" plain size="small" @click="printOrder">
+                    <el-button type="primary" size="small" @click="printOrder">
                         <i class="el-icon-printer"></i> 打印订单
                     </el-button>
                     <el-button v-if="order.status === 'pending'" type="danger" plain size="small"
@@ -53,8 +53,9 @@
                     <div class="flight-card" v-for="(ticket, index) in order.tickets" :key="index">
                         <div class="flight-header">
                             <div class="airline">
-                                <img :src="ticket.flight?.airlineLogo || 'https://picsum.photos/id/24/40/40'"
-                                    :alt="ticket.flight?.airlineName || '未知航空'" class="airline-logo">
+                                <div class="airline-icon">
+                                    <span class="plane-svg"></span>
+                                </div>
                                 <div class="airline-info">
                                     <div class="airline-name">{{ ticket.flight?.airlineName || '未知航空' }}</div>
                                     <div class="flight-number">{{ ticket.flight?.flightNumber || '未知航班' }}</div>
@@ -103,7 +104,33 @@
                             </div>
                         </div>
 
+                        <!-- 值机状态展示 -->
+                        <div class="checkin-status" v-if="ticket.checkedIn">
+                            <div class="checkin-badge">
+                                <el-tag type="success" size="small">
+                                    <i class="el-icon-check"></i> 已值机
+                                </el-tag>
+                                <span class="checkin-time" v-if="ticket.checkedInAt">
+                                    {{ formatDateTime(ticket.checkedInAt) }}
+                                </span>
+                            </div>
+                            <div class="boarding-info">
+                                <div class="boarding-item" v-if="ticket.gate">
+                                    <span class="label">登机口:</span>
+                                    <span class="value highlight">{{ ticket.gate }}</span>
+                                </div>
+                                <div class="boarding-item" v-if="ticket.boardingPassNumber">
+                                    <span class="label">登机牌号:</span>
+                                    <span class="value">{{ ticket.boardingPassNumber }}</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="ticket-actions">
+                            <el-button v-if="canReschedule(ticket)" type="warning" size="small" plain
+                                @click="goToReschedule(ticket)">
+                                改签
+                            </el-button>
                             <el-button v-if="canRefund(ticket)" type="danger" size="small" plain
                                 @click="showRefundDialog(ticket)">
                                 申请退票
@@ -111,6 +138,10 @@
                             <el-button v-if="canCheckIn(ticket)" type="primary" size="small"
                                 @click="goToCheckIn(ticket)">
                                 在线值机
+                            </el-button>
+                            <el-button v-if="ticket.checkedIn" type="success" size="small"
+                                @click="viewBoardingPass(ticket)">
+                                查看登机牌
                             </el-button>
                             <el-button type="info" size="small" plain @click="showTicketDetail(ticket)">
                                 查看详情
@@ -161,6 +192,16 @@
                         <span class="label">支付状态:</span>
                         <span class="value" :class="order.paidAt ? 'success-text' : 'warning-text'">
                             {{ order.paidAt ? '已支付' : '待支付' }}
+                        </span>
+                    </div>
+                    <div class="payment-row" v-if="order.status === 'pending' && remainingPaymentSeconds > 0">
+                        <span class="label">剩余支付时间:</span>
+                        <span class="value">
+                            <CountdownTimer 
+                                :remaining-seconds="remainingPaymentSeconds"
+                                :warning-threshold="300"
+                                @timeout="handlePaymentTimeout"
+                            />
                         </span>
                     </div>
                     <div class="payment-row" v-if="order.paidAt">
@@ -369,9 +410,13 @@
 <script>
 import api from '@/services/api'
 import { ElMessage } from 'element-plus'
+import CountdownTimer from '@/components/CountdownTimer.vue'
 
 export default {
     name: 'OrderDetail',
+    components: {
+        CountdownTimer
+    },
     data() {
         return {
             isLoading: true,
@@ -384,6 +429,7 @@ export default {
             selectedTicket: null,
             isRefunding: false,
             isCancelling: false,
+            remainingPaymentSeconds: 0,
             refundForm: {
                 reason: 'personal_reason',
                 remark: ''
@@ -502,7 +548,7 @@ export default {
                                         data.tickets.forEach(ticket => {
                                             if (ticket.passenger_name && ticket.passenger_id_number) {
                                                 const passenger = {
-                                                    id: ticket.id || `p-${Math.random().toString(36).substring(2, 8)}`,
+                                                    id: ticket.id || 0,
                                                     name: ticket.passenger_name,
                                                     idType: ticket.passenger_id_type || 'idcard',
                                                     idNumber: ticket.passenger_id_number,
@@ -568,7 +614,7 @@ export default {
                                                 console.log('乘客姓名:', ticket.passenger_name);
                                                 console.log('证件号:', ticket.passenger_id_number);
                                                 const passenger = {
-                                                    id: ticket.id || Math.random().toString(36).substring(2, 10), // 使用机票ID或随机ID
+                                                    id: ticket.id || 0,
                                                     name: (ticket.passenger_name && ticket.passenger_name !== '') ? ticket.passenger_name : '未知乘客',
                                                     idType: (ticket.passenger_id_type && ticket.passenger_id_type !== '') ? ticket.passenger_id_type : 'idcard',
                                                     idNumber: (ticket.passenger_id_number && ticket.passenger_id_number !== '') ? ticket.passenger_id_number : '--',
@@ -607,7 +653,7 @@ export default {
                                             id: ticket.flight_id || ticket.flight?.id || 0,
                                             flightNumber: ticket.flight_number || ticket.flight?.flight_number || '未知航班',
                                             airlineName: ticket.airline_name || ticket.flight?.airline_name || '未知航空',
-                                            airlineLogo: ticket.airline_logo || ticket.flight?.airline_logo || `https://picsum.photos/id/${Math.floor(Math.random() * 30)}/40/40`,
+                                            airlineLogo: ticket.airline_logo || ticket.flight?.airline_logo || '',
                                             departureCity: ticket.departure_city || ticket.flight?.departure_city || '未知城市',
                                             arrivalCity: ticket.arrival_city || ticket.flight?.arrival_city || '未知城市',
                                             departureAirport: ticket.departure_airport || ticket.flight?.departure_airport || '未知机场',
@@ -648,7 +694,12 @@ export default {
                                             seatNumber: ticket.seat_number || '--',
                                             cabinClass: ticket.cabin_class || 'economy',
                                             price: parseFloat(ticket.price) || 0,
-                                            status: ticket.status || 'valid'
+                                            status: ticket.status || 'valid',
+                                            // 值机相关字段
+                                            checkedIn: ticket.checked_in || false,
+                                            checkedInAt: ticket.checked_in_at ? new Date(ticket.checked_in_at) : null,
+                                            boardingPassNumber: ticket.boarding_pass_number || null,
+                                            gate: ticket.gate || null
                                         };
                                     } catch (ticketError) {
                                         console.error('处理单张机票时出错:', ticketError);
@@ -667,7 +718,12 @@ export default {
                                             seatNumber: '--',
                                             cabinClass: 'economy',
                                             price: 0,
-                                            status: 'unknown'
+                                            status: 'unknown',
+                                            // 值机相关字段
+                                            checkedIn: false,
+                                            checkedInAt: null,
+                                            boardingPassNumber: null,
+                                            gate: null
                                         };
                                     }
                                 });
@@ -698,6 +754,11 @@ export default {
                     }
 
                     this.isLoading = false;
+                    
+                    // 如果是待支付订单，获取剩余支付时间
+                    if (this.order && this.order.status === 'pending') {
+                        this.fetchRemainingPaymentTime();
+                    }
                 })
                 .catch(error => {
                     console.error('获取订单详情失败:', error);
@@ -828,9 +889,61 @@ export default {
         canCheckIn(ticket) {
             if (!this.order || !ticket) return false;
 
-            // 已出票且未值机的机票可以值机
-            return this.order.status === 'ticketed' &&
+            // 已值机的机票不显示值机按钮
+            if (ticket.checkedIn) return false;
+
+            // 已支付且机票有效的可以值机
+            return this.order.status === 'paid' &&
                 ticket.status === 'valid';
+        },
+
+        canReschedule(ticket) {
+            if (!this.order || !ticket) return false;
+
+            // 机票状态必须为有效
+            if (ticket.status !== 'valid') return false;
+
+            // 订单状态必须为已支付或已出票
+            if (this.order.status !== 'paid' && this.order.status !== 'ticketed') return false;
+
+            // 航班起飞时间必须距当前超过2小时
+            const departureTime = new Date(ticket.flight?.departureTime);
+            const now = new Date();
+            const diffHours = (departureTime - now) / (1000 * 60 * 60);
+
+            return diffHours > 2;
+        },
+
+        goToReschedule(ticket) {
+            this.$router.push({
+                path: `/reschedule/${ticket.id}`,
+                query: { orderId: this.order.id }
+            });
+        },
+
+        async fetchRemainingPaymentTime() {
+            try {
+                // 计算剩余支付时间（订单创建后30分钟内需支付）
+                const createdAt = new Date(this.order.createdAt);
+                const now = new Date();
+                const paymentDeadline = new Date(createdAt.getTime() + 30 * 60 * 1000); // 30分钟
+                const remainingMs = paymentDeadline - now;
+                
+                if (remainingMs > 0) {
+                    this.remainingPaymentSeconds = Math.floor(remainingMs / 1000);
+                } else {
+                    this.remainingPaymentSeconds = 0;
+                }
+            } catch (err) {
+                console.error('获取剩余支付时间失败:', err);
+                this.remainingPaymentSeconds = 0;
+            }
+        },
+
+        handlePaymentTimeout() {
+            ElMessage.warning('支付时间已过期，订单将自动取消');
+            // 刷新订单详情
+            this.fetchOrderDetail();
         },
 
         showRefundDialog(ticket) {
@@ -865,24 +978,19 @@ export default {
         submitRefund() {
             this.isRefunding = true;
 
-            // 模拟退票请求
-            setTimeout(() => {
-                this.isRefunding = false;
-                this.refundDialogVisible = false;
-
-                // 更新订单状态
-                if (this.selectedTicket) {
-                    this.selectedTicket.status = 'refunded';
-
-                    // 检查是否所有机票都已退票
-                    const allRefunded = this.order.tickets.every(ticket => ticket.status === 'refunded');
-                    if (allRefunded) {
-                        this.order.status = 'refunded';
-                    }
-                }
-
-                this.$message.success('退票申请已提交，退款将在1-7个工作日内退回原支付账户');
-            }, 1500);
+            api.tickets.refund(this.selectedTicket.id)
+                .then(() => {
+                    this.isRefunding = false;
+                    this.refundDialogVisible = false;
+                    this.$message.success('退票申请已提交，退款将在1-7个工作日内退回原支付账户');
+                    // 重新加载订单详情
+                    this.fetchOrderDetail();
+                })
+                .catch(error => {
+                    this.isRefunding = false;
+                    console.error('退票失败:', error);
+                    this.$message.error(error.message || '退票失败，请稍后重试');
+                });
         },
 
         showCancelDialog() {
@@ -892,19 +1000,19 @@ export default {
         confirmCancelOrder() {
             this.isCancelling = true;
 
-            // 模拟取消订单请求
-            setTimeout(() => {
-                this.isCancelling = false;
-                this.cancelOrderDialogVisible = false;
-
-                // 更新订单状态
-                this.order.status = 'cancelled';
-                this.order.tickets.forEach(ticket => {
-                    ticket.status = 'cancelled';
+            api.orders.cancel(this.order.id)
+                .then(() => {
+                    this.isCancelling = false;
+                    this.cancelOrderDialogVisible = false;
+                    this.$message.success('订单已取消');
+                    // 重新加载订单详情
+                    this.fetchOrderDetail();
+                })
+                .catch(error => {
+                    this.isCancelling = false;
+                    console.error('取消订单失败:', error);
+                    this.$message.error(error.message || '取消订单失败，请稍后重试');
                 });
-
-                this.$message.success('订单已取消');
-            }, 1500);
         },
 
         startEditRemark() {
@@ -918,7 +1026,7 @@ export default {
         },
 
         saveRemark() {
-            // 模拟保存备注请求
+            // 备注功能暂不支持API，仅本地保存
             this.order.remarks = this.remarkContent;
             this.isEditingRemark = false;
             this.$message.success('备注已保存');
@@ -931,6 +1039,14 @@ export default {
 
         goToCheckIn(ticket) {
             // 导航到值机页面
+            this.$router.push({
+                name: 'checkin',
+                params: { ticketId: ticket.id }
+            });
+        },
+
+        viewBoardingPass(ticket) {
+            // 导航到值机页面查看登机牌（已值机状态会直接显示登机牌）
             this.$router.push({
                 name: 'checkin',
                 params: { ticketId: ticket.id }
@@ -962,9 +1078,10 @@ export default {
 
 <style scoped>
 .order-detail-view {
-    padding: 20px;
+    padding: 20px 40px;
     background-color: #f5f7fa;
-    min-height: 100vh;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .header-banner {
@@ -1023,8 +1140,9 @@ export default {
 }
 
 .order-container {
-    max-width: 1000px;
-    margin: 0 auto;
+    width: 100%;
+    padding: 20px 40px;
+    box-sizing: border-box;
 }
 
 .order-header {
@@ -1123,12 +1241,25 @@ export default {
     align-items: center;
 }
 
-.airline-logo {
-    width: 40px;
-    height: 40px;
+.airline-icon {
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    margin-right: 10px;
-    object-fit: cover;
+    margin-right: 12px;
+    background: linear-gradient(135deg, #409eff 0%, #337ecc 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.plane-svg {
+    width: 24px;
+    height: 24px;
+    display: block;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23ffffff" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 .airline-info {
@@ -1272,6 +1403,60 @@ export default {
 .ticket-number {
     display: flex;
     align-items: center;
+}
+
+/* 值机状态展示样式 */
+.checkin-status {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    border: 1px solid #a5d6a7;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 12px 0;
+}
+
+.checkin-badge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.checkin-badge .el-tag {
+    font-weight: 500;
+}
+
+.checkin-time {
+    font-size: 12px;
+    color: #666;
+}
+
+.boarding-info {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.boarding-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.boarding-item .label {
+    font-size: 13px;
+    color: #666;
+}
+
+.boarding-item .value {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+.boarding-item .value.highlight {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1976d2;
 }
 
 .ticket-actions {

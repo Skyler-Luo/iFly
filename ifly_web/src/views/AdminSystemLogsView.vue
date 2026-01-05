@@ -182,128 +182,15 @@
 </template>
 
 <script>
+import api from '../services/api'
+
 export default {
     name: 'AdminSystemLogsView',
     data() {
         return {
-            logs: [
-                {
-                    timestamp: '2023-07-25T08:32:45',
-                    level: 'ERROR',
-                    component: 'AuthService',
-                    user: 'admin',
-                    message: '用户认证失败: 无效的凭证',
-                    ip: '192.168.1.105',
-                    details: 'java.security.AuthException: Invalid credentials\n  at com.ifly.service.AuthService.authenticate(AuthService.java:127)\n  at com.ifly.controller.AdminController.login(AdminController.java:58)'
-                },
-                {
-                    timestamp: '2023-07-25T08:30:12',
-                    level: 'INFO',
-                    component: 'BookingService',
-                    user: 'system',
-                    message: '航班 CA1234 座位分配已更新',
-                    ip: '192.168.1.1'
-                },
-                {
-                    timestamp: '2023-07-25T08:15:33',
-                    level: 'WARNING',
-                    component: 'PaymentService',
-                    user: 'user',
-                    message: '支付超时: 订单 #98765',
-                    ip: '203.0.113.45',
-                    details: 'Payment gateway timeout after 30 seconds. Transaction ID: TXN123456789'
-                },
-                {
-                    timestamp: '2023-07-25T08:10:22',
-                    level: 'INFO',
-                    component: 'UserService',
-                    user: 'system',
-                    message: '新用户注册成功: user123@example.com'
-                },
-                {
-                    timestamp: '2023-07-25T07:55:18',
-                    level: 'ERROR',
-                    component: 'DatabaseService',
-                    user: 'system',
-                    message: '数据库连接池耗尽',
-                    ip: '192.168.1.1',
-                    details: 'com.ifly.exception.DBException: Connection pool exhausted\n  at com.ifly.db.ConnectionManager.getConnection(ConnectionManager.java:89)\n  at com.ifly.service.FlightService.updateFlightStatus(FlightService.java:213)'
-                },
-                {
-                    timestamp: '2023-07-25T07:45:30',
-                    level: 'INFO',
-                    component: 'SchedulerService',
-                    user: 'system',
-                    message: '航班状态更新任务已完成: 45个航班已更新'
-                },
-                {
-                    timestamp: '2023-07-25T07:32:14',
-                    level: 'DEBUG',
-                    component: 'API',
-                    user: 'system',
-                    message: 'GET /api/flights?date=2023-07-25 - 200 OK - 45ms'
-                },
-                {
-                    timestamp: '2023-07-25T07:30:05',
-                    level: 'INFO',
-                    component: 'SystemService',
-                    user: 'admin',
-                    message: '系统备份已启动'
-                },
-                {
-                    timestamp: '2023-07-25T07:25:55',
-                    level: 'WARNING',
-                    component: 'SecurityService',
-                    user: 'system',
-                    message: '检测到多次失败的登录尝试: IP 203.0.113.78',
-                    ip: '203.0.113.78'
-                },
-                {
-                    timestamp: '2023-07-25T07:20:33',
-                    level: 'INFO',
-                    component: 'NotificationService',
-                    user: 'system',
-                    message: '已发送 156 条航班变更通知'
-                },
-                {
-                    timestamp: '2023-07-25T07:15:42',
-                    level: 'ERROR',
-                    component: 'EmailService',
-                    user: 'system',
-                    message: '邮件发送失败: 无法连接到 SMTP 服务器',
-                    ip: '192.168.1.1',
-                    details: 'javax.mail.MessagingException: Could not connect to SMTP host: smtp.ifly.com, port: 25\n  at com.sun.mail.smtp.SMTPTransport.openServer(SMTPTransport.java:2210)\n  at com.sun.mail.smtp.SMTPTransport.protocolConnect(SMTPTransport.java:772)'
-                },
-                {
-                    timestamp: '2023-07-25T07:10:18',
-                    level: 'INFO',
-                    component: 'BookingService',
-                    user: 'user',
-                    message: '新预订已创建: 订单 #98765'
-                },
-                {
-                    timestamp: '2023-07-25T07:05:27',
-                    level: 'DEBUG',
-                    component: 'API',
-                    user: 'system',
-                    message: 'POST /api/bookings - 201 Created - 78ms'
-                },
-                {
-                    timestamp: '2023-07-25T07:00:01',
-                    level: 'INFO',
-                    component: 'SchedulerService',
-                    user: 'system',
-                    message: '每日维护任务已启动'
-                },
-                {
-                    timestamp: '2023-07-24T23:59:59',
-                    level: 'INFO',
-                    component: 'SystemService',
-                    user: 'system',
-                    message: '日志轮换已完成'
-                }
-            ],
-            components: ['AuthService', 'BookingService', 'PaymentService', 'UserService', 'DatabaseService', 'SchedulerService', 'API', 'SystemService', 'SecurityService', 'NotificationService', 'EmailService'],
+            logs: [],
+            components: ['AuthService', 'BookingService', 'PaymentService', 'UserService', 'DatabaseService', 'SchedulerService', 'API', 'SystemService', 'SecurityService', 'NotificationService'],
+            isLoading: false,
             levelFilter: '',
             componentFilter: '',
             userFilter: '',
@@ -443,17 +330,41 @@ export default {
             console.log('导出日志', this.filteredLogs);
             alert('日志导出功能在实际应用中将生成CSV或TXT文件');
         },
-        refreshLogs() {
-            // 实际应用中，这里应该重新从服务器获取日志数据
-            console.log('刷新日志');
-            alert('日志刷新成功');
+        async refreshLogs() {
+            await this.fetchLogs()
         },
         viewLog(log) {
             this.selectedLog = log;
             this.showLogDetail = true;
+        },
+        async fetchLogs() {
+            this.isLoading = true
+            try {
+                const params = {}
+                if (this.levelFilter) params.level = this.levelFilter
+                if (this.startDate) params.start_date = this.startDate
+                if (this.endDate) params.end_date = this.endDate
+                
+                const response = await api.admin.logs.getSystemLogs(params)
+                const data = response?.logs || response || []
+                this.logs = Array.isArray(data) ? data.map(log => ({
+                    timestamp: log.timestamp,
+                    level: log.level,
+                    component: log.source || log.component || 'System',
+                    user: log.user || 'system',
+                    message: log.message,
+                    ip: log.ip || log.ipAddress,
+                    details: log.details
+                })) : []
+            } catch (error) {
+                console.error('获取日志失败:', error)
+                this.logs = []
+            } finally {
+                this.isLoading = false
+            }
         }
     },
-    created() {
+    async created() {
         // 设置默认的日期范围为最近7天
         const today = new Date();
         const sevenDaysAgo = new Date();
@@ -461,15 +372,17 @@ export default {
 
         this.startDate = sevenDaysAgo.toISOString().split('T')[0];
         this.endDate = today.toISOString().split('T')[0];
+        
+        await this.fetchLogs()
     }
 }
 </script>
 
 <style scoped>
 .admin-logs {
-    padding: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
+    padding: 20px 40px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .title {

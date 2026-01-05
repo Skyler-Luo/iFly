@@ -34,8 +34,8 @@
 <script>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-// import { ElMessage } from 'element-plus' // 暂时不使用ElMessage
-// import api from '@/services/api' // 暂时不使用API
+import { ElMessage } from 'element-plus'
+import api from '@/services/api'
 import UserInfoTab from '@/components/profile/UserInfoTab.vue'
 import PassengerListTab from '@/components/profile/PassengerListTab.vue'
 import OrderHistoryTab from '@/components/profile/OrderHistoryTab.vue'
@@ -59,66 +59,41 @@ export default {
         const user = ref({})
         const loading = ref(false)
 
-        const loadUserProfile = () => {
+        const loadUserProfile = async () => {
             loading.value = true
 
-            // 使用模拟数据（因为API尚未接入）
-            setTimeout(() => {
-                try {
-                    // 从本地存储获取用户信息
-                    const userStr = localStorage.getItem('user')
-                    if (userStr) {
-                        const userInfo = JSON.parse(userStr)
-                        user.value = {
-                            ...userInfo,
-                            real_name: userInfo.real_name || '张三',
-                            phone: userInfo.phone || '13800138000',
-                            id_card: userInfo.id_card || '310000********0000',
-                            gender: userInfo.gender || 'male',
-                            address: userInfo.address || '上海市浦东新区xxx路xxx号',
-                        }
-                    } else {
-                        // 如果没有用户信息，使用默认模拟数据
-                        user.value = {
-                            username: '测试用户',
-                            email: 'test@example.com',
-                            real_name: '张三',
-                            phone: '13800138000',
-                            id_card: '310000********0000',
-                            gender: 'male',
-                            address: '上海市浦东新区xxx路xxx号',
-                            avatar: ''
-                        }
-                    }
-                } catch (error) {
-                    console.error('解析用户信息失败:', error)
-                    // 使用默认模拟数据
-                    user.value = {
-                        username: '测试用户',
-                        email: 'test@example.com',
-                        real_name: '张三',
-                        phone: '13800138000',
-                        id_card: '310000********0000',
-                        gender: 'male',
-                        address: '上海市浦东新区xxx路xxx号',
-                        avatar: ''
-                    }
-                }
-                loading.value = false
-            }, 500)
-
-            /* 实际API调用代码（暂时注释掉）
             try {
                 const response = await api.auth.getProfile()
-                user.value = response
+                const data = response.data || response
+                user.value = {
+                    id: data.id,
+                    username: data.username,
+                    email: data.email,
+                    real_name: data.real_name || '',
+                    phone: data.phone || '',
+                    id_card: data.id_card || '',
+                    gender: data.gender || '',
+                    address: data.address || '',
+                    avatar: data.avatar || ''
+                }
             } catch (error) {
                 console.error('获取用户信息失败:', error)
-                ElMessage.error('获取用户信息失败，请重新登录')
-                router.push('/login')
+                // 如果获取失败，尝试从本地存储获取
+                try {
+                    const userStr = localStorage.getItem('user')
+                    if (userStr) {
+                        user.value = JSON.parse(userStr)
+                    } else {
+                        ElMessage.error('获取用户信息失败，请重新登录')
+                        router.push('/login')
+                    }
+                } catch (e) {
+                    ElMessage.error('获取用户信息失败，请重新登录')
+                    router.push('/login')
+                }
             } finally {
                 loading.value = false
             }
-            */
         }
 
         onMounted(() => {
@@ -143,9 +118,9 @@ export default {
 
 <style scoped>
 .user-profile-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
+    width: 100%;
+    padding: 20px 40px;
+    box-sizing: border-box;
 }
 
 .profile-card {

@@ -1,42 +1,17 @@
 <template>
   <div class="admin-dashboard">
-    <h1 class="title">管理员控制台</h1>
-
-    <div class="dashboard-summary">
-      <div class="summary-title">
-        <h2>系统概览</h2>
-        <div class="period-selector">
-          <el-radio-group v-model="timePeriod" size="small" @change="refreshData">
-            <el-radio-button label="day">今日</el-radio-button>
-            <el-radio-button label="week">本周</el-radio-button>
-            <el-radio-button label="month">本月</el-radio-button>
-          </el-radio-group>
-        </div>
+    <div class="page-header">
+      <h1 class="title">管理员控制台</h1>
+      <div class="header-actions">
+        <el-radio-group v-model="timePeriod" size="default" @change="refreshData">
+          <el-radio-button value="day">今日</el-radio-button>
+          <el-radio-button value="week">本周</el-radio-button>
+          <el-radio-button value="month">本月</el-radio-button>
+        </el-radio-group>
+        <el-button type="primary" :icon="Refresh" @click="refreshData" :loading="loading">
+          刷新
+        </el-button>
       </div>
-
-      <!-- 调试信息区域 -->
-      <div v-if="debugMode" class="debug-info">
-        <div class="debug-title">
-          <h3>调试信息</h3>
-          <button @click="debugMode = false" class="close-debug">关闭</button>
-        </div>
-        <div class="debug-content">
-          <p>API响应状态: {{ apiStatus }}</p>
-          <p>数据结构: {{ apiDataKeys.join(', ') }}</p>
-          <p>统计数据: {{ JSON.stringify(stats) }}</p>
-          <p>收入数据长度: {{ revenueData.length }}</p>
-          <p>热门目的地长度: {{ popularDestinations.length }}</p>
-          <p>航班利用率数据长度: {{ seatUtilization.length }}</p>
-          <button @click="refreshData" class="refresh-debug">刷新数据</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 调试模式切换按钮 -->
-    <div class="debug-toggle">
-      <button @click="debugMode = !debugMode" class="debug-btn">
-        {{ debugMode ? '隐藏调试' : '显示调试' }}
-      </button>
     </div>
 
     <div v-if="loading" class="loading-container">
@@ -52,54 +27,62 @@
 
     <div v-if="!loading && !error">
       <div class="dashboard-stats">
-        <div class="stat-card">
+        <div class="stat-card stat-flights">
           <div class="stat-icon">
-            <i class="fas fa-plane"></i>
+            <el-icon><Promotion /></el-icon>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ stats.flights }}</div>
             <div class="stat-label">航班总数</div>
+            <div class="stat-value">{{ stats.flights }}</div>
             <div class="stat-trend" :class="{ 'up': stats.flightsGrowth > 0, 'down': stats.flightsGrowth < 0 }">
-              {{ stats.flightsGrowth > 0 ? '+' : '' }}{{ stats.flightsGrowth }}%
+              <el-icon v-if="stats.flightsGrowth >= 0"><Top /></el-icon>
+              <el-icon v-else><Bottom /></el-icon>
+              {{ Math.abs(stats.flightsGrowth) }}%
             </div>
           </div>
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card stat-users">
           <div class="stat-icon">
-            <i class="fas fa-users"></i>
+            <el-icon><User /></el-icon>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ stats.users }}</div>
             <div class="stat-label">注册用户</div>
+            <div class="stat-value">{{ stats.users }}</div>
             <div class="stat-trend" :class="{ 'up': stats.usersGrowth > 0, 'down': stats.usersGrowth < 0 }">
-              {{ stats.usersGrowth > 0 ? '+' : '' }}{{ stats.usersGrowth }}%
+              <el-icon v-if="stats.usersGrowth >= 0"><Top /></el-icon>
+              <el-icon v-else><Bottom /></el-icon>
+              {{ Math.abs(stats.usersGrowth) }}%
             </div>
           </div>
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card stat-orders">
           <div class="stat-icon">
-            <i class="fas fa-ticket-alt"></i>
+            <el-icon><Tickets /></el-icon>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ stats.orders }}</div>
             <div class="stat-label">订单总数</div>
+            <div class="stat-value">{{ stats.orders }}</div>
             <div class="stat-trend" :class="{ 'up': stats.ordersGrowth > 0, 'down': stats.ordersGrowth < 0 }">
-              {{ stats.ordersGrowth > 0 ? '+' : '' }}{{ stats.ordersGrowth }}%
+              <el-icon v-if="stats.ordersGrowth >= 0"><Top /></el-icon>
+              <el-icon v-else><Bottom /></el-icon>
+              {{ Math.abs(stats.ordersGrowth) }}%
             </div>
           </div>
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card stat-revenue">
           <div class="stat-icon">
-            <i class="fas fa-money-bill-wave"></i>
+            <el-icon><Coin /></el-icon>
           </div>
           <div class="stat-content">
-            <div class="stat-value">¥{{ stats.revenue.toLocaleString() }}</div>
             <div class="stat-label">总收入</div>
+            <div class="stat-value">¥{{ stats.revenue.toLocaleString() }}</div>
             <div class="stat-trend" :class="{ 'up': stats.revenueGrowth > 0, 'down': stats.revenueGrowth < 0 }">
-              {{ stats.revenueGrowth > 0 ? '+' : '' }}{{ stats.revenueGrowth }}%
+              <el-icon v-if="stats.revenueGrowth >= 0"><Top /></el-icon>
+              <el-icon v-else><Bottom /></el-icon>
+              {{ Math.abs(stats.revenueGrowth) }}%
             </div>
           </div>
         </div>
@@ -117,9 +100,6 @@
             </router-link>
             <router-link to="/admin/orders" class="btn btn-primary">
               <i class="fas fa-list"></i> 订单管理
-            </router-link>
-            <router-link to="/admin/promotions" class="btn btn-primary">
-              <i class="fas fa-tags"></i> 优惠管理
             </router-link>
             <router-link to="/admin/settings" class="btn btn-primary">
               <i class="fas fa-cogs"></i> 系统设置
@@ -175,61 +155,6 @@
             </div>
           </div>
         </div>
-
-        <div class="realtime-monitoring">
-          <h2>实时监控</h2>
-          <div class="monitoring-row">
-            <div class="monitoring-card">
-              <h3>当前在线用户</h3>
-              <div class="realtime-value">{{ realtimeStats.onlineUsers }}</div>
-              <div class="realtime-chart">
-                <v-chart :option="onlineUsersOption" autoresize />
-              </div>
-            </div>
-
-            <div class="monitoring-card">
-              <h3>实时订单数</h3>
-              <div class="realtime-value">{{ realtimeStats.activeOrders }}</div>
-              <div class="realtime-chart">
-                <v-chart :option="activeOrdersOption" autoresize />
-              </div>
-            </div>
-
-            <div class="monitoring-card">
-              <h3>系统资源</h3>
-              <div class="resource-stats">
-                <div class="resource-item">
-                  <div class="resource-label">CPU</div>
-                  <el-progress :percentage="realtimeStats.cpuUsage" :color="resourceColor" />
-                </div>
-                <div class="resource-item">
-                  <div class="resource-label">内存</div>
-                  <el-progress :percentage="realtimeStats.memoryUsage" :color="resourceColor" />
-                </div>
-                <div class="resource-item">
-                  <div class="resource-label">存储</div>
-                  <el-progress :percentage="realtimeStats.diskUsage" :color="resourceColor" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="recent-activities">
-          <h2>最近活动</h2>
-          <div class="activity-list">
-            <div v-for="activity in recentActivities" :key="activity.id" class="activity-item">
-              <div class="activity-icon" :class="'activity-' + activity.type">
-                <i :class="getActivityIcon(activity.type)"></i>
-              </div>
-              <div class="activity-content">
-                <div class="activity-title">{{ activity.title }}</div>
-                <div class="activity-description">{{ activity.description }}</div>
-                <div class="activity-time">{{ activity.time }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -238,15 +163,23 @@
 <script>
 // 直接导入Vue-ECharts组件
 import VChart from 'vue-echarts'
+import { Refresh, Promotion, User, Tickets, Coin, Top, Bottom } from '@element-plus/icons-vue'
 import api from '../services/api'
 
 export default {
   name: 'AdminDashboardView',
   components: {
-    VChart
+    VChart,
+    Promotion,
+    User,
+    Tickets,
+    Coin,
+    Top,
+    Bottom
   },
   data() {
     return {
+      Refresh,
       timePeriod: 'week',
       loading: true,
       error: null,
@@ -264,56 +197,7 @@ export default {
       popularDestinations: [],
       seatUtilization: [],
       userGrowthData: [],
-      orderStatusData: [],
-      realtimeStats: {
-        onlineUsers: 0,
-        activeOrders: 0,
-        cpuUsage: 0,
-        memoryUsage: 0,
-        diskUsage: 0
-      },
-      onlineUserHistory: [0, 0, 0, 0, 0, 0, 0],
-      activeOrderHistory: [0, 0, 0, 0, 0, 0, 0],
-      recentActivities: [
-        {
-          id: 1,
-          type: 'order',
-          title: '新订单',
-          description: '用户王小明(ID: 10089)预订了北京至上海的机票',
-          time: '10分钟前'
-        },
-        {
-          id: 2,
-          type: 'user',
-          title: '新用户注册',
-          description: '5位新用户在过去一小时内完成注册',
-          time: '1小时前'
-        },
-        {
-          id: 3,
-          type: 'system',
-          title: '系统更新',
-          description: '系统完成了数据库优化和安全更新',
-          time: '3小时前'
-        },
-        {
-          id: 4,
-          type: 'promotion',
-          title: '新优惠活动',
-          description: '暑期特惠活动已经开始，持续到8月底',
-          time: '5小时前'
-        },
-        {
-          id: 5,
-          type: 'alert',
-          title: '系统警告',
-          description: '检测到异常登录尝试，IP已被临时封锁',
-          time: '12小时前'
-        }
-      ],
-      debugMode: false,
-      apiStatus: '',
-      apiDataKeys: []
+      orderStatusData: []
     }
   },
   computed: {
@@ -412,53 +296,48 @@ export default {
     seatUtilizationOption() {
       return {
         tooltip: {
+          trigger: 'axis',
           formatter: '{b}: {c}%'
         },
-        series: [
-          {
-            type: 'gauge',
-            startAngle: 90,
-            endAngle: -270,
-            pointer: {
-              show: false
-            },
-            progress: {
-              show: true,
-              overlap: false,
-              roundCap: true,
-              clip: false,
-              itemStyle: {
-                borderWidth: 1,
-                borderColor: '#464646'
-              }
-            },
-            axisLine: {
-              lineStyle: {
-                width: 20
-              }
-            },
-            splitLine: {
-              show: false
-            },
-            axisTick: {
-              show: false
-            },
-            axisLabel: {
-              show: false
-            },
-            data: this.seatUtilization,
-            detail: {
-              width: 50,
-              height: 14,
-              fontSize: 14,
-              color: 'auto',
-              borderColor: 'auto',
-              borderRadius: 20,
-              borderWidth: 1,
-              formatter: '{value}%'
-            }
+        grid: {
+          left: '15%',
+          right: '15%',
+          top: '15%',
+          bottom: '15%'
+        },
+        xAxis: {
+          type: 'category',
+          data: this.seatUtilization.map(item => item.name),
+          axisLabel: {
+            fontSize: 12
           }
-        ]
+        },
+        yAxis: {
+          type: 'value',
+          max: 100,
+          axisLabel: {
+            formatter: '{value}%'
+          }
+        },
+        series: [{
+          type: 'bar',
+          data: this.seatUtilization.map(item => item.value),
+          barWidth: '40%',
+          itemStyle: {
+            borderRadius: [4, 4, 0, 0],
+            color: function(params) {
+              const colors = ['#5470c6', '#91cc75']
+              return colors[params.dataIndex % colors.length]
+            }
+          },
+          label: {
+            show: true,
+            position: 'top',
+            formatter: '{c}%',
+            fontSize: 14,
+            fontWeight: 'bold'
+          }
+        }]
       }
     },
     userGrowthOption() {
@@ -537,126 +416,9 @@ export default {
           }
         ]
       }
-    },
-    onlineUsersOption() {
-      return {
-        xAxis: {
-          type: 'category',
-          show: false,
-          data: ['', '', '', '', '', '', '']
-        },
-        yAxis: {
-          type: 'value',
-          show: false
-        },
-        grid: {
-          left: 0,
-          right: 0,
-          top: 0,
-          bottom: 0
-        },
-        series: [
-          {
-            data: this.onlineUserHistory,
-            type: 'line',
-            showSymbol: false,
-            smooth: true,
-            lineStyle: {
-              width: 2,
-              color: '#1976d2'
-            },
-            areaStyle: {
-              color: {
-                type: 'linear',
-                x: 0,
-                y: 0,
-                x2: 0,
-                y2: 1,
-                colorStops: [
-                  {
-                    offset: 0,
-                    color: 'rgba(25, 118, 210, 0.5)'
-                  },
-                  {
-                    offset: 1,
-                    color: 'rgba(25, 118, 210, 0)'
-                  }
-                ]
-              }
-            }
-          }
-        ]
-      }
-    },
-    activeOrdersOption() {
-      return {
-        xAxis: {
-          type: 'category',
-          show: false,
-          data: ['', '', '', '', '', '', '']
-        },
-        yAxis: {
-          type: 'value',
-          show: false
-        },
-        grid: {
-          left: 0,
-          right: 0,
-          top: 0,
-          bottom: 0
-        },
-        series: [
-          {
-            data: this.activeOrderHistory,
-            type: 'line',
-            showSymbol: false,
-            smooth: true,
-            lineStyle: {
-              width: 2,
-              color: '#f44336'
-            },
-            areaStyle: {
-              color: {
-                type: 'linear',
-                x: 0,
-                y: 0,
-                x2: 0,
-                y2: 1,
-                colorStops: [
-                  {
-                    offset: 0,
-                    color: 'rgba(244, 67, 54, 0.5)'
-                  },
-                  {
-                    offset: 1,
-                    color: 'rgba(244, 67, 54, 0)'
-                  }
-                ]
-              }
-            }
-          }
-        ]
-      }
-    },
-    resourceColor() {
-      return (percentage) => {
-        if (percentage < 70) return '#4caf50'
-        if (percentage < 85) return '#ff9800'
-        return '#f44336'
-      }
     }
   },
   methods: {
-    getActivityIcon(type) {
-      const icons = {
-        order: 'fas fa-shopping-cart',
-        user: 'fas fa-user-plus',
-        system: 'fas fa-cogs',
-        promotion: 'fas fa-tag',
-        alert: 'fas fa-exclamation-triangle'
-      }
-      return icons[type] || 'fas fa-info-circle'
-    },
     // 添加辅助方法，确保能够处理各种API响应结构
     extractResponseData(response) {
       // 检查是否是axios响应
@@ -774,30 +536,7 @@ export default {
               return item
             })
           }
-
-          if (response.realtimeStats) {
-            this.realtimeStats = response.realtimeStats
-
-            // 更新实时图表历史数据
-            if (this.realtimeStats.onlineUsers) {
-              this.onlineUserHistory = [
-                ...this.onlineUserHistory.slice(1),
-                this.realtimeStats.onlineUsers
-              ]
-            }
-
-            if (this.realtimeStats.activeOrders) {
-              this.activeOrderHistory = [
-                ...this.activeOrderHistory.slice(1),
-                this.realtimeStats.activeOrders
-              ]
-            }
-          }
         }
-
-        // 更新调试信息
-        this.apiStatus = response ? '成功' : '失败'
-        this.apiDataKeys = Object.keys(response || {})
       } catch (err) {
         console.error('获取仪表盘数据失败:', err)
         this.error = '获取仪表盘数据失败，请稍后再试'
@@ -810,30 +549,6 @@ export default {
       this.refreshInterval = setInterval(() => {
         this.refreshData()
       }, 300000)
-
-      // 模拟实时数据更新
-      this.realtimeInterval = setInterval(() => {
-        // 更新在线用户数
-        if (this.realtimeStats.onlineUsers > 0) {
-          const randomChange = Math.floor(Math.random() * 10) - 3  // -3 到 6 的随机数
-          this.realtimeStats.onlineUsers = Math.max(500, this.realtimeStats.onlineUsers + randomChange)
-          this.onlineUserHistory.push(this.realtimeStats.onlineUsers)
-          this.onlineUserHistory.shift()
-        }
-
-        // 更新实时订单数
-        if (this.realtimeStats.activeOrders > 0) {
-          const orderChange = Math.floor(Math.random() * 5) - 2  // -2 到 2 的随机数
-          this.realtimeStats.activeOrders = Math.max(20, this.realtimeStats.activeOrders + orderChange)
-          this.activeOrderHistory.push(this.realtimeStats.activeOrders)
-          this.activeOrderHistory.shift()
-        }
-
-        // 更新系统资源使用率
-        this.realtimeStats.cpuUsage = Math.min(95, Math.max(20, this.realtimeStats.cpuUsage + (Math.random() * 6 - 3)))
-        this.realtimeStats.memoryUsage = Math.min(95, Math.max(50, this.realtimeStats.memoryUsage + (Math.random() * 4 - 2)))
-        this.realtimeStats.diskUsage = Math.min(90, Math.max(30, this.realtimeStats.diskUsage + (Math.random() * 1 - 0.5)))
-      }, 5000)  // 每5秒更新一次
     }
   },
   mounted() {
@@ -845,74 +560,102 @@ export default {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval)
     }
-    if (this.realtimeInterval) {
-      clearInterval(this.realtimeInterval)
-    }
   }
 }
 </script>
 
 <style scoped>
 .admin-dashboard {
-  padding: 20px;
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 20px 40px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.title {
-  font-size: 28px;
-  color: #333;
-  margin-bottom: 30px;
-  border-bottom: 2px solid #3f51b5;
-  padding-bottom: 10px;
-}
-
-.dashboard-summary {
-  margin-bottom: 20px;
-}
-
-.summary-title {
+.page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
 }
 
-.summary-title h2 {
-  font-size: 20px;
+.title {
+  font-size: 24px;
+  color: #333;
   margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
 .dashboard-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   margin-bottom: 30px;
 }
 
 .stat-card {
   background: white;
-  border-radius: 10px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 24px;
   display: flex;
   align-items: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border-left: 4px solid #3f51b5;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.stat-flights {
+  border-left-color: #3f51b5;
+}
+
+.stat-users {
+  border-left-color: #4caf50;
+}
+
+.stat-orders {
+  border-left-color: #ff9800;
+}
+
+.stat-revenue {
+  border-left-color: #e91e63;
+}
+
+.stat-flights .stat-icon {
+  color: #3f51b5;
+}
+
+.stat-users .stat-icon {
+  color: #4caf50;
+}
+
+.stat-orders .stat-icon {
+  color: #ff9800;
+}
+
+.stat-revenue .stat-icon {
+  color: #e91e63;
 }
 
 .stat-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 10px;
-  background: rgba(63, 81, 181, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 15px;
+  margin-right: 20px;
 }
 
 .stat-icon i {
-  font-size: 24px;
-  color: #3f51b5;
+  font-size: 36px;
 }
 
 .stat-content {
@@ -920,29 +663,36 @@ export default {
 }
 
 .stat-value {
-  font-size: 24px;
-  font-weight: bold;
+  font-size: 28px;
+  font-weight: 700;
   color: #333;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 
 .stat-label {
   font-size: 14px;
-  color: #666;
-  margin-bottom: 5px;
+  color: #888;
+  margin-bottom: 6px;
 }
 
 .stat-trend {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stat-trend i {
+  font-size: 10px;
 }
 
 .stat-trend.up {
-  color: #4caf50;
+  color: #52c41a;
 }
 
 .stat-trend.down {
-  color: #f44336;
+  color: #ff4d4f;
 }
 
 .dashboard-content {
@@ -1033,157 +783,6 @@ export default {
   height: 300px;
 }
 
-.realtime-monitoring {
-  background: white;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.realtime-monitoring h2 {
-  font-size: 18px;
-  margin-top: 0;
-  margin-bottom: 15px;
-  color: #333;
-}
-
-.monitoring-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-}
-
-.monitoring-card {
-  background: #f9f9f9;
-  border-radius: 8px;
-  padding: 15px;
-}
-
-.monitoring-card h3 {
-  font-size: 16px;
-  margin-top: 0;
-  margin-bottom: 10px;
-  color: #333;
-}
-
-.realtime-value {
-  font-size: 24px;
-  font-weight: bold;
-  color: #3f51b5;
-  margin-bottom: 10px;
-}
-
-.realtime-chart {
-  height: 100px;
-}
-
-.resource-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.resource-item {
-  margin-bottom: 5px;
-}
-
-.resource-label {
-  font-size: 14px;
-  margin-bottom: 5px;
-  color: #666;
-}
-
-.recent-activities {
-  background: white;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.recent-activities h2 {
-  font-size: 18px;
-  margin-top: 0;
-  margin-bottom: 15px;
-  color: #333;
-}
-
-.activity-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.activity-item {
-  display: flex;
-  align-items: flex-start;
-  padding: 15px;
-  border-radius: 8px;
-  background: #f9f9f9;
-  transition: background 0.2s;
-}
-
-.activity-item:hover {
-  background: #f0f0f0;
-}
-
-.activity-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 15px;
-  flex-shrink: 0;
-}
-
-.activity-order {
-  background: rgba(33, 150, 243, 0.2);
-  color: #2196f3;
-}
-
-.activity-user {
-  background: rgba(76, 175, 80, 0.2);
-  color: #4caf50;
-}
-
-.activity-system {
-  background: rgba(156, 39, 176, 0.2);
-  color: #9c27b0;
-}
-
-.activity-promotion {
-  background: rgba(255, 193, 7, 0.2);
-  color: #ffc107;
-}
-
-.activity-alert {
-  background: rgba(244, 67, 54, 0.2);
-  color: #f44336;
-}
-
-.activity-content {
-  flex: 1;
-}
-
-.activity-title {
-  font-weight: 600;
-  margin-bottom: 5px;
-}
-
-.activity-description {
-  font-size: 13px;
-  color: #666;
-  margin-bottom: 5px;
-}
-
-.activity-time {
-  font-size: 12px;
-  color: #999;
-}
-
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -1248,74 +847,21 @@ export default {
   background: #d32f2f;
 }
 
-.debug-info {
-  background: white;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin-top: 15px;
+@media (max-width: 1200px) {
+  .dashboard-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.debug-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.debug-title h3 {
-  font-size: 16px;
-  margin: 0;
-}
-
-.close-debug {
-  background: #f44336;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 5px 10px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.close-debug:hover {
-  background: #d32f2f;
-}
-
-.debug-content {
-  margin-bottom: 15px;
-}
-
-.refresh-debug {
-  background: #3f51b5;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 5px 10px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.refresh-debug:hover {
-  background: #303f9f;
-}
-
-.debug-toggle {
-  margin-top: 15px;
-  text-align: right;
-}
-
-.debug-btn {
-  background: #3f51b5;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 5px 10px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.debug-btn:hover {
-  background: #303f9f;
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

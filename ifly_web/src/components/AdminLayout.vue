@@ -43,7 +43,6 @@ export default {
                 'admin-orders': '订单管理',
                 'admin-flight-analytics': '航班数据分析',
                 'admin-revenue': '收入管理',
-                'admin-promotions': '优惠管理',
                 'admin-settings': '系统设置'
             }
 

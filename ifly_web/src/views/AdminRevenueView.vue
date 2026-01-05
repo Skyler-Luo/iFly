@@ -2,252 +2,294 @@
   <div class="admin-revenue">
     <h1 class="title">收入管理</h1>
     
-    <div class="summary-cards">
-      <div class="summary-card">
-        <div class="card-icon">
-          <i class="fas fa-money-bill-wave"></i>
-        </div>
-        <div class="card-content">
-          <div class="card-title">总收入</div>
-          <div class="card-value">¥{{ formatNumber(totalRevenue) }}</div>
-          <div class="card-trend positive">
-            <i class="fas fa-arrow-up"></i> {{ revenueTrend }}% 较上月
-          </div>
-        </div>
-      </div>
-      
-      <div class="summary-card">
-        <div class="card-icon">
-          <i class="fas fa-ticket-alt"></i>
-        </div>
-        <div class="card-content">
-          <div class="card-title">机票销量</div>
-          <div class="card-value">{{ formatNumber(ticketSales) }}</div>
-          <div class="card-trend positive">
-            <i class="fas fa-arrow-up"></i> {{ ticketSalesTrend }}% 较上月
-          </div>
-        </div>
-      </div>
-      
-      <div class="summary-card">
-        <div class="card-icon">
-          <i class="fas fa-chart-line"></i>
-        </div>
-        <div class="card-content">
-          <div class="card-title">平均票价</div>
-          <div class="card-value">¥{{ averageTicketPrice }}</div>
-          <div class="card-trend positive">
-            <i class="fas fa-arrow-up"></i> {{ averagePriceTrend }}% 较上月
-          </div>
-        </div>
-      </div>
-      
-      <div class="summary-card">
-        <div class="card-icon">
-          <i class="fas fa-percentage"></i>
-        </div>
-        <div class="card-content">
-          <div class="card-title">毛利率</div>
-          <div class="card-value">{{ grossMargin }}%</div>
-          <div class="card-trend negative">
-            <i class="fas fa-arrow-down"></i> {{ marginTrend }}% 较上月
-          </div>
-        </div>
-      </div>
+    <!-- 加载状态 -->
+    <div v-if="loading" class="loading-container">
+      <i class="el-icon-loading"></i>
+      <span>加载中...</span>
     </div>
     
-    <div class="filter-section">
-      <div class="date-filter">
-        <select v-model="timeRange" @change="updateData">
-          <option value="week">最近一周</option>
-          <option value="month">本月</option>
-          <option value="quarter">本季度</option>
-          <option value="year">今年</option>
-          <option value="custom">自定义</option>
-        </select>
+    <!-- 错误提示 -->
+    <div v-else-if="error" class="error-container">
+      <i class="fas fa-exclamation-circle"></i>
+      <span>{{ error }}</span>
+      <button class="btn-retry" @click="fetchData">重试</button>
+    </div>
+    
+    <template v-else>
+      <div class="summary-cards">
+        <div class="summary-card">
+          <div class="card-icon">
+            <i class="fas fa-money-bill-wave"></i>
+          </div>
+          <div class="card-content">
+            <div class="card-title">总收入</div>
+            <div class="card-value" v-if="totalRevenue !== null">¥{{ formatNumber(totalRevenue) }}</div>
+            <div class="card-value no-data" v-else>数据暂无</div>
+            <div class="card-trend positive" v-if="revenueTrend !== null">
+              <i :class="revenueTrend >= 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i> {{ Math.abs(revenueTrend) }}% 较上月
+            </div>
+          </div>
+        </div>
         
-        <div v-if="timeRange === 'custom'" class="custom-date">
-          <input type="date" v-model="customStartDate">
-          <span>至</span>
-          <input type="date" v-model="customEndDate">
-          <button @click="updateData">应用</button>
-        </div>
-      </div>
-      
-      <div class="route-filter">
-        <select v-model="routeFilter" @change="updateData">
-          <option value="">所有航线</option>
-          <option v-for="route in routes" :key="route.id" :value="route.id">
-            {{ route.name }}
-          </option>
-        </select>
-      </div>
-      
-      <div class="cabin-filter">
-        <select v-model="cabinFilter" @change="updateData">
-          <option value="">所有舱位</option>
-          <option value="economy">经济舱</option>
-          <option value="business">商务舱</option>
-          <option value="first">头等舱</option>
-        </select>
-      </div>
-      
-      <div class="export-button">
-        <button class="btn-export">
-          <i class="fas fa-file-export"></i> 导出数据
-        </button>
-      </div>
-    </div>
-    
-    <div class="chart-row">
-      <div class="chart-card">
-        <div class="card-header">
-          <h2>收入趋势</h2>
-          <div class="segmented-control">
-            <button 
-              v-for="option in chartViewOptions" 
-              :key="option.value" 
-              :class="['segment-button', { active: chartView === option.value }]"
-              @click="chartView = option.value"
-            >
-              {{ option.label }}
-            </button>
+        <div class="summary-card">
+          <div class="card-icon">
+            <i class="fas fa-ticket-alt"></i>
+          </div>
+          <div class="card-content">
+            <div class="card-title">机票销量</div>
+            <div class="card-value" v-if="ticketSales !== null">{{ formatNumber(ticketSales) }}</div>
+            <div class="card-value no-data" v-else>数据暂无</div>
+            <div class="card-trend positive" v-if="ticketSalesTrend !== null">
+              <i :class="ticketSalesTrend >= 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i> {{ Math.abs(ticketSalesTrend) }}% 较上月
+            </div>
           </div>
         </div>
-        <div class="chart-container revenue-chart">
-          <!-- 在实际应用中这里应使用echarts或chart.js等图表库 -->
-          <div class="mock-chart">
-            <div class="mock-bars">
-              <div 
-                v-for="(item, index) in revenueData" 
-                :key="index"
-                class="mock-bar" 
-                :style="{ height: (item.value / maxRevenue * 100) + '%' }"
+        
+        <div class="summary-card">
+          <div class="card-icon">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <div class="card-content">
+            <div class="card-title">平均票价</div>
+            <div class="card-value" v-if="averageTicketPrice !== null">¥{{ averageTicketPrice }}</div>
+            <div class="card-value no-data" v-else>数据暂无</div>
+            <div class="card-trend positive" v-if="averagePriceTrend !== null">
+              <i :class="averagePriceTrend >= 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i> {{ Math.abs(averagePriceTrend) }}% 较上月
+            </div>
+          </div>
+        </div>
+        
+        <div class="summary-card">
+          <div class="card-icon">
+            <i class="fas fa-percentage"></i>
+          </div>
+          <div class="card-content">
+            <div class="card-title">毛利率</div>
+            <div class="card-value" v-if="grossMargin !== null">{{ grossMargin }}%</div>
+            <div class="card-value no-data" v-else>数据暂无</div>
+            <div class="card-trend" :class="marginTrend >= 0 ? 'positive' : 'negative'" v-if="marginTrend !== null">
+              <i :class="marginTrend >= 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i> {{ Math.abs(marginTrend) }}% 较上月
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <div class="date-filter">
+          <select v-model="timeRange" @change="updateData">
+            <option value="week">最近一周</option>
+            <option value="month">本月</option>
+            <option value="quarter">本季度</option>
+            <option value="year">今年</option>
+            <option value="custom">自定义</option>
+          </select>
+          
+          <div v-if="timeRange === 'custom'" class="custom-date">
+            <input type="date" v-model="customStartDate">
+            <span>至</span>
+            <input type="date" v-model="customEndDate">
+            <button @click="updateData">应用</button>
+          </div>
+        </div>
+        
+        <div class="route-filter">
+          <select v-model="routeFilter" @change="updateData">
+            <option value="">所有航线</option>
+            <option v-for="route in routes" :key="route.id" :value="route.id">
+              {{ route.name }}
+            </option>
+          </select>
+        </div>
+        
+        <div class="cabin-filter">
+          <select v-model="cabinFilter" @change="updateData">
+            <option value="">所有舱位</option>
+            <option value="economy">经济舱</option>
+            <option value="business">商务舱</option>
+            <option value="first">头等舱</option>
+          </select>
+        </div>
+        
+        <div class="export-button">
+          <button class="btn-export">
+            <i class="fas fa-file-export"></i> 导出数据
+          </button>
+        </div>
+      </div>
+      
+      <div class="chart-row">
+        <div class="chart-card">
+          <div class="card-header">
+            <h2>收入趋势</h2>
+            <div class="segmented-control">
+              <button 
+                v-for="option in chartViewOptions" 
+                :key="option.value" 
+                :class="['segment-button', { active: chartView === option.value }]"
+                @click="chartView = option.value"
               >
-                <div class="bar-tooltip">¥{{ formatNumber(item.value) }}</div>
+                {{ option.label }}
+              </button>
+            </div>
+          </div>
+          <div class="chart-container revenue-chart">
+            <div v-if="revenueData.length > 0" class="mock-chart">
+              <div class="mock-bars">
+                <div 
+                  v-for="(item, index) in revenueData" 
+                  :key="index"
+                  class="mock-bar" 
+                  :style="{ height: (item.value / maxRevenue * 100) + '%' }"
+                >
+                  <div class="bar-tooltip">¥{{ formatNumber(item.value) }}</div>
+                </div>
+              </div>
+              <div class="chart-labels">
+                <span v-for="(item, index) in revenueData" :key="'label-'+index">{{ item.label }}</span>
               </div>
             </div>
-            <div class="chart-labels">
-              <span v-for="(item, index) in revenueData" :key="'label-'+index">{{ item.label }}</span>
+            <div v-else class="no-data-chart">
+              <i class="fas fa-chart-bar"></i>
+              <span>数据暂无</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="chart-card">
+          <div class="card-header">
+            <h2>舱位收入分布</h2>
+          </div>
+          <div class="chart-container distribution-chart">
+            <div v-if="cabinDistribution.length > 0">
+              <div class="pie-chart">
+                <div class="pie-segments">
+                  <div 
+                    v-for="(segment, index) in cabinDistribution" 
+                    :key="index" 
+                    class="pie-segment"
+                    :style="getPieSegmentStyle(segment, index)"
+                  ></div>
+                </div>
+              </div>
+              <div class="chart-legend">
+                <div class="legend-item" v-for="(item, index) in cabinDistribution" :key="index">
+                  <div class="color-indicator" :style="{ backgroundColor: pieColors[index] }"></div>
+                  <div class="legend-label">{{ getCabinName(item.cabin) }}</div>
+                  <div class="legend-value">¥{{ formatNumber(item.value) }} ({{ item.percentage }}%)</div>
+                </div>
+              </div>
+            </div>
+            <div v-else class="no-data-chart">
+              <i class="fas fa-chart-pie"></i>
+              <span>数据暂无</span>
             </div>
           </div>
         </div>
       </div>
       
-      <div class="chart-card">
-        <div class="card-header">
-          <h2>舱位收入分布</h2>
-        </div>
-        <div class="chart-container distribution-chart">
-          <div class="pie-chart">
-            <div class="pie-segments">
-              <div 
-                v-for="(segment, index) in cabinDistribution" 
-                :key="index" 
-                class="pie-segment"
-                :style="getPieSegmentStyle(segment, index)"
-              ></div>
+      <div class="revenue-tables">
+        <div class="table-header">
+          <h2>航线收入详情</h2>
+          <div class="table-actions">
+            <div class="search-box">
+              <input type="text" v-model="searchQuery" placeholder="搜索航线...">
+              <i class="fas fa-search"></i>
+            </div>
+            <div class="sort-control">
+              <label>排序：</label>
+              <select v-model="sortBy">
+                <option value="revenue">收入</option>
+                <option value="tickets">票数</option>
+                <option value="avgPrice">平均票价</option>
+                <option value="growth">增长率</option>
+              </select>
+              <button class="sort-button" @click="toggleSortOrder">
+                <i :class="sortOrder === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'"></i>
+              </button>
             </div>
           </div>
-          <div class="chart-legend">
-            <div class="legend-item" v-for="(item, index) in cabinDistribution" :key="index">
-              <div class="color-indicator" :style="{ backgroundColor: pieColors[index] }"></div>
-              <div class="legend-label">{{ getCabinName(item.cabin) }}</div>
-              <div class="legend-value">¥{{ formatNumber(item.value) }} ({{ item.percentage }}%)</div>
-            </div>
+        </div>
+        
+        <div class="table-container">
+          <table class="revenue-table" v-if="routeRevenue.length > 0">
+            <thead>
+              <tr>
+                <th>航线</th>
+                <th>收入</th>
+                <th>票数</th>
+                <th>平均票价</th>
+                <th>同期增长</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="route in sortedRouteRevenue" :key="route.id">
+                <td>{{ route.name }}</td>
+                <td class="value-cell">¥{{ formatNumber(route.revenue) }}</td>
+                <td class="value-cell">{{ route.tickets }}</td>
+                <td class="value-cell">¥{{ route.avgPrice }}</td>
+                <td class="trend-cell" :class="getTrendClass(route.growth)">
+                  <i :class="route.growth >= 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+                  {{ Math.abs(route.growth) }}%
+                </td>
+                <td class="action-cell">
+                  <button class="action-btn" @click="showRouteDetails(route.id)">
+                    <i class="fas fa-chart-bar"></i> 详情
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-else class="no-data-table">
+            <i class="fas fa-inbox"></i>
+            <span>数据暂无</span>
           </div>
         </div>
-      </div>
-    </div>
-    
-    <div class="revenue-tables">
-      <div class="table-header">
-        <h2>航线收入详情</h2>
-        <div class="table-actions">
-          <div class="search-box">
-            <input type="text" v-model="searchQuery" placeholder="搜索航线...">
-            <i class="fas fa-search"></i>
-          </div>
-          <div class="sort-control">
-            <label>排序：</label>
-            <select v-model="sortBy">
-              <option value="revenue">收入</option>
-              <option value="tickets">票数</option>
-              <option value="avgPrice">平均票价</option>
-              <option value="growth">增长率</option>
-            </select>
-            <button class="sort-button" @click="toggleSortOrder">
-              <i :class="sortOrder === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'"></i>
-            </button>
-          </div>
+        
+        <div class="pagination" v-if="routeRevenue.length > 0">
+          <button class="page-btn" :disabled="currentPage === 1" @click="currentPage--">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <div class="page-info">{{ currentPage }} / {{ totalPages }}</div>
+          <button class="page-btn" :disabled="currentPage === totalPages" @click="currentPage++">
+            <i class="fas fa-chevron-right"></i>
+          </button>
         </div>
       </div>
-      
-      <div class="table-container">
-        <table class="revenue-table">
-          <thead>
-            <tr>
-              <th>航线</th>
-              <th>收入</th>
-              <th>票数</th>
-              <th>平均票价</th>
-              <th>同期增长</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="route in sortedRouteRevenue" :key="route.id">
-              <td>{{ route.name }}</td>
-              <td class="value-cell">¥{{ formatNumber(route.revenue) }}</td>
-              <td class="value-cell">{{ route.tickets }}</td>
-              <td class="value-cell">¥{{ route.avgPrice }}</td>
-              <td class="trend-cell" :class="getTrendClass(route.growth)">
-                <i :class="route.growth >= 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
-                {{ Math.abs(route.growth) }}%
-              </td>
-              <td class="action-cell">
-                <button class="action-btn" @click="showRouteDetails(route.id)">
-                  <i class="fas fa-chart-bar"></i> 详情
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      
-      <div class="pagination">
-        <button class="page-btn" :disabled="currentPage === 1" @click="currentPage--">
-          <i class="fas fa-chevron-left"></i>
-        </button>
-        <div class="page-info">{{ currentPage }} / {{ totalPages }}</div>
-        <button class="page-btn" :disabled="currentPage === totalPages" @click="currentPage++">
-          <i class="fas fa-chevron-right"></i>
-        </button>
-      </div>
-    </div>
+    </template>
   </div>
 </template>
 
+
 <script>
+import api from '@/services/api'
+
 export default {
   name: 'AdminRevenueView',
   data() {
     return {
-      totalRevenue: 3452980,
-      revenueTrend: 8.5,
-      ticketSales: 24856,
-      ticketSalesTrend: 5.2,
-      averageTicketPrice: 1389,
-      averagePriceTrend: 3.1,
-      grossMargin: 42.8,
-      marginTrend: 1.2,
+      // 加载状态
+      loading: false,
+      error: null,
       
+      // 汇总数据
+      totalRevenue: null,
+      revenueTrend: null,
+      ticketSales: null,
+      ticketSalesTrend: null,
+      averageTicketPrice: null,
+      averagePriceTrend: null,
+      grossMargin: null,
+      marginTrend: null,
+      
+      // 筛选条件
       timeRange: 'month',
       customStartDate: '',
       customEndDate: '',
       routeFilter: '',
       cabinFilter: '',
       
+      // 图表视图
       chartView: 'monthly',
       chartViewOptions: [
         { label: '日视图', value: 'daily' },
@@ -255,41 +297,20 @@ export default {
         { label: '月视图', value: 'monthly' }
       ],
       
-      revenueData: [
-        { label: '1月', value: 280000 },
-        { label: '2月', value: 230000 },
-        { label: '3月', value: 310000 },
-        { label: '4月', value: 340000 },
-        { label: '5月', value: 380000 },
-        { label: '6月', value: 450000 },
-        { label: '7月', value: 520000 },
-        { label: '8月', value: 480000 }
-      ],
+      // 收入趋势数据
+      revenueData: [],
       
-      cabinDistribution: [
-        { cabin: 'economy', value: 1960000, percentage: 56.8 },
-        { cabin: 'business', value: 982000, percentage: 28.4 },
-        { cabin: 'first', value: 510980, percentage: 14.8 }
-      ],
-      
+      // 舱位分布数据
+      cabinDistribution: [],
       pieColors: ['#4CAF50', '#2196F3', '#FF9800'],
       
-      routes: [
-        { id: 1, name: '北京 - 上海' },
-        { id: 2, name: '广州 - 北京' },
-        { id: 3, name: '深圳 - 成都' },
-        { id: 4, name: '上海 - 广州' },
-        { id: 5, name: '成都 - 杭州' }
-      ],
+      // 航线列表
+      routes: [],
       
-      routeRevenue: [
-        { id: 1, name: '北京 - 上海', revenue: 980000, tickets: 7245, avgPrice: 1352, growth: 12.5 },
-        { id: 2, name: '广州 - 北京', revenue: 750000, tickets: 5120, avgPrice: 1465, growth: 8.3 },
-        { id: 3, name: '深圳 - 成都', revenue: 620000, tickets: 4560, avgPrice: 1360, growth: -2.1 },
-        { id: 4, name: '上海 - 广州', revenue: 580000, tickets: 4210, avgPrice: 1378, growth: 5.7 },
-        { id: 5, name: '成都 - 杭州', revenue: 522980, tickets: 3721, avgPrice: 1405, growth: 7.2 }
-      ],
+      // 航线收入数据
+      routeRevenue: [],
       
+      // 表格控制
       searchQuery: '',
       sortBy: 'revenue',
       sortOrder: 'desc',
@@ -299,99 +320,227 @@ export default {
   },
   computed: {
     maxRevenue() {
-      return Math.max(...this.revenueData.map(item => item.value));
+      if (this.revenueData.length === 0) return 1
+      return Math.max(...this.revenueData.map(item => item.value)) || 1
     },
     filteredRouteRevenue() {
       return this.routeRevenue.filter(route => {
-        return route.name.toLowerCase().includes(this.searchQuery.toLowerCase());
-      });
+        return route.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+      })
     },
     sortedRouteRevenue() {
       const sorted = [...this.filteredRouteRevenue].sort((a, b) => {
-        let valA = a[this.sortBy];
-        let valB = b[this.sortBy];
+        let valA = a[this.sortBy]
+        let valB = b[this.sortBy]
         
         if (this.sortOrder === 'asc') {
-          return valA - valB;
+          return valA - valB
         } else {
-          return valB - valA;
+          return valB - valA
         }
-      });
+      })
       
       // 分页
-      const start = (this.currentPage - 1) * this.itemsPerPage;
-      const end = start + this.itemsPerPage;
-      return sorted.slice(start, end);
+      const start = (this.currentPage - 1) * this.itemsPerPage
+      const end = start + this.itemsPerPage
+      return sorted.slice(start, end)
     },
     totalPages() {
-      return Math.ceil(this.filteredRouteRevenue.length / this.itemsPerPage);
+      return Math.max(1, Math.ceil(this.filteredRouteRevenue.length / this.itemsPerPage))
     }
   },
   methods: {
     formatNumber(num) {
-      return num.toLocaleString();
+      if (num === null || num === undefined) return '0'
+      return Number(num).toLocaleString()
     },
-    updateData() {
-      console.log('更新数据：', {
-        timeRange: this.timeRange,
-        routeFilter: this.routeFilter,
-        cabinFilter: this.cabinFilter
-      });
-      // 在实际应用中，这里应该调用API获取新的数据
-    },
-    getPieSegmentStyle(segment, index) {
-      // 计算饼图分段的样式
-      const color = this.pieColors[index % this.pieColors.length];
+    
+    // 获取日期范围参数
+    getDateParams() {
+      const today = new Date()
+      let startDate, endDate
       
-      // 计算分段的起始和结束角度
-      let startPercent = 0;
-      for (let i = 0; i < index; i++) {
-        startPercent += this.cabinDistribution[i].percentage;
+      switch (this.timeRange) {
+        case 'week':
+          startDate = new Date(today)
+          startDate.setDate(today.getDate() - 7)
+          endDate = today
+          break
+        case 'month':
+          startDate = new Date(today.getFullYear(), today.getMonth(), 1)
+          endDate = today
+          break
+        case 'quarter':
+          startDate = new Date(today.getFullYear(), Math.floor(today.getMonth() / 3) * 3, 1)
+          endDate = today
+          break
+        case 'year':
+          startDate = new Date(today.getFullYear(), 0, 1)
+          endDate = today
+          break
+        case 'custom':
+          startDate = this.customStartDate ? new Date(this.customStartDate) : null
+          endDate = this.customEndDate ? new Date(this.customEndDate) : null
+          break
+        default:
+          startDate = new Date(today.getFullYear(), today.getMonth(), 1)
+          endDate = today
       }
       
-      const startAngle = startPercent * 3.6; // 将百分比转换为角度
-      const endAngle = startAngle + segment.percentage * 3.6;
+      return {
+        start_date: startDate ? startDate.toISOString().split('T')[0] : undefined,
+        end_date: endDate ? endDate.toISOString().split('T')[0] : undefined
+      }
+    },
+    
+    async fetchData() {
+      this.loading = true
+      this.error = null
+      
+      try {
+        const params = this.getDateParams()
+        const response = await api.admin.analytics.getRevenueAnalytics(params)
+        
+        // 处理返回数据
+        this.processRevenueData(response)
+      } catch (err) {
+        console.error('获取收入数据失败:', err)
+        this.error = err.message || '获取数据失败，请稍后重试'
+        // 清空数据
+        this.clearData()
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    processRevenueData(data) {
+      // 总收入
+      this.totalRevenue = data.total_revenue || null
+      
+      // 计算平均票价（如果有订单数量）
+      if (data.payment_methods && data.payment_methods.length > 0) {
+        const totalOrders = data.payment_methods.reduce((sum, m) => sum + (m.count || 0), 0)
+        this.ticketSales = totalOrders
+        if (totalOrders > 0 && this.totalRevenue) {
+          this.averageTicketPrice = Math.round(this.totalRevenue / totalOrders)
+        }
+      }
+      
+      // 处理月度趋势数据
+      if (data.monthly_trend && data.monthly_trend.length > 0) {
+        this.revenueData = data.monthly_trend.map(item => ({
+          label: item.month ? item.month.substring(5) + '月' : '',
+          value: item.revenue || 0
+        }))
+        
+        // 计算趋势（对比最近两个月）
+        if (data.monthly_trend.length >= 2) {
+          const lastMonth = data.monthly_trend[data.monthly_trend.length - 1]
+          const prevMonth = data.monthly_trend[data.monthly_trend.length - 2]
+          if (prevMonth.revenue && prevMonth.revenue > 0) {
+            this.revenueTrend = Math.round(((lastMonth.revenue - prevMonth.revenue) / prevMonth.revenue) * 100 * 10) / 10
+          }
+        }
+      } else {
+        this.revenueData = []
+      }
+      
+      // 处理支付方式数据（暂时用于舱位分布展示）
+      if (data.payment_methods && data.payment_methods.length > 0) {
+        const total = data.payment_methods.reduce((sum, m) => sum + (m.revenue || 0), 0)
+        this.cabinDistribution = data.payment_methods.slice(0, 3).map((method, index) => ({
+          cabin: ['economy', 'business', 'first'][index] || 'economy',
+          value: method.revenue || 0,
+          percentage: total > 0 ? Math.round((method.revenue / total) * 100 * 10) / 10 : 0
+        }))
+      } else {
+        this.cabinDistribution = []
+      }
+      
+      // 航线收入数据（从 route_revenue 获取，如果后端支持）
+      // 目前后端 RevenueAnalytics 不返回航线数据，保持为空
+      this.routeRevenue = []
+      this.routes = []
+    },
+    
+    clearData() {
+      this.totalRevenue = null
+      this.revenueTrend = null
+      this.ticketSales = null
+      this.ticketSalesTrend = null
+      this.averageTicketPrice = null
+      this.averagePriceTrend = null
+      this.grossMargin = null
+      this.marginTrend = null
+      this.revenueData = []
+      this.cabinDistribution = []
+      this.routeRevenue = []
+      this.routes = []
+    },
+    
+    updateData() {
+      this.currentPage = 1
+      this.fetchData()
+    },
+    
+    getPieSegmentStyle(segment, index) {
+      const color = this.pieColors[index % this.pieColors.length]
+      
+      let startPercent = 0
+      for (let i = 0; i < index; i++) {
+        startPercent += this.cabinDistribution[i].percentage
+      }
+      
+      const startAngle = startPercent * 3.6
+      const endAngle = startAngle + segment.percentage * 3.6
       
       return {
         background: `conic-gradient(${color} ${startAngle}deg, ${color} ${endAngle}deg, transparent ${endAngle}deg)`
-      };
+      }
     },
+    
     getCabinName(cabinCode) {
       const names = {
         'economy': '经济舱',
         'business': '商务舱',
         'first': '头等舱'
-      };
-      return names[cabinCode] || cabinCode;
+      }
+      return names[cabinCode] || cabinCode
     },
+    
     toggleSortOrder() {
-      this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+      this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc'
     },
+    
     getTrendClass(value) {
-      return value >= 0 ? 'trend-up' : 'trend-down';
+      return value >= 0 ? 'trend-up' : 'trend-down'
     },
+    
     showRouteDetails(routeId) {
-      console.log('查看航线详情:', routeId);
-      // 在实际应用中，这里应该跳转到航线详情页或打开详情模态框
+      console.log('查看航线详情:', routeId)
     }
   },
   mounted() {
-    // 设置默认自定义日期为当前月份的第一天和最后一天
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    // 设置默认自定义日期
+    const today = new Date()
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1)
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0)
     
-    this.customStartDate = firstDay.toISOString().split('T')[0];
-    this.customEndDate = lastDay.toISOString().split('T')[0];
+    this.customStartDate = firstDay.toISOString().split('T')[0]
+    this.customEndDate = lastDay.toISOString().split('T')[0]
+    
+    // 获取数据
+    this.fetchData()
   }
 }
 </script>
 
+
 <style scoped>
 .admin-revenue {
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+  padding: 20px 40px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .title {
@@ -400,6 +549,39 @@ export default {
   margin-bottom: 20px;
   border-bottom: 2px solid #3f51b5;
   padding-bottom: 10px;
+}
+
+.loading-container,
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.loading-container i,
+.error-container i {
+  font-size: 48px;
+  color: #999;
+  margin-bottom: 16px;
+}
+
+.error-container i {
+  color: #F44336;
+}
+
+.btn-retry {
+  margin-top: 16px;
+  padding: 8px 24px;
+  background-color: #3f51b5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 .summary-cards {
@@ -466,6 +648,11 @@ export default {
   font-weight: bold;
   color: #333;
   margin-bottom: 5px;
+}
+
+.card-value.no-data {
+  color: #999;
+  font-size: 16px;
 }
 
 .card-trend {
@@ -606,6 +793,22 @@ export default {
   position: relative;
 }
 
+.no-data-chart,
+.no-data-table {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #999;
+}
+
+.no-data-chart i,
+.no-data-table i {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
 .mock-chart {
   height: 250px;
   display: flex;
@@ -628,6 +831,7 @@ export default {
   border-radius: 4px 4px 0 0;
   position: relative;
   transition: height 0.3s;
+  min-height: 4px;
 }
 
 .mock-bar:hover {
@@ -783,6 +987,7 @@ export default {
 
 .table-container {
   overflow-x: auto;
+  min-height: 200px;
 }
 
 .revenue-table {
@@ -896,4 +1101,4 @@ export default {
     width: 100%;
   }
 }
-</style> 
+</style>

@@ -84,7 +84,7 @@ export default {
             }
 
             // 调用API获取消息数据
-            api.messages.getMessages(params)
+            api.userMessages.getMessages(params)
                 .then(response => {
                     console.log('API 请求参数:', params)
                     console.log('API 响应:', response)
@@ -155,7 +155,7 @@ export default {
             if (message) {
                 const newReadStatus = !message.isRead
 
-                api.messages.markAsRead(messageId, newReadStatus)
+                api.userMessages.markAsRead(messageId, newReadStatus)
                     .then(() => {
                         message.isRead = newReadStatus
                         ElMessage({
@@ -173,7 +173,7 @@ export default {
 
         // 处理删除消息
         const handleDeleteMessage = (messageId) => {
-            api.messages.deleteMessage(messageId)
+            api.userMessages.deleteMessage(messageId)
                 .then(() => {
                     const index = messages.value.findIndex(msg => msg.id === messageId)
                     if (index !== -1) {
@@ -199,7 +199,7 @@ export default {
                 return
             }
 
-            api.messages.markAllAsRead()
+            api.userMessages.markAllAsRead()
                 .then(() => {
                     messages.value = messages.value.map(msg => ({ ...msg, isRead: true }))
                     ElMessage({
@@ -221,7 +221,7 @@ export default {
                 return
             }
 
-            api.messages.deleteMultiple(selectedMessages.value)
+            api.userMessages.deleteMultiple(selectedMessages.value)
                 .then(() => {
                     const selectedIds = selectedMessages.value
                     messages.value = messages.value.filter(msg => !selectedIds.includes(msg.id))
@@ -270,9 +270,10 @@ export default {
 
 <style scoped>
 .notification-container {
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 0 20px;
+    width: 100%;
+    margin: 0;
+    padding: 20px 40px;
+    box-sizing: border-box;
 }
 
 .notification-card {

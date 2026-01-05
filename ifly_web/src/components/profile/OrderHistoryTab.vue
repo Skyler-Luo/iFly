@@ -6,8 +6,8 @@
                 <el-option label="全部订单" value="" />
                 <el-option label="待支付" value="PENDING" />
                 <el-option label="已支付" value="PAID" />
+                <el-option label="已完成" value="COMPLETED" />
                 <el-option label="已取消" value="CANCELLED" />
-                <el-option label="已退款" value="REFUNDED" />
             </el-select>
         </div>
 
@@ -125,7 +125,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowRight, User } from '@element-plus/icons-vue'
-// import api from '@/services/api' // 暂时不使用API
+import api from '@/services/api'
 
 export default {
     name: 'OrderHistoryTab',
@@ -146,102 +146,56 @@ export default {
         const currentOrder = ref(null)
 
         // 获取订单列表
-        const fetchOrders = () => {
+        const fetchOrders = async () => {
             loading.value = true
 
-            // 使用模拟数据（因为API尚未接入）
-            setTimeout(() => {
-                orders.value = [
-                    {
-                        id: 1,
-                        order_number: 'ORD202406200001',
-                        created_at: '2024-06-20 10:30:00',
-                        status: 'PAID',
-                        total_amount: 2580,
-                        flight_info: {
-                            departure_city: '上海',
-                            departure_airport: '虹桥国际机场',
-                            departure_time: '2024-07-10 08:30:00',
-                            arrival_city: '北京',
-                            arrival_airport: '首都国际机场',
-                            arrival_time: '2024-07-10 10:40:00',
-                            airline: '东方航空',
-                            flight_number: 'MU5137'
-                        },
-                        passengers: [
-                            { name: '张三' },
-                            { name: '李四' }
-                        ]
-                    },
-                    {
-                        id: 2,
-                        order_number: 'ORD202406190002',
-                        created_at: '2024-06-19 15:20:00',
-                        status: 'PENDING',
-                        total_amount: 1290,
-                        flight_info: {
-                            departure_city: '广州',
-                            departure_airport: '白云国际机场',
-                            departure_time: '2024-07-15 14:20:00',
-                            arrival_city: '成都',
-                            arrival_airport: '双流国际机场',
-                            arrival_time: '2024-07-15 16:45:00',
-                            airline: '南方航空',
-                            flight_number: 'CZ3456'
-                        },
-                        passengers: [
-                            { name: '张三' }
-                        ]
-                    },
-                    {
-                        id: 3,
-                        order_number: 'ORD202406150003',
-                        created_at: '2024-06-15 09:15:00',
-                        status: 'CANCELLED',
-                        total_amount: 3260,
-                        flight_info: {
-                            departure_city: '上海',
-                            departure_airport: '浦东国际机场',
-                            departure_time: '2024-06-30 21:10:00',
-                            arrival_city: '深圳',
-                            arrival_airport: '宝安国际机场',
-                            arrival_time: '2024-06-30 23:30:00',
-                            airline: '中国国际航空',
-                            flight_number: 'CA1234'
-                        },
-                        passengers: [
-                            { name: '张三' },
-                            { name: '李四' },
-                            { name: '王五' }
-                        ]
-                    }
-                ]
-
-                totalOrders.value = orders.value.length
-                loading.value = false
-            }, 500)
-
-            /* 实际API调用代码（暂时注释掉）
             try {
-              const params = {
-                page: currentPage.value,
-                page_size: pageSize.value
-              }
-              
-              if (orderStatus.value) {
-                params.status = orderStatus.value
-              }
-              
-              const response = await api.orders.getAll(params)
-              orders.value = response.results
-              totalOrders.value = response.count
+                const params = {
+                    page: currentPage.value,
+                    page_size: pageSize.value
+                }
+
+                if (orderStatus.value) {
+                    params.status = orderStatus.value
+                }
+
+                const response = await api.orders.getList(params)
+                
+                // 转换后端数据格式为前端展示格式
+                orders.value = (response.results || []).map(order => {
+                    // 获取第一张机票的航班信息
+                    const firstTicket = order.tickets && order.tickets[0]
+                    const flight = firstTicket?.flight || {}
+                    
+                    return {
+                        id: order.id,
+                        order_number: order.order_number,
+                        created_at: order.created_at,
+                        status: order.status?.toUpperCase() || 'PENDING',
+                        total_amount: parseFloat(order.total_price) || 0,
+                        flight_info: {
+                            departure_city: flight.departure_city || '',
+                            departure_airport: flight.departure_airport || '',
+                            departure_time: flight.departure_time || '',
+                            arrival_city: flight.arrival_city || '',
+                            arrival_airport: flight.arrival_airport || '',
+                            arrival_time: flight.arrival_time || '',
+                            airline: flight.airline || '',
+                            flight_number: flight.flight_number || ''
+                        },
+                        passengers: (order.tickets || []).map(ticket => ({
+                            name: ticket.passenger_name
+                        }))
+                    }
+                })
+                
+                totalOrders.value = response.count || 0
             } catch (error) {
-              console.error('获取订单列表失败:', error)
-              ElMessage.error('获取订单列表失败，请稍后重试')
+                console.error('获取订单列表失败:', error)
+                ElMessage.error('获取订单列表失败，请稍后重试')
             } finally {
-              loading.value = false
+                loading.value = false
             }
-            */
         }
 
         // 格式化日期
@@ -275,8 +229,9 @@ export default {
             const statusMap = {
                 'PENDING': '待支付',
                 'PAID': '已支付',
+                'COMPLETED': '已完成',
                 'CANCELLED': '已取消',
-                'REFUNDED': '已退款'
+                'CANCELED': '已取消'
             }
             return statusMap[status] || status
         }
@@ -286,8 +241,9 @@ export default {
             const typeMap = {
                 'PENDING': 'warning',
                 'PAID': 'success',
+                'COMPLETED': 'success',
                 'CANCELLED': 'info',
-                'REFUNDED': 'info'
+                'CANCELED': 'info'
             }
             return typeMap[status] || ''
         }
@@ -328,23 +284,11 @@ export default {
         }
 
         // 确认取消订单
-        const confirmCancelOrder = () => {
+        const confirmCancelOrder = async () => {
             if (!currentOrder.value || !currentOrder.value.id) return
 
             cancelling.value = true
 
-            // 模拟取消订单（因为API尚未接入）
-            setTimeout(() => {
-                const orderIndex = orders.value.findIndex(order => order.id === currentOrder.value.id)
-                if (orderIndex !== -1) {
-                    orders.value[orderIndex].status = 'CANCELLED'
-                }
-                ElMessage.success('订单取消成功')
-                cancelDialogVisible.value = false
-                cancelling.value = false
-            }, 500)
-
-            /* 实际API调用代码（暂时注释掉）
             try {
                 await api.orders.cancel(currentOrder.value.id)
                 ElMessage.success('订单取消成功')
@@ -356,7 +300,6 @@ export default {
             } finally {
                 cancelling.value = false
             }
-            */
         }
 
         onMounted(() => {

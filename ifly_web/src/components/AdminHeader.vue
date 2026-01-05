@@ -59,7 +59,7 @@
                             <i class="fas fa-cog"></i> 设置
                         </router-link>
                         <div class="dropdown-divider"></div>
-                        <button class="dropdown-item" @click="logout">
+                        <button class="dropdown-item" @click.stop="logout">
                             <i class="fas fa-sign-out-alt"></i> 退出登录
                         </button>
                     </div>
@@ -147,10 +147,26 @@ export default {
             console.log('查看全部通知')
             this.showNotifications = false
         },
-        logout() {
-            // 实际应用中，这里应该调用登出API
-            console.log('退出登录')
-            // this.$router.push('/login')
+        async logout() {
+            // 动态导入依赖
+            const tokenManager = (await import('../utils/tokenManager')).default
+            
+            try {
+                const api = (await import('../services/api')).default
+                await api.accounts.logout()
+            } catch (error) {
+                // 忽略 API 错误，继续清除本地状态
+                console.warn('登出API调用失败，继续清除本地状态:', error)
+            }
+            
+            // 清除本地认证信息
+            tokenManager.clearToken()
+            
+            // 触发登出事件
+            window.dispatchEvent(new CustomEvent('user-logout'))
+            
+            // 跳转到首页
+            this.$router.push('/')
         }
     },
     mounted() {

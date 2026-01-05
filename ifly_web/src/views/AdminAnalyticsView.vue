@@ -56,9 +56,9 @@
                         <h2>销售趋势分析</h2>
                         <div class="card-actions">
                             <el-radio-group v-model="salesTrendTimeUnit" size="small" @change="updateSalesTrend">
-                                <el-radio-button label="day">日</el-radio-button>
-                                <el-radio-button label="week">周</el-radio-button>
-                                <el-radio-button label="month">月</el-radio-button>
+                                <el-radio-button value="day">日</el-radio-button>
+                                <el-radio-button value="week">周</el-radio-button>
+                                <el-radio-button value="month">月</el-radio-button>
                             </el-radio-group>
                         </div>
                     </div>
@@ -520,18 +520,19 @@ export default {
                         name: '客户分布',
                         type: 'pie',
                         radius: ['40%', '70%'],
-                        center: ['50%', '45%'],
-                        avoidLabelOverlap: false,
+                        center: ['50%', '40%'],
+                        avoidLabelOverlap: true,
                         itemStyle: {
                             borderRadius: 10,
                             borderColor: '#fff',
                             borderWidth: 2
                         },
                         label: {
-                            show: false
+                            show: true,
+                            formatter: '{b}: {d}%'
                         },
                         labelLine: {
-                            show: false
+                            show: true
                         },
                         data: this.customerSegments
                     }
@@ -541,10 +542,36 @@ export default {
         routeMapOption() {
             return {
                 tooltip: {
-                    trigger: 'item',
-                    formatter: '{b}: {c}'
+                    trigger: 'item'
                 },
-                series: {
+                legend: {
+                    data: ['出发城市', '到达城市'],
+                    bottom: 0,
+                    left: 'center'
+                },
+                radar: {
+                    indicator: [
+                        { name: '北京', max: 5000 },
+                        { name: '上海', max: 5000 },
+                        { name: '广州', max: 5000 },
+                        { name: '成都', max: 5000 },
+                        { name: '深圳', max: 5000 },
+                        { name: '西安', max: 5000 }
+                    ],
+                    radius: '60%',
+                    center: ['50%', '45%'],
+                    axisName: {
+                        color: '#333',
+                        fontSize: 12
+                    },
+                    splitArea: {
+                        show: true,
+                        areaStyle: {
+                            color: ['#f5f5f5', '#fff']
+                        }
+                    }
+                },
+                series: [{
                     type: 'radar',
                     data: [
                         {
@@ -554,6 +581,9 @@ export default {
                                 color: 'rgba(63,81,181,0.2)'
                             },
                             lineStyle: {
+                                color: '#3f51b5'
+                            },
+                            itemStyle: {
                                 color: '#3f51b5'
                             }
                         },
@@ -565,31 +595,13 @@ export default {
                             },
                             lineStyle: {
                                 color: '#4caf50'
+                            },
+                            itemStyle: {
+                                color: '#4caf50'
                             }
                         }
-                    ],
-                    radar: {
-                        indicator: [
-                            { name: '北京', max: 5000 },
-                            { name: '上海', max: 5000 },
-                            { name: '广州', max: 5000 },
-                            { name: '成都', max: 5000 },
-                            { name: '深圳', max: 5000 },
-                            { name: '西安', max: 5000 }
-                        ],
-                        radius: '65%',
-                        axisName: {
-                            color: '#333',
-                            fontSize: 12
-                        },
-                        splitArea: {
-                            show: true,
-                            areaStyle: {
-                                color: ['#f5f5f5', '#fff']
-                            }
-                        }
-                    }
-                }
+                    ]
+                }]
             }
         },
         customerLoyaltyOption() {
@@ -597,48 +609,86 @@ export default {
                 tooltip: {
                     trigger: 'item',
                     formatter: function (params) {
-                        return params.seriesName + '<br/>' +
-                            params.marker + params.data.name + '<br/>' +
+                        if (!params.data || !params.data.value) return ''
+                        return '客户忠诚度分析<br/>' +
+                            params.marker + (params.data.name || '') + '<br/>' +
                             '忠诚度指数: ' + params.data.value[0] + '<br/>' +
-                            '平均乘机次数: ' + params.data.value[1] + '次/年<br/>' +
-                            '平均消费: ' + params.data.value[2] + '元/次'
+                            '乘机次数: ' + params.data.value[1] + '次<br/>' +
+                            '平均消费: ' + params.data.value[2] + '元'
                     }
+                },
+                legend: {
+                    data: ['低忠诚度', '中忠诚度', '高忠诚度'],
+                    bottom: 0,
+                    left: 'center'
+                },
+                grid: {
+                    left: '10%',
+                    right: '10%',
+                    bottom: '15%',
+                    top: '10%'
                 },
                 xAxis: {
                     name: '忠诚度指数',
                     nameLocation: 'center',
-                    nameGap: 30,
-                    scale: true
-                },
-                yAxis: {
-                    name: '乘机频率(次/年)',
-                    nameLocation: 'center',
-                    nameGap: 30,
-                    scale: true
-                },
-                series: [{
-                    name: '客户忠诚度分析',
-                    type: 'scatter',
-                    symbolSize: function (data) {
-                        // 根据第三个维度(消费)缩放气泡大小
-                        return Math.sqrt(data[2]) / 10;
-                    },
-                    encode: {
-                        x: 0,
-                        y: 1,
-                        tooltip: [0, 1, 2]
-                    },
-                    data: this.customerLoyalty.levels,
-                    itemStyle: {
-                        color: function (params) {
-                            // 根据忠诚度指数设置不同颜色
-                            const value = params.data.value[0]
-                            if (value < 0.3) return '#ff9800'
-                            if (value < 0.6) return '#4caf50'
-                            return '#3f51b5'
+                    nameGap: 25,
+                    type: 'value',
+                    min: 0,
+                    max: 1,
+                    splitLine: {
+                        show: true,
+                        lineStyle: {
+                            type: 'dashed'
                         }
                     }
-                }]
+                },
+                yAxis: {
+                    name: '乘机次数',
+                    nameLocation: 'center',
+                    nameGap: 35,
+                    type: 'value',
+                    splitLine: {
+                        show: true,
+                        lineStyle: {
+                            type: 'dashed'
+                        }
+                    }
+                },
+                series: [
+                    {
+                        name: '低忠诚度',
+                        type: 'scatter',
+                        symbolSize: function (data) {
+                            return Math.max(10, Math.sqrt(data[2]) / 8)
+                        },
+                        data: this.customerLoyalty.levels.filter(item => item.value[0] < 0.3),
+                        itemStyle: {
+                            color: '#ff9800'
+                        }
+                    },
+                    {
+                        name: '中忠诚度',
+                        type: 'scatter',
+                        symbolSize: function (data) {
+                            return Math.max(10, Math.sqrt(data[2]) / 8)
+                        },
+                        data: this.customerLoyalty.levels.filter(item => item.value[0] >= 0.3 && item.value[0] < 0.6),
+                        itemStyle: {
+                            color: '#4caf50'
+                        }
+                    },
+                    {
+                        name: '高忠诚度',
+                        type: 'scatter',
+                        symbolSize: function (data) {
+                            return Math.max(10, Math.sqrt(data[2]) / 8)
+                        },
+                        data: this.customerLoyalty.levels.filter(item => item.value[0] >= 0.6),
+                        itemStyle: {
+                            color: '#3f51b5'
+                        }
+                    }
+                ]
             }
         },
         onlineUserChartOption() {
@@ -806,11 +856,9 @@ export default {
             this.error = null
 
             try {
-                console.log('开始获取分析数据...')
                 // 格式化日期
                 const startDate = this.dateRange[0].toISOString().split('T')[0]
                 const endDate = this.dateRange[1].toISOString().split('T')[0]
-                console.log(`查询时间范围: ${startDate} 至 ${endDate}`)
 
                 // 并行获取所有需要的数据
                 await Promise.all([
@@ -822,9 +870,7 @@ export default {
                     this.fetchPivotData(startDate, endDate),
                     this.fetchRealtimeData()
                 ])
-                console.log('所有分析数据获取完成')
             } catch (error) {
-                console.error('获取数据分析数据失败:', error)
                 this.error = '加载数据时出错，请重试'
                 ElMessage.error('数据加载失败')
             } finally {
@@ -834,14 +880,12 @@ export default {
 
         async fetchAnalyticsOverview(startDate, endDate) {
             try {
-                console.log('获取数据概览...')
                 const response = await api.admin.analytics.getAnalyticsOverview({
                     params: {
                         start_date: startDate,
                         end_date: endDate
                     }
                 })
-                console.log('数据概览响应:', response)
 
                 if (response && response.metrics) {
                     // 更新各个业务指标
@@ -884,16 +928,9 @@ export default {
                             trend: metrics.refund_rate_change || 0
                         }
                     ]
-                    console.log('数据概览指标已更新')
-                } else {
-                    console.warn('数据概览响应无效或缺少metrics字段')
                 }
             } catch (error) {
-                console.error('获取数据概览失败:', error)
-                if (error.response) {
-                    console.error('错误状态码:', error.response.status)
-                    console.error('错误数据:', error.response.data)
-                }
+                // 静默处理错误
             }
         },
 
@@ -981,13 +1018,11 @@ export default {
 
         async fetchPivotData(startDate, endDate) {
             try {
-                const response = await api.admin.analytics.getPivotData({
-                    params: {
-                        start_date: startDate,
-                        end_date: endDate,
-                        dimension: this.pivotDimension,
-                        metric: this.pivotMetric
-                    }
+                const response = await api.admin.analytics.getPivotTableData({
+                    start_date: startDate,
+                    end_date: endDate,
+                    dimension: this.pivotDimension,
+                    metric: this.pivotMetric
                 })
 
                 if (response && response.data) {
@@ -1039,7 +1074,7 @@ export default {
             this.fetchRealtimeData()
         }, 60000)  // 每分钟刷新一次
     },
-    beforeDestroy() {
+    beforeUnmount() {
         // 清除定时器
         if (this.realtimeDataInterval) {
             clearInterval(this.realtimeDataInterval)
@@ -1050,9 +1085,9 @@ export default {
 
 <style scoped>
 .admin-analytics {
-    padding: 20px;
-    max-width: 1600px;
-    margin: 0 auto;
+    padding: 20px 40px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .page-header {

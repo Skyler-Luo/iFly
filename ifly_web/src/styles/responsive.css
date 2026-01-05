@@ -1,0 +1,413 @@
+/**
+ * 统一的响应式设计样式
+ * 提供一致的断点和移动端适配
+ */
+
+/* CSS 自定义属性定义 */
+:root {
+  /* 响应式断点 */
+  --mobile-max: 768px;
+  --tablet-max: 1024px;
+  --desktop-min: 1025px;
+  
+  /* 触摸友好的最小尺寸 */
+  --touch-target-min: 44px;
+  
+  /* 间距系统 */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-xxl: 48px;
+}
+
+/* 通用响应式容器 */
+.container-responsive {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+}
+
+@media (max-width: 768px) {
+  .container-responsive {
+    padding: 0 var(--space-sm);
+  }
+}
+
+/* 触摸友好的按钮 */
+.btn-touch-friendly {
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+  padding: var(--space-sm) var(--space-md);
+}
+
+/* 触摸目标最小尺寸样式 - Requirements 5.4 */
+.touch-target {
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+}
+
+/* 移动端触摸目标增强 */
+@media (max-width: 768px) {
+  /* 所有可交互元素的最小触摸尺寸 */
+  .touch-target,
+  .btn-touch-friendly,
+  button.touch-enhanced,
+  input.touch-enhanced,
+  select.touch-enhanced,
+  a.touch-enhanced {
+    min-height: var(--touch-target-min);
+    min-width: var(--touch-target-min);
+  }
+  
+  /* 表单输入框触摸优化 */
+  .form-touch-friendly input,
+  .form-touch-friendly select,
+  .form-touch-friendly textarea,
+  .form-touch-friendly button {
+    min-height: var(--touch-target-min);
+    font-size: 16px; /* 防止 iOS 自动缩放 */
+  }
+  
+  /* Element Plus 组件触摸优化 */
+  .el-input__inner,
+  .el-select .el-input__inner,
+  .el-button {
+    min-height: var(--touch-target-min) !important;
+  }
+  
+  /* 链接和按钮的触摸区域扩展 */
+  .touch-area-expand {
+    position: relative;
+  }
+  
+  .touch-area-expand::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    bottom: -8px;
+    left: -8px;
+  }
+}
+
+/* 响应式文本 */
+.text-responsive-lg {
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.text-responsive-md {
+  font-size: 1.5rem;
+  line-height: 1.3;
+}
+
+.text-responsive-sm {
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .text-responsive-lg {
+    font-size: 1.5rem;
+  }
+  
+  .text-responsive-md {
+    font-size: 1.25rem;
+  }
+  
+  .text-responsive-sm {
+    font-size: 0.875rem;
+  }
+}
+
+/* 响应式网格 */
+.grid-responsive {
+  display: grid;
+  gap: var(--space-md);
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+/* 多列布局容器 */
+.multi-column-layout {
+  display: grid;
+  gap: var(--space-lg);
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.multi-column-layout-2 {
+  display: grid;
+  gap: var(--space-lg);
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.multi-column-layout-4 {
+  display: grid;
+  gap: var(--space-lg);
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* 移动端单列布局转换 - Requirements 5.1 */
+@media (max-width: 768px) {
+  .grid-responsive {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+  
+  /* 多列布局在移动端转换为单列 */
+  .multi-column-layout,
+  .multi-column-layout-2,
+  .multi-column-layout-4 {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+  
+  /* Flex 布局在移动端转换为单列 */
+  .flex-to-column-mobile {
+    flex-direction: column !important;
+  }
+  
+  /* 强制单列布局 */
+  .force-single-column-mobile {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+}
+
+/* 响应式表单 */
+.form-responsive .el-form-item {
+  margin-bottom: var(--space-md);
+}
+
+@media (max-width: 768px) {
+  .form-responsive .el-form-item {
+    margin-bottom: var(--space-sm);
+  }
+  
+  .form-responsive .el-form-item__label {
+    text-align: left !important;
+    padding-bottom: var(--space-xs);
+  }
+  
+  /* 移动端表单项全宽 */
+  .form-responsive .el-input,
+  .form-responsive .el-select,
+  .form-responsive .el-date-editor {
+    width: 100% !important;
+  }
+}
+
+/* 响应式导航 */
+.nav-responsive {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+@media (max-width: 768px) {
+  .nav-responsive {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+  
+  /* 移动端隐藏不重要的导航项 */
+  .nav-responsive .nav-item-secondary {
+    display: none;
+  }
+}
+
+/* 响应式卡片 */
+.card-responsive {
+  padding: var(--space-lg);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 移动端卡片尺寸和间距优化 - Requirements 5.3 */
+@media (max-width: 768px) {
+  .card-responsive {
+    padding: var(--space-md);
+    border-radius: 8px; /* 保持圆角在 8-16px 范围内 */
+    margin-bottom: var(--space-md);
+  }
+  
+  /* 移动端卡片触摸友好间距 */
+  .card-touch-friendly {
+    padding: var(--space-lg);
+    margin-bottom: var(--space-md);
+  }
+  
+  /* 卡片内部元素间距增加 */
+  .card-responsive > * + *,
+  .card-touch-friendly > * + * {
+    margin-top: var(--space-md);
+  }
+  
+  /* 卡片内按钮触摸优化 */
+  .card-responsive button,
+  .card-responsive .el-button,
+  .card-touch-friendly button,
+  .card-touch-friendly .el-button {
+    min-height: var(--touch-target-min);
+    width: 100%;
+    margin-top: var(--space-sm);
+  }
+  
+  /* 卡片列表项间距 */
+  .card-list-mobile .card-responsive,
+  .card-list-mobile .card-touch-friendly {
+    margin-bottom: var(--space-md);
+  }
+  
+  /* 目的地卡片移动端适配 */
+  .destination-card-mobile {
+    width: 100%;
+    min-height: 200px;
+  }
+  
+  /* 航班卡片移动端适配 */
+  .flight-card-mobile {
+    padding: var(--space-md);
+    border-radius: 12px;
+  }
+  
+  .flight-card-mobile .flight-info {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+  
+  .flight-card-mobile .flight-price {
+    text-align: center;
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--color-border-light, #e0e0e0);
+  }
+}
+
+/* 响应式表格 */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+@media (max-width: 768px) {
+  .table-responsive table {
+    min-width: 600px;
+  }
+  
+  /* 移动端简化表格显示 */
+  .table-responsive .col-hide-mobile {
+    display: none;
+  }
+}
+
+/* 响应式图片 */
+.img-responsive {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* 响应式视频 */
+.video-responsive {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%; /* 16:9 比例 */
+}
+
+.video-responsive iframe,
+.video-responsive video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* 移动端优化的间距 */
+@media (max-width: 768px) {
+  .mb-mobile-sm { margin-bottom: var(--space-sm) !important; }
+  .mb-mobile-md { margin-bottom: var(--space-md) !important; }
+  .mt-mobile-sm { margin-top: var(--space-sm) !important; }
+  .mt-mobile-md { margin-top: var(--space-md) !important; }
+  .p-mobile-sm { padding: var(--space-sm) !important; }
+  .p-mobile-md { padding: var(--space-md) !important; }
+}
+
+/* 移动端显示/隐藏 */
+.show-mobile {
+  display: none;
+}
+
+.hide-mobile {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .show-mobile {
+    display: block;
+  }
+  
+  .hide-mobile {
+    display: none;
+  }
+}
+
+/* 响应式flexbox */
+.flex-responsive {
+  display: flex;
+  gap: var(--space-md);
+}
+
+@media (max-width: 768px) {
+  .flex-responsive {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+  
+  .flex-responsive.keep-row-mobile {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+/* 无障碍访问增强 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 高对比度支持 */
+@media (prefers-contrast: high) {
+  .card-responsive {
+    border: 2px solid #000;
+  }
+  
+  .btn-touch-friendly {
+    border: 2px solid currentColor;
+  }
+}
+
+/* 打印样式 */
+@media print {
+  .hide-print {
+    display: none !important;
+  }
+  
+  .container-responsive {
+    padding: 0;
+  }
+  
+  .card-responsive {
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+}

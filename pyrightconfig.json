@@ -1,0 +1,25 @@
+{
+  "include": [
+    "accounts",
+    "booking",
+    "flight",
+    "core",
+    "payments",
+    "notifications",
+    "user_messages",
+    "admin_api",
+    "analytics",
+    "iFly"
+  ],
+  "exclude": [
+    "**/migrations",
+    "**/__pycache__",
+    ".venv",
+    "venv",
+    "node_modules"
+  ],
+  "reportGeneralTypeIssues": "none",
+  "reportAttributeAccessIssue": "none",
+  "reportOptionalMemberAccess": "none",
+  "typeCheckingMode": "basic"
+}

@@ -3,28 +3,25 @@
         <h1 class="title">航班管理</h1>
 
         <div class="top-actions">
-            <div class="search-bar">
-                <input type="text" v-model="searchQuery" placeholder="搜索航班号、目的地..." />
-                <button @click="handleSearch" class="btn-search">
+            <el-input
+                v-model="searchQuery"
+                placeholder="搜索航班号、出发地、目的地..."
+                clearable
+                style="width: 300px"
+                @keyup.enter="handleSearch"
+            >
+                <template #prefix>
                     <i class="fas fa-search"></i>
-                </button>
-            </div>
+                </template>
+            </el-input>
 
-            <div class="filter-options">
-                <select v-model="statusFilter">
-                    <option value="">所有状态</option>
-                    <option value="scheduled">计划中</option>
-                    <option value="boarding">登机中</option>
-                    <option value="departed">已起飞</option>
-                    <option value="arrived">已到达</option>
-                    <option value="cancelled">已取消</option>
-                    <option value="delayed">已延误</option>
-                </select>
-
-                <div class="date-filter">
-                    <input type="date" v-model="dateFilter" />
-                </div>
-            </div>
+            <el-radio-group v-model="statusFilter" @change="handleSearch">
+                <el-radio-button value="">全部</el-radio-button>
+                <el-radio-button value="scheduled">已计划</el-radio-button>
+                <el-radio-button value="full">已满</el-radio-button>
+                <el-radio-button value="departed">已起飞</el-radio-button>
+                <el-radio-button value="canceled">已取消</el-radio-button>
+            </el-radio-group>
 
             <button @click="showAddFlightModal = true" class="btn btn-primary">
                 <i class="fas fa-plus"></i> 添加航班
@@ -42,7 +39,7 @@
             <button @click="fetchFlights" class="btn btn-primary">重新加载</button>
         </div>
 
-        <div class="data-table-container">
+        <div v-else class="data-table-container">
             <table class="data-table">
                 <thead>
                     <tr>
@@ -107,12 +104,10 @@
                                     <i class="fas fa-ellipsis-v"></i>
                                 </button>
                                 <div class="dropdown-menu">
-                                    <a @click="updateFlightStatus(flight.id, 'scheduled')">设为计划</a>
-                                    <a @click="updateFlightStatus(flight.id, 'boarding')">设为登机中</a>
+                                    <a @click="updateFlightStatus(flight.id, 'scheduled')">设为已计划</a>
+                                    <a @click="updateFlightStatus(flight.id, 'full')">设为已满</a>
                                     <a @click="updateFlightStatus(flight.id, 'departed')">设为已起飞</a>
-                                    <a @click="updateFlightStatus(flight.id, 'arrived')">设为已到达</a>
-                                    <a @click="updateFlightStatus(flight.id, 'delayed')">设为已延误</a>
-                                    <a @click="updateFlightStatus(flight.id, 'cancelled')">设为已取消</a>
+                                    <a @click="updateFlightStatus(flight.id, 'canceled')">设为已取消</a>
                                     <a @click="viewPassengers(flight.id)">查看乘客</a>
                                     <a @click="managePricing(flight.id)">管理价格</a>
                                 </div>
@@ -123,13 +118,13 @@
             </table>
 
             <div class="pagination">
-                <button @click="prevPage" :disabled="currentPage === 1" class="btn-page">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
-                <button @click="nextPage" :disabled="currentPage === totalPages" class="btn-page">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
+                <el-pagination
+                    v-model:current-page="currentPage"
+                    :page-size="pageSize"
+                    :total="processedFlights.length"
+                    layout="total, prev, pager, next"
+                    background
+                />
             </div>
         </div>
 
@@ -187,12 +182,10 @@
                             <div class="form-group">
                                 <label>状态</label>
                                 <select v-model="flightForm.status" required>
-                                    <option value="scheduled">计划中</option>
-                                    <option value="boarding">登机中</option>
+                                    <option value="scheduled">已计划</option>
+                                    <option value="full">已满</option>
                                     <option value="departed">已起飞</option>
-                                    <option value="arrived">已到达</option>
-                                    <option value="cancelled">已取消</option>
-                                    <option value="delayed">已延误</option>
+                                    <option value="canceled">已取消</option>
                                 </select>
                             </div>
 
@@ -251,7 +244,7 @@ export default {
             sortKey: '',
             sortDirection: 'asc',
             currentPage: 1,
-            pageSize: 5,
+            pageSize: 8,
             showAddFlightModal: false,
             showDeleteConfirm: false,
             selectedFlight: null,
@@ -271,82 +264,61 @@ export default {
         }
     },
     computed: {
-        filteredFlights() {
-            let result = [...this.flights]
+        // 过滤和排序后的航班（不分页）
+        processedFlights() {
+            let result = [...this.flights];
 
             // 应用搜索
             if (this.searchQuery) {
-                const query = this.searchQuery.toLowerCase()
+                const query = this.searchQuery.toLowerCase();
                 result = result.filter(flight =>
                     flight.flightNumber.toLowerCase().includes(query) ||
                     flight.departure.toLowerCase().includes(query) ||
                     flight.destination.toLowerCase().includes(query)
-                )
+                );
             }
 
             // 应用状态过滤
             if (this.statusFilter) {
-                result = result.filter(flight => flight.status === this.statusFilter)
+                result = result.filter(flight => flight.status === this.statusFilter);
             }
 
             // 应用日期过滤
             if (this.dateFilter) {
-                const filterDate = new Date(this.dateFilter).toISOString().split('T')[0]
+                const filterDate = this.dateFilter;
                 result = result.filter(flight => {
-                    const flightDate = new Date(flight.departureTime).toISOString().split('T')[0]
-                    return flightDate === filterDate
-                })
+                    const flightDate = new Date(flight.departureTime).toISOString().split('T')[0];
+                    return flightDate === filterDate;
+                });
             }
 
             // 应用排序
             if (this.sortKey) {
                 result.sort((a, b) => {
-                    let aValue = a[this.sortKey]
-                    let bValue = b[this.sortKey]
+                    let aValue = a[this.sortKey];
+                    let bValue = b[this.sortKey];
 
-                    // 日期时间排序特殊处理
                     if (this.sortKey === 'departureTime' || this.sortKey === 'arrivalTime') {
-                        aValue = new Date(aValue).getTime()
-                        bValue = new Date(bValue).getTime()
+                        aValue = new Date(aValue).getTime();
+                        bValue = new Date(bValue).getTime();
                     }
 
-                    if (aValue < bValue) return this.sortDirection === 'asc' ? -1 : 1
-                    if (aValue > bValue) return this.sortDirection === 'asc' ? 1 : -1
-                    return 0
-                })
+                    if (aValue < bValue) return this.sortDirection === 'asc' ? -1 : 1;
+                    if (aValue > bValue) return this.sortDirection === 'asc' ? 1 : -1;
+                    return 0;
+                });
             }
 
-            // 分页
-            const startIndex = (this.currentPage - 1) * this.pageSize
-            const endIndex = startIndex + this.pageSize
-            return result.slice(startIndex, endIndex)
+            return result;
+        },
+        // 分页后的航班
+        filteredFlights() {
+            const start = (this.currentPage - 1) * this.pageSize;
+            const end = start + this.pageSize;
+            return this.processedFlights.slice(start, end);
         },
         totalPages() {
-            // 应用所有过滤条件后的总页数
-            let filtered = [...this.flights]
-
-            if (this.searchQuery) {
-                const query = this.searchQuery.toLowerCase()
-                filtered = filtered.filter(flight =>
-                    flight.flightNumber.toLowerCase().includes(query) ||
-                    flight.departure.toLowerCase().includes(query) ||
-                    flight.destination.toLowerCase().includes(query)
-                )
-            }
-
-            if (this.statusFilter) {
-                filtered = filtered.filter(flight => flight.status === this.statusFilter)
-            }
-
-            if (this.dateFilter) {
-                const filterDate = new Date(this.dateFilter).toISOString().split('T')[0]
-                filtered = filtered.filter(flight => {
-                    const flightDate = new Date(flight.departureTime).toISOString().split('T')[0]
-                    return flightDate === filterDate
-                })
-            }
-
-            return Math.ceil(filtered.length / this.pageSize)
+            return Math.ceil(this.processedFlights.length / this.pageSize) || 1;
         }
     },
     methods: {
@@ -356,56 +328,38 @@ export default {
         },
         sortBy(key) {
             if (this.sortKey === key) {
-                // 如果已经按这个键排序，切换排序方向
-                this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc'
+                this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
             } else {
-                // 如果是新的排序键，设置为升序
-                this.sortKey = key
-                this.sortDirection = 'asc'
+                this.sortKey = key;
+                this.sortDirection = 'asc';
             }
         },
         getSortIconClass(key) {
-            if (this.sortKey !== key) return 'fa-sort'
-            return this.sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down'
+            if (this.sortKey !== key) return 'fa-sort';
+            return this.sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
         },
         formatDateTime(dateTimeStr) {
-            const date = new Date(dateTimeStr)
-            return `${date.toLocaleDateString()} ${date.toLocaleTimeString().substring(0, 5)}`
+            if (!dateTimeStr) return '';
+            const date = new Date(dateTimeStr);
+            return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN').substring(0, 5);
         },
         getStatusText(status) {
             const statusMap = {
-                scheduled: '计划中',
-                boarding: '登机中',
+                scheduled: '已计划',
+                full: '已满',
                 departed: '已起飞',
-                arrived: '已到达',
-                cancelled: '已取消',
-                delayed: '已延误'
-            }
-            return statusMap[status] || status
-        },
-        prevPage() {
-            if (this.currentPage > 1) {
-                this.currentPage--
-            }
-        },
-        nextPage() {
-            if (this.currentPage < this.totalPages) {
-                this.currentPage++
-            }
-        },
-        editFlight(flight) {
-            this.isEditing = true
-            this.flightForm = { ...flight }
-            this.showAddFlightModal = true
+                canceled: '已取消'
+            };
+            return statusMap[status] || status;
         },
         openDeleteConfirm(flight) {
-            this.selectedFlight = flight
-            this.showDeleteConfirm = true
+            this.selectedFlight = flight;
+            this.showDeleteConfirm = true;
         },
         closeModal() {
-            this.showAddFlightModal = false
-            this.isEditing = false
-            this.resetForm()
+            this.showAddFlightModal = false;
+            this.isEditing = false;
+            this.resetForm();
         },
         resetForm() {
             this.flightForm = {
@@ -419,7 +373,7 @@ export default {
                 aircraft: '',
                 crewCount: 6,
                 description: ''
-            }
+            };
         },
         submitFlightForm() {
             if (this.isEditing) {
@@ -439,51 +393,73 @@ export default {
                 if (this.dateFilter) params.date = this.dateFilter;
 
                 const response = await api.admin.flights.getList(params);
-                if (Array.isArray(response.data)) {
-                    this.flights = response.data;
-                } else {
-                    console.warn('API返回的数据不是数组，使用空数组');
-                    this.flights = [];
-                }
+                const data = Array.isArray(response) ? response : (response?.results || []);
+                
+                this.flights = data.map(flight => ({
+                    id: flight.id,
+                    flightNumber: flight.flight_number,
+                    departure: flight.departure_city,
+                    destination: flight.arrival_city,
+                    departureTime: flight.departure_time,
+                    arrivalTime: flight.arrival_time,
+                    status: flight.status,
+                    capacity: flight.capacity,
+                    ticketsSold: flight.capacity - flight.available_seats,
+                    aircraft: flight.aircraft_type,
+                    price: flight.price,
+                    discount: flight.discount
+                }));
 
-                console.log('获取到航班数据:', this.flights);
-
-                // 如果返回的数据为空，使用模拟数据
-                if (!this.flights || this.flights.length === 0) {
-                    console.warn('API返回的数据为空，使用默认数据');
-                    this.useDefaultData();
-                }
+                console.log('获取到航班数据:', this.flights.length, '条');
             } catch (error) {
                 console.error('获取航班数据失败:', error);
                 this.error = '获取航班数据失败，请稍后再试';
-
-                // API调用失败，确保flights是数组
                 this.flights = [];
-                // 使用模拟数据
-                this.useDefaultData();
             } finally {
                 this.isLoading = false;
             }
         },
         async addFlight() {
             try {
-                const response = await api.admin.flights.create(this.flightForm);
-                this.flights.push(response.data);
+                const payload = {
+                    flight_number: this.flightForm.flightNumber,
+                    departure_city: this.flightForm.departure,
+                    arrival_city: this.flightForm.destination,
+                    departure_time: this.flightForm.departureTime,
+                    arrival_time: this.flightForm.arrivalTime,
+                    status: this.flightForm.status,
+                    capacity: this.flightForm.capacity,
+                    available_seats: this.flightForm.capacity,
+                    aircraft_type: this.flightForm.aircraft,
+                    price: 1000,
+                    discount: 1.0
+                };
+                await api.admin.flights.create(payload);
                 this.closeModal();
-                this.fetchFlights(); // 重新获取所有航班数据
+                this.fetchFlights();
             } catch (error) {
                 console.error('添加航班失败:', error);
-                alert('添加航班失败，请稍后再试');
+                alert('添加航班失败: ' + (error.message || '请稍后再试'));
             }
         },
         async updateFlight() {
             try {
-                await api.admin.flights.update(this.selectedFlight.id, this.flightForm);
+                const payload = {
+                    flight_number: this.flightForm.flightNumber,
+                    departure_city: this.flightForm.departure,
+                    arrival_city: this.flightForm.destination,
+                    departure_time: this.flightForm.departureTime,
+                    arrival_time: this.flightForm.arrivalTime,
+                    status: this.flightForm.status,
+                    capacity: this.flightForm.capacity,
+                    aircraft_type: this.flightForm.aircraft
+                };
+                await api.admin.flights.update(this.flightForm.id, payload);
                 this.closeModal();
-                this.fetchFlights(); // 重新获取所有航班数据
+                this.fetchFlights();
             } catch (error) {
                 console.error('更新航班失败:', error);
-                alert('更新航班失败，请稍后再试');
+                alert('更新航班失败: ' + (error.message || '请稍后再试'));
             }
         },
         async deleteFlight() {
@@ -512,7 +488,6 @@ export default {
             try {
                 const response = await api.admin.flights.getPassengers(flightId);
                 console.log('乘客数据:', response.data);
-                // 这里可以添加显示乘客数据的逻辑
             } catch (error) {
                 console.error('获取乘客信息失败:', error);
                 alert('获取乘客信息失败，请稍后再试');
@@ -522,57 +497,28 @@ export default {
             try {
                 const response = await api.admin.flights.getPricing(flightId);
                 console.log('价格数据:', response.data);
-                // 这里可以添加管理价格的逻辑
             } catch (error) {
                 console.error('获取价格信息失败:', error);
                 alert('获取价格信息失败，请稍后再试');
             }
         },
-        useDefaultData() {
-            this.flights = [
-                {
-                    id: 1,
-                    flightNumber: 'CA1234',
-                    departure: '北京',
-                    destination: '上海',
-                    departureTime: '2023-07-10T08:00:00',
-                    arrivalTime: '2023-07-10T10:30:00',
-                    status: 'scheduled',
-                    capacity: 180,
-                    ticketsSold: 165,
-                    aircraft: 'Boeing 737-800',
-                    crewCount: 6,
-                    description: '往返航班，餐饮服务'
-                },
-                {
-                    id: 2,
-                    flightNumber: 'MU5678',
-                    departure: '广州',
-                    destination: '成都',
-                    departureTime: '2023-07-10T12:15:00',
-                    arrivalTime: '2023-07-10T14:45:00',
-                    status: 'boarding',
-                    capacity: 220,
-                    ticketsSold: 198,
-                    aircraft: 'Airbus A320',
-                    crewCount: 7,
-                    description: '提供机上WiFi服务'
-                },
-                {
-                    id: 3,
-                    flightNumber: 'CZ3961',
-                    departure: '深圳',
-                    destination: '北京',
-                    departureTime: '2023-07-10T15:30:00',
-                    arrivalTime: '2023-07-10T18:20:00',
-                    status: 'departed',
-                    capacity: 280,
-                    ticketsSold: 260,
-                    aircraft: 'Boeing 777-300ER',
-                    crewCount: 10,
-                    description: '宽体机，全舱娱乐系统'
-                }
-            ];
+        editFlight(flight) {
+            this.isEditing = true;
+            this.flightForm = {
+                id: flight.id,
+                flightNumber: flight.flightNumber,
+                departure: flight.departure,
+                destination: flight.destination,
+                departureTime: flight.departureTime ? flight.departureTime.slice(0, 16) : '',
+                arrivalTime: flight.arrivalTime ? flight.arrivalTime.slice(0, 16) : '',
+                status: flight.status,
+                capacity: flight.capacity,
+                aircraft: flight.aircraft,
+                crewCount: 6,
+                description: ''
+            };
+            this.selectedFlight = flight;
+            this.showAddFlightModal = true;
         }
     },
     mounted() {
@@ -583,9 +529,9 @@ export default {
 
 <style scoped>
 .admin-flights {
-    padding: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
+    padding: 20px 40px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .title {
@@ -598,57 +544,10 @@ export default {
 
 .top-actions {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.search-bar {
-    display: flex;
-    align-items: center;
-    background: white;
-    border-radius: 4px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    flex: 1;
-    max-width: 400px;
-}
-
-.search-bar input {
-    border: none;
-    padding: 10px 15px;
-    flex: 1;
-    outline: none;
-    font-size: 14px;
-}
-
-.btn-search {
-    background: #f5f5f5;
-    border: none;
-    height: 40px;
-    width: 40px;
-    cursor: pointer;
-    color: #555;
-}
-
-.btn-search:hover {
-    background: #eaeaea;
-}
-
-.filter-options {
-    display: flex;
-    gap: 10px;
-}
-
-.filter-options select,
-.filter-options input {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    outline: none;
-    font-size: 14px;
+    gap: 20px;
 }
 
 .btn {
@@ -720,7 +619,6 @@ export default {
     font-weight: 600;
     cursor: pointer;
     user-select: none;
-    position: relative;
 }
 
 .data-table th i {
@@ -736,10 +634,6 @@ export default {
     background: #f9f9f9;
 }
 
-.data-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
 .status-badge {
     padding: 4px 8px;
     border-radius: 12px;
@@ -753,9 +647,9 @@ export default {
     color: #1976d2;
 }
 
-.status-boarding {
-    background: #e8f5e9;
-    color: #2e7d32;
+.status-full {
+    background: #fff8e1;
+    color: #ff8f00;
 }
 
 .status-departed {
@@ -763,19 +657,9 @@ export default {
     color: #5e35b1;
 }
 
-.status-arrived {
-    background: #e0f2f1;
-    color: #00796b;
-}
-
-.status-cancelled {
+.status-canceled {
     background: #ffebee;
     color: #c62828;
-}
-
-.status-delayed {
-    background: #fff8e1;
-    color: #ff8f00;
 }
 
 .actions-cell {
@@ -849,34 +733,6 @@ export default {
     border-top: 1px solid #eee;
 }
 
-.btn-page {
-    background: #f5f5f5;
-    border: none;
-    width: 32px;
-    height: 32px;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: #555;
-}
-
-.btn-page:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.btn-page:not(:disabled):hover {
-    background: #e0e0e0;
-}
-
-.page-info {
-    margin: 0 15px;
-    font-size: 14px;
-    color: #666;
-}
-
 .modal {
     position: fixed;
     top: 0;
@@ -936,7 +792,6 @@ export default {
 
 .form-group {
     margin-bottom: 15px;
-    width: 100%;
 }
 
 .form-group label {
@@ -955,12 +810,16 @@ export default {
     border-radius: 4px;
     font-size: 14px;
     outline: none;
+    box-sizing: border-box;
 }
 
 .form-row {
     display: flex;
     gap: 15px;
-    margin-bottom: 15px;
+}
+
+.form-row .form-group {
+    flex: 1;
 }
 
 .form-actions {
@@ -970,28 +829,43 @@ export default {
     margin-top: 20px;
 }
 
-@media (max-width: 768px) {
-    .top-actions {
-        flex-direction: column;
-        align-items: stretch;
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    min-height: 200px;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border-left-color: #3498db;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
     }
 
-    .search-bar {
-        max-width: none;
+    100% {
+        transform: rotate(360deg);
     }
+}
 
-    .filter-options {
-        flex-direction: column;
-    }
+.error-container {
+    text-align: center;
+    padding: 2rem;
+    color: #e74c3c;
+}
 
-    .data-table {
-        display: block;
-        overflow-x: auto;
-    }
-
-    .form-row {
-        flex-direction: column;
-        gap: 0;
-    }
+.error-container i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
 }
 </style>

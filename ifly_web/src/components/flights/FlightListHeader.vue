@@ -9,10 +9,10 @@
         <div class="sort-options">
             <span>排序方式:</span>
             <el-radio-group v-model="currentSort" size="small" @change="handleSortChange">
-                <el-radio-button label="recommended">推荐</el-radio-button>
-                <el-radio-button label="price">价格</el-radio-button>
-                <el-radio-button label="departureTime">起飞时间</el-radio-button>
-                <el-radio-button label="duration">飞行时间</el-radio-button>
+                <el-radio-button value="recommended">推荐</el-radio-button>
+                <el-radio-button value="price">价格</el-radio-button>
+                <el-radio-button value="departureTime">起飞时间</el-radio-button>
+                <el-radio-button value="duration">飞行时间</el-radio-button>
             </el-radio-group>
         </div>
     </div>

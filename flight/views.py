@@ -1,25 +1,32 @@
-from django.shortcuts import render
+"""航班视图模块，提供航班查询、预订、管理等 API 接口。"""
+import logging
+from decimal import Decimal
+
 from rest_framework import viewsets, permissions, filters as drf_filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+
+from booking.models import Ticket
+from core.config.airport_data import get_airport_info, get_airline_info
+from .filters import FlightFilter
 from .models import Flight
 from .serializers import FlightSerializer
-from .filters import FlightFilter
-from booking.models import Ticket  # 导入机票模型以检查座位占用
-from decimal import Decimal  # 添加Decimal导入
-
-# Create your views here.
 
 class FlightViewSet(viewsets.ModelViewSet):
-    queryset = Flight.objects.all()
+    queryset = Flight.objects.select_related().prefetch_related('ticket_set')
     serializer_class = FlightSerializer
     filter_backends = [drf_filters.OrderingFilter, drf_filters.SearchFilter]
     filterset_class = FlightFilter
     search_fields = ['flight_number', 'departure_city', 'arrival_city', 'aircraft_type']
     ordering_fields = ['departure_time', 'arrival_time', 'price']
+    ordering = ['departure_time']
 
     def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy', 'import_csv', 'export_csv', 'depart', 'cancel_flight']:
+        admin_actions = [
+            'create', 'update', 'partial_update', 'destroy',
+            'import_csv', 'export_csv', 'depart', 'cancel_flight'
+        ]
+        if self.action in admin_actions:
             permission_classes = [permissions.IsAdminUser]
         elif self.action in ['book', 'cancel_seat']:
             permission_classes = [permissions.IsAuthenticated]
@@ -30,6 +37,8 @@ class FlightViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def search(self, request):
         """搜索航班接口，支持多种过滤条件"""
+        from django.utils import timezone
+        
         queryset = self.get_queryset()
         
         # 获取查询参数
@@ -40,7 +49,15 @@ class FlightViewSet(viewsets.ModelViewSet):
         max_price = request.query_params.get('max_price')
         available_seats = request.query_params.get('available_seats')
         
-        print(f"搜索航班: 出发城市={departure_city}, 到达城市={arrival_city}, 日期={departure_date}")
+        # 使用logging替代print
+        logger = logging.getLogger(__name__)
+        logger.info(f"搜索航班: 出发城市={departure_city}, 到达城市={arrival_city}, 日期={departure_date}")
+        
+        # 默认只显示未起飞的航班（起飞时间大于当前时间）
+        queryset = queryset.filter(departure_time__gt=timezone.now())
+        
+        # 排除已取消和已起飞的航班
+        queryset = queryset.exclude(status__in=['canceled', 'departed'])
         
         # 应用过滤
         if departure_city:
@@ -60,8 +77,8 @@ class FlightViewSet(viewsets.ModelViewSet):
         # 默认按起飞时间排序
         queryset = queryset.order_by('departure_time')
         
-        # 打印查询结果数量
-        print(f"查询结果: {queryset.count()}条航班记录")
+        # 记录查询结果数量
+        logger.info(f"查询结果: {queryset.count()}条航班记录")
         
         # 序列化结果
         serializer = self.get_serializer(queryset, many=True)
@@ -110,9 +127,21 @@ class FlightViewSet(viewsets.ModelViewSet):
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="flights.csv"'
         writer = csv.writer(response)
-        writer.writerow(['flight_number','airline_name','departure_city','arrival_city','departure_time','arrival_time','price','discount','capacity','available_seats','status','aircraft_type'])
+        headers = [
+            'flight_number', 'airline_name', 'departure_city', 'arrival_city',
+            'departure_time', 'arrival_time', 'price', 'discount',
+            'capacity', 'available_seats', 'status', 'aircraft_type'
+        ]
+        writer.writerow(headers)
         for flight in self.get_queryset():
-            writer.writerow([flight.flight_number, flight.airline_name, flight.departure_city, flight.arrival_city, flight.departure_time, flight.arrival_time, flight.price, flight.discount, flight.capacity, flight.available_seats, flight.status, flight.aircraft_type])
+            writer.writerow([
+                flight.flight_number, flight.airline_name,
+                flight.departure_city, flight.arrival_city,
+                flight.departure_time, flight.arrival_time,
+                flight.price, flight.discount,
+                flight.capacity, flight.available_seats,
+                flight.status, flight.aircraft_type
+            ])
         return response
 
     @action(detail=False, methods=['post'])
@@ -149,7 +178,13 @@ class FlightViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'])
     def seats(self, request, pk=None):
-        """返回航班座位布局及占用情况"""
+        """返回航班座位布局及占用情况
+        
+        支持 cabin_class 参数过滤舱位：
+        - first: 头等舱，1-3 排
+        - business: 商务舱，4-9 排
+        - economy: 经济舱，10-30 排（默认）
+        """
         flight = self.get_object()
         
         # 确保flight对象存在
@@ -162,6 +197,19 @@ class FlightViewSet(viewsets.ModelViewSet):
         # 根据舱位类别确定座位范围
         cabin_class = request.query_params.get('cabin_class', 'economy')
         
+        # 定义舱位对应的行范围
+        cabin_row_ranges = {
+            'first': (1, 3),      # 头等舱 1-3 排
+            'business': (4, 9),   # 商务舱 4-9 排
+            'economy': (10, 30),  # 经济舱 10-30 排
+        }
+        
+        # 获取舱位对应的行范围，默认为经济舱
+        start_row, end_row = cabin_row_ranges.get(cabin_class, cabin_row_ranges['economy'])
+        
+        # 确保行范围不超过航班实际座位排数
+        end_row = min(end_row, rows)
+        
         # 获取已占用座位
         occupied_seats = []
         tickets = Ticket.objects.filter(flight=flight, status='valid')
@@ -169,25 +217,38 @@ class FlightViewSet(viewsets.ModelViewSet):
             if ticket.seat_number:
                 occupied_seats.append(ticket.seat_number)
                 
-        # 构建座位图
+        # 构建座位图（仅包含指定舱位的行）
         seat_map = []
-        for r in range(1, rows+1):
+        for r in range(start_row, end_row + 1):
             row_list = []
             for c in range(per_row):
                 seat = f"{r}{chr(ord('A')+c)}"
                 taken = seat in occupied_seats
                 row_list.append({'seat': seat, 'taken': taken})
             seat_map.append(row_list)
+        
+        # 过滤出当前舱位范围内的已占用座位
+        cabin_occupied_seats = [
+            seat for seat in occupied_seats 
+            if self._get_seat_row(seat) >= start_row and self._get_seat_row(seat) <= end_row
+        ]
             
         # 返回前端需要的格式
         return Response({
             'flight_id': flight.id,
             'seat_map': seat_map,
-            'occupied_seats': occupied_seats,
+            'occupied_seats': cabin_occupied_seats,
             'cabin_class': cabin_class,
-            'rows': rows,
-            'columns': per_row
+            'rows': end_row - start_row + 1,
+            'columns': per_row,
+            'start_row': start_row,
+            'end_row': end_row
         })
+    
+    def _get_seat_row(self, seat_number: str) -> int:
+        """从座位号中提取行号，如 '12A' -> 12"""
+        row_str = ''.join(filter(str.isdigit, seat_number))
+        return int(row_str) if row_str else 0
 
     @action(detail=True, methods=['get'])
     def fare(self, request, pk=None):
@@ -244,29 +305,28 @@ class FlightViewSet(viewsets.ModelViewSet):
         
         cabin_price = float(flight.price) * cabin_multiplier
         
-        # 添加机场信息（实际应该从机场数据库获取）
-        departure_airport = self._get_airport_name(flight.departure_city)
-        arrival_airport = self._get_airport_name(flight.arrival_city)
-        departure_code = self._get_airport_code(flight.departure_city)
-        arrival_code = self._get_airport_code(flight.arrival_city)
+        # 使用配置文件获取机场信息
+        departure_info = get_airport_info(flight.departure_city)
+        arrival_info = get_airport_info(flight.arrival_city)
         
         airport_info = {
             'departure': {
-                'name': departure_airport,
-                'code': departure_code,
-                'terminal': 'T2',  # 模拟数据
+                'name': departure_info['name'],
+                'code': departure_info['code'],
+                'terminal': departure_info['terminal'],
                 'city': flight.departure_city
             },
             'arrival': {
-                'name': arrival_airport,
-                'code': arrival_code,
-                'terminal': 'T1',  # 模拟数据
+                'name': arrival_info['name'],
+                'code': arrival_info['code'],
+                'terminal': arrival_info['terminal'],
                 'city': flight.arrival_city
             }
         }
         
-        # 获取航空公司logo（模拟数据）
-        airline_logo = self._get_airline_logo(flight.airline_name)
+        # 使用配置文件获取航空公司信息
+        airline_info = get_airline_info(flight.airline_name)
+        airline_logo = airline_info['logo_url']
         
         # 返回详细信息，确保与前端期望的格式一致
         return Response({
@@ -312,10 +372,10 @@ class FlightViewSet(viewsets.ModelViewSet):
             'airports': airport_info,
             
             # 额外信息
-            'baggageAllowance': 20,  # 行李限额（kg）
-            'baggage_allowance': 20,
-            'mealService': True,  # 是否提供餐食
-            'meal_service': True,
+            'baggageAllowance': flight.baggage_allowance,
+            'baggage_allowance': flight.baggage_allowance,
+            'mealService': flight.meal_service,
+            'meal_service': flight.meal_service,
             'wifi': flight.aircraft_type in ['Boeing 787', 'Airbus A350'],  # 是否有WiFi
             'entertainment': flight.aircraft_type not in ['Boeing 737', 'Airbus A320'],  # 是否有娱乐系统
             'powerOutlets': True,  # 是否有电源插座
@@ -327,47 +387,3 @@ class FlightViewSet(viewsets.ModelViewSet):
             'cabinClass': cabin_class,
             'cabin_class': cabin_class
         })
-    
-    def _get_airport_name(self, city):
-        """获取城市对应的机场名称"""
-        airport_mapping = {
-            '北京': '首都国际机场',
-            '上海': '浦东国际机场',
-            '广州': '白云国际机场',
-            '深圳': '宝安国际机场',
-            '成都': '双流国际机场',
-            '杭州': '萧山国际机场',
-            '西安': '咸阳国际机场',
-            '重庆': '江北国际机场',
-            '南京': '禄口国际机场',
-            '武汉': '天河国际机场'
-        }
-        return airport_mapping.get(city, f"{city}机场")
-    
-    def _get_airport_code(self, city):
-        """获取城市对应的机场代码"""
-        code_mapping = {
-            '北京': 'PEK',
-            '上海': 'PVG',
-            '广州': 'CAN',
-            '深圳': 'SZX',
-            '成都': 'CTU',
-            '杭州': 'HGH',
-            '西安': 'XIY',
-            '重庆': 'CKG',
-            '南京': 'NKG',
-            '武汉': 'WUH'
-        }
-        return code_mapping.get(city, city[:3].upper())
-    
-    def _get_airline_logo(self, airline_name):
-        """获取航空公司Logo URL"""
-        logo_mapping = {
-            '中国国际航空': 'https://picsum.photos/id/10/200/200',
-            '东方航空': 'https://picsum.photos/id/11/200/200',
-            '南方航空': 'https://picsum.photos/id/12/200/200',
-            '海南航空': 'https://picsum.photos/id/13/200/200',
-            '四川航空': 'https://picsum.photos/id/14/200/200',
-            '厦门航空': 'https://picsum.photos/id/15/200/200'
-        }
-        return logo_mapping.get(airline_name, 'https://picsum.photos/id/10/200/200')

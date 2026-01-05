@@ -36,10 +36,6 @@
                             <div class="stat-value">{{ formatCurrency(user.totalSpent) }}</div>
                             <div class="stat-label">消费总额</div>
                         </div>
-                        <div class="stat-item">
-                            <div class="stat-value">{{ user.points }}</div>
-                            <div class="stat-label">积分</div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -86,8 +82,17 @@
             </div>
         </div>
 
-        <div class="orders-table">
-            <table>
+        <div class="orders-table" v-loading="isLoading">
+            <div v-if="error" class="error-state">
+                <i class="el-icon-warning"></i>
+                <p>{{ error }}</p>
+                <el-button type="primary" size="small" @click="loadUserData($route.params.userId)">重新加载</el-button>
+            </div>
+            <div v-else-if="!isLoading && filteredOrders.length === 0" class="empty-state">
+                <i class="el-icon-document"></i>
+                <p>暂无订单数据</p>
+            </div>
+            <table v-else>
                 <thead>
                     <tr>
                         <th>订单号</th>
@@ -167,6 +172,8 @@
 </template>
 
 <script>
+import api from '@/services/api'
+
 export default {
     name: 'AdminUserOrdersView',
     data() {
@@ -178,111 +185,19 @@ export default {
             endDate: '',
             currentPage: 1,
             perPage: 10,
+            isLoading: false,
+            error: null,
             user: {
-                id: '123456',
-                name: '张文杰',
-                email: 'zhang.wj@example.com',
-                phone: '13812345678',
-                registerDate: '2022-03-15T10:30:00',
-                orderCount: 12,
-                totalSpent: 15680.50,
-                points: 3500,
+                id: '',
+                name: '',
+                email: '',
+                phone: '',
+                registerDate: '',
+                orderCount: 0,
+                totalSpent: 0,
                 avatar: null
             },
-            orders: [
-                {
-                    id: 'ORD12345678',
-                    orderNumber: 'IF-20230510-001',
-                    createdAt: '2023-05-10T14:30:00',
-                    amount: 1580,
-                    paymentMethod: 'alipay',
-                    status: 'completed',
-                    flight: {
-                        flightNumber: 'CA1234',
-                        departureCity: '北京',
-                        arrivalCity: '上海',
-                        departureTime: '2023-05-15T09:30:00'
-                    },
-                    passengerCount: 1,
-                    passengers: [
-                        { name: '张文杰', idNumber: '110101199001011234' }
-                    ]
-                },
-                {
-                    id: 'ORD23456789',
-                    orderNumber: 'IF-20230615-002',
-                    createdAt: '2023-06-15T10:15:00',
-                    amount: 3560,
-                    paymentMethod: 'wechat',
-                    status: 'paid',
-                    flight: {
-                        flightNumber: 'CA5678',
-                        departureCity: '北京',
-                        arrivalCity: '广州',
-                        departureTime: '2023-06-20T14:20:00'
-                    },
-                    passengerCount: 2,
-                    passengers: [
-                        { name: '张文杰', idNumber: '110101199001011234' },
-                        { name: '李小红', idNumber: '110101199203033456' }
-                    ]
-                },
-                {
-                    id: 'ORD34567890',
-                    orderNumber: 'IF-20230720-003',
-                    createdAt: '2023-07-20T16:45:00',
-                    amount: 2100,
-                    paymentMethod: 'credit_card',
-                    status: 'pending',
-                    flight: {
-                        flightNumber: 'CA9012',
-                        departureCity: '上海',
-                        arrivalCity: '成都',
-                        departureTime: '2023-07-25T11:00:00'
-                    },
-                    passengerCount: 1,
-                    passengers: [
-                        { name: '张文杰', idNumber: '110101199001011234' }
-                    ]
-                },
-                {
-                    id: 'ORD45678901',
-                    orderNumber: 'IF-20230805-004',
-                    createdAt: '2023-08-05T09:20:00',
-                    amount: 5200,
-                    paymentMethod: 'alipay',
-                    status: 'cancelled',
-                    flight: {
-                        flightNumber: 'CA3456',
-                        departureCity: '广州',
-                        arrivalCity: '北京',
-                        departureTime: '2023-08-10T17:30:00'
-                    },
-                    passengerCount: 2,
-                    passengers: [
-                        { name: '张文杰', idNumber: '110101199001011234' },
-                        { name: '王小明', idNumber: '110101199505055678' }
-                    ]
-                },
-                {
-                    id: 'ORD56789012',
-                    orderNumber: 'IF-20230912-005',
-                    createdAt: '2023-09-12T13:10:00',
-                    amount: 3240,
-                    paymentMethod: 'wechat',
-                    status: 'refunded',
-                    flight: {
-                        flightNumber: 'CA7890',
-                        departureCity: '成都',
-                        arrivalCity: '深圳',
-                        departureTime: '2023-09-18T08:45:00'
-                    },
-                    passengerCount: 1,
-                    passengers: [
-                        { name: '张文杰', idNumber: '110101199001011234' }
-                    ]
-                }
-            ]
+            orders: []
         }
     },
     computed: {
@@ -293,8 +208,8 @@ export default {
             if (this.searchQuery) {
                 const query = this.searchQuery.toLowerCase();
                 result = result.filter(order =>
-                    order.orderNumber.toLowerCase().includes(query) ||
-                    order.flight.flightNumber.toLowerCase().includes(query)
+                    (order.orderNumber && order.orderNumber.toLowerCase().includes(query)) ||
+                    (order.flight && order.flight.flightNumber && order.flight.flightNumber.toLowerCase().includes(query))
                 );
             }
 
@@ -340,22 +255,23 @@ export default {
             return result;
         },
         totalPages() {
-            return Math.ceil(this.filteredOrders.length / this.perPage);
+            return Math.max(1, Math.ceil(this.filteredOrders.length / this.perPage));
         }
     },
     created() {
         // 从路由参数获取用户ID
         const userId = this.$route.params.userId;
-        // 实际应用中应该从API获取用户和订单数据
         this.loadUserData(userId);
     },
     methods: {
         formatDate(dateString) {
+            if (!dateString) return '-';
             const date = new Date(dateString);
             return date.toLocaleDateString('zh-CN');
         },
         formatCurrency(amount) {
-            return `¥${amount.toFixed(2)}`;
+            if (amount === undefined || amount === null) return '¥0.00';
+            return `¥${Number(amount).toFixed(2)}`;
         },
         getAvatarPlaceholder(name) {
             return name ? name.charAt(0).toUpperCase() : 'U';
@@ -364,10 +280,9 @@ export default {
             const methods = {
                 'alipay': '支付宝',
                 'wechat': '微信支付',
-                'credit_card': '信用卡',
-                'points': '积分兑换'
+                'credit_card': '信用卡'
             };
-            return methods[method] || method;
+            return methods[method] || method || '-';
         },
         getOrderStatusText(status) {
             const statuses = {
@@ -375,44 +290,121 @@ export default {
                 'paid': '已支付',
                 'completed': '已完成',
                 'cancelled': '已取消',
+                'canceled': '已取消',
                 'refunded': '已退款'
             };
             return statuses[status] || status;
         },
         getOrderStatusClass(status) {
+            if (status === 'canceled') return 'status-cancelled';
             return `status-${status}`;
         },
         getPassengerList(passengers) {
             if (!passengers || passengers.length === 0) return '无乘客信息';
             if (passengers.length <= 2) {
-                return passengers.map(p => p.name).join(', ');
+                return passengers.map(p => p.name || p.passenger_name).join(', ');
             }
-            return `${passengers[0].name}, ${passengers[1].name} 等${passengers.length}人`;
+            return `${passengers[0].name || passengers[0].passenger_name}, ${passengers[1].name || passengers[1].passenger_name} 等${passengers.length}人`;
         },
-        loadUserData(userId) {
-            // 在实际应用中，这里应该调用API获取用户详情和订单列表
-            console.log('正在加载用户ID:', userId);
-            // 模拟API加载
-            this.user.id = userId;
+        async loadUserData(userId) {
+            this.isLoading = true;
+            this.error = null;
+            
+            try {
+                // 获取用户信息
+                if (userId) {
+                    try {
+                        const userResponse = await api.admin.users.getDetail(userId);
+                        this.user = {
+                            id: userResponse.id || userId,
+                            name: userResponse.username || userResponse.name || '未知用户',
+                            email: userResponse.email || '-',
+                            phone: userResponse.phone || '-',
+                            registerDate: userResponse.date_joined || userResponse.registerDate || '',
+                            orderCount: 0,
+                            totalSpent: 0,
+                            avatar: userResponse.avatar || null
+                        };
+                    } catch (userError) {
+                        console.warn('获取用户信息失败，使用默认值:', userError);
+                        this.user.id = userId;
+                    }
+                }
+                
+                // 获取用户订单
+                const params = userId ? { user: userId } : {};
+                const ordersResponse = await api.orders.getList(params);
+                const ordersData = ordersResponse.results || ordersResponse || [];
+                
+                // 转换订单数据格式
+                this.orders = ordersData.map(order => this.transformOrderData(order));
+                
+                // 更新用户统计信息
+                this.user.orderCount = this.orders.length;
+                this.user.totalSpent = this.orders.reduce((sum, order) => sum + (order.amount || 0), 0);
+                
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                this.error = '加载数据失败，请稍后重试';
+                this.$message.error(this.error);
+            } finally {
+                this.isLoading = false;
+            }
+        },
+        transformOrderData(order) {
+            // 从机票中提取航班和乘客信息
+            const tickets = order.tickets || [];
+            const firstTicket = tickets[0] || {};
+            const flight = firstTicket.flight || {};
+            
+            return {
+                id: order.id,
+                orderNumber: order.order_number || order.orderNumber || `ORD${order.id}`,
+                createdAt: order.created_at || order.createdAt,
+                amount: parseFloat(order.total_price || order.amount || 0),
+                paymentMethod: order.payment_method || order.paymentMethod || '-',
+                status: order.status,
+                flight: {
+                    flightNumber: flight.flight_number || flight.flightNumber || '-',
+                    departureCity: flight.departure_city || flight.departureCity || '-',
+                    arrivalCity: flight.arrival_city || flight.arrivalCity || '-',
+                    departureTime: flight.departure_time || flight.departureTime || ''
+                },
+                passengerCount: tickets.length || 1,
+                passengers: tickets.map(ticket => ({
+                    name: ticket.passenger_name || ticket.passengerName || '-',
+                    idNumber: ticket.passenger_id_number || ticket.idNumber || '-'
+                }))
+            };
         },
         viewOrderDetails(order) {
-            console.log('查看订单详情:', order);
-            // 实际应用中可能会导航到订单详情页或弹出详情模态框
+            this.$router.push(`/admin/orders/${order.id}`);
         },
         editOrder(order) {
-            console.log('编辑订单:', order);
-            // 实际应用中可能会导航到订单编辑页或弹出编辑模态框
+            this.$router.push(`/admin/orders/${order.id}/edit`);
         },
-        cancelOrder(order) {
-            if (confirm(`确定要取消订单 ${order.orderNumber} 吗？`)) {
-                console.log('取消订单:', order);
+        async cancelOrder(order) {
+            if (!confirm(`确定要取消订单 ${order.orderNumber} 吗？`)) return;
+            
+            try {
+                await api.orders.cancel(order.id);
                 order.status = 'cancelled';
+                this.$message.success('订单已取消');
+            } catch (error) {
+                console.error('取消订单失败:', error);
+                this.$message.error('取消订单失败，请稍后重试');
             }
         },
-        issueRefund(order) {
-            if (confirm(`确定要为订单 ${order.orderNumber} 申请退款吗？`)) {
-                console.log('申请退款:', order);
+        async issueRefund(order) {
+            if (!confirm(`确定要为订单 ${order.orderNumber} 申请退款吗？`)) return;
+            
+            try {
+                await api.orders.updateStatus(order.id, { status: 'refunded' });
                 order.status = 'refunded';
+                this.$message.success('退款申请已提交');
+            } catch (error) {
+                console.error('申请退款失败:', error);
+                this.$message.error('申请退款失败，请稍后重试');
             }
         }
     }
@@ -421,9 +413,9 @@ export default {
 
 <style scoped>
 .admin-user-orders {
-    padding: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
+    padding: 20px 40px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .title {
@@ -825,5 +817,27 @@ export default {
     .orders-table {
         overflow-x: auto;
     }
+}
+
+.empty-state,
+.error-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: #909399;
+}
+
+.empty-state i,
+.error-state i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    display: block;
+}
+
+.error-state {
+    color: #f56c6c;
+}
+
+.error-state i {
+    color: #f56c6c;
 }
 </style>

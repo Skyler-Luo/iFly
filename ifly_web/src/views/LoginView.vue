@@ -64,7 +64,6 @@
                 </div>
             </el-form>
 
-            <social-login class="fade-in-item" style="animation-delay: 0.6s" />
         </div>
     </auth-background>
 </template>
@@ -76,18 +75,17 @@ import { ElMessage } from 'element-plus'
 // eslint-disable-next-line no-unused-vars
 import { User, Lock } from '@element-plus/icons-vue'
 import AuthBackground from '@/components/AuthBackground.vue'
-import SocialLogin from '@/components/SocialLogin.vue'
-import axios from 'axios'
+import { createValidationRules } from '@/utils/validators'
+import tokenManager from '@/utils/tokenManager'
+import api from '@/services/api'
 
 export default {
     name: 'LoginView',
     components: {
-        AuthBackground,
-        SocialLogin
+        AuthBackground
     },
     setup() {
         const route = useRoute()
-        // eslint-disable-next-line no-unused-vars
         const router = useRouter()
         const loginFormRef = ref(null)
         const loading = ref(false)
@@ -99,14 +97,8 @@ export default {
         })
 
         const rules = {
-            username: [
-                { required: true, message: '请输入用户名', trigger: 'blur' },
-                { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' }
-            ],
-            password: [
-                { required: true, message: '请输入密码', trigger: 'blur' },
-                { min: 6, max: 20, message: '长度在 6 到 20 个字符', trigger: 'blur' }
-            ]
+            username: createValidationRules.length(3, 50),  // 支持邮箱，放宽长度限制
+            password: createValidationRules.length(6, 30)
         }
 
         const submitForm = async () => {
@@ -117,35 +109,37 @@ export default {
                     loading.value = true
 
                     try {
-                        const response = await axios.post('http://127.0.0.1:8000/api/accounts/login/', {
+                        const response = await api.auth.login({
                             username: loginForm.username,
                             password: loginForm.password
                         });
 
-                        if (!response.data.token || !response.data.user) {
+                        if (!response.token || !response.user) {
                             throw new Error('服务器响应格式不正确')
                         }
 
-                        localStorage.setItem('token', response.data.token)
-                        localStorage.setItem('user_id', response.data.user.id)
-                        localStorage.setItem('username', response.data.user.username)
-                        localStorage.setItem('role', response.data.user.role || 'user')
+                        // 使用安全的token管理器
+                        // 记住我：30天，否则：关闭浏览器后失效（使用 sessionStorage）
+                        if (loginForm.remember) {
+                            tokenManager.setToken(response.token, response.user, 30 * 24 * 60 * 60 * 1000) // 30天
+                        } else {
+                            tokenManager.setToken(response.token, response.user, 24 * 60 * 60 * 1000, true) // 24小时，使用 session
+                        }
 
                         window.dispatchEvent(new CustomEvent('user-login', {
                             detail: {
-                                username: response.data.user.username,
-                                userId: response.data.user.id
+                                username: response.user.username,
+                                userId: response.user.id
                             }
                         }))
 
                         const redirectPath = route.query.redirect || '/'
                         ElMessage.success('登录成功')
 
-                        window.location.href = redirectPath
+                        router.push(redirectPath)
                     } catch (error) {
                         console.error('登录失败:', error)
-                        const errorMsg = error.response?.data?.error || '登录失败，请检查用户名和密码'
-                        ElMessage.error(errorMsg)
+                        // 错误消息已在 api.js 拦截器中显示，这里不再重复
                     } finally {
                         loading.value = false
                     }

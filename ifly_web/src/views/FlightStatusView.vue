@@ -133,18 +133,6 @@
 
                         <div class="status-info">
                             <div class="info-item">
-                                <i class="el-icon-time"></i>
-                                <span>登机口: {{ flight.gate }}</span>
-                            </div>
-                            <div class="info-item">
-                                <i class="el-icon-tickets"></i>
-                                <span>值机柜台: {{ flight.checkInCounter }}</span>
-                            </div>
-                            <div class="info-item">
-                                <i class="el-icon-location-information"></i>
-                                <span>行李转盘: {{ flight.baggageClaim }}</span>
-                            </div>
-                            <div class="info-item">
                                 <i class="el-icon-place"></i>
                                 <span>机型: {{ flight.aircraft }}</span>
                             </div>
@@ -172,7 +160,7 @@
             <ul>
                 <li>您可以通过航班号或出发/到达城市查询航班动态</li>
                 <li>航班状态实时更新，提供最新的延误、登机口变更等信息</li>
-                <li>订阅航班动态可以通过短信或APP通知获取航班最新状态</li>
+                <li>订阅航班动态可以通过APP通知获取航班最新状态</li>
                 <li>如需帮助，请联系我们的客服热线400-123-4567</li>
             </ul>
 
@@ -201,6 +189,8 @@
 </template>
 
 <script>
+import api from '@/services/api'
+
 export default {
     name: 'FlightStatusView',
     data() {
@@ -219,44 +209,12 @@ export default {
                 '北京', '上海', '广州', '深圳', '成都', '杭州',
                 '西安', '重庆', '南京', '武汉', '厦门', '长沙'
             ],
-            popularRoutes: [
-                {
-                    route: '北京-上海',
-                    flightNumber: 'CA1234',
-                    scheduledTime: '08:30',
-                    status: '正常',
-                    statusType: 'success'
-                },
-                {
-                    route: '广州-上海',
-                    flightNumber: 'CZ3901',
-                    scheduledTime: '10:15',
-                    status: '延误',
-                    statusType: 'warning'
-                },
-                {
-                    route: '成都-北京',
-                    flightNumber: '3U8888',
-                    scheduledTime: '13:45',
-                    status: '正常',
-                    statusType: 'success'
-                },
-                {
-                    route: '深圳-杭州',
-                    flightNumber: 'ZH1573',
-                    scheduledTime: '16:20',
-                    status: '已起飞',
-                    statusType: 'info'
-                },
-                {
-                    route: '上海-西安',
-                    flightNumber: 'MU2153',
-                    scheduledTime: '19:50',
-                    status: '取消',
-                    statusType: 'danger'
-                }
-            ]
+            popularRoutes: [],
+            isLoadingPopular: false
         };
+    },
+    created() {
+        this.loadPopularRoutes();
     },
     methods: {
         resetForm() {
@@ -267,7 +225,7 @@ export default {
                 this.searchForm.flightNumber = '';
             }
         },
-        searchFlight() {
+        async searchFlight() {
             if (this.searchType === 'flightNumber' && !this.searchForm.flightNumber) {
                 this.$message.warning('请输入航班号');
                 return;
@@ -282,78 +240,163 @@ export default {
             }
 
             this.isSearching = true;
+            this.hasSearched = true;
+            this.flightResults = [];
 
-            // 模拟API调用
-            setTimeout(() => {
-                this.isSearching = false;
-                this.hasSearched = true;
-
-                // 模拟返回数据
-                if (this.searchType === 'flightNumber' && this.searchForm.flightNumber === 'CA1234' ||
-                    this.searchType === 'route' && this.searchForm.departureCity === '北京' && this.searchForm.arrivalCity === '上海') {
-                    this.flightResults = [
-                        {
-                            flightNumber: 'CA1234',
-                            airline: '中国国际航空公司',
-                            departureCity: '北京',
-                            departureAirport: '首都国际机场',
-                            departureTerminal: 'T3',
-                            arrivalCity: '上海',
-                            arrivalAirport: '虹桥国际机场',
-                            arrivalTerminal: 'T2',
-                            scheduledDepartureTime: '08:30',
-                            actualDepartureTime: '09:15',
-                            scheduledArrivalTime: '10:30',
-                            actualArrivalTime: '11:10',
-                            duration: '2小时',
-                            statusText: '已延误',
-                            statusClass: 'delayed',
-                            departureDelayedClass: 'delayed',
-                            arrivalDelayedClass: 'delayed',
-                            delayReason: '天气原因',
-                            progressStep: 3,
-                            gate: 'C12',
-                            checkInCounter: '45-48',
-                            baggageClaim: '7号',
-                            aircraft: 'Boeing 737-800'
-                        }
-                    ];
-                } else if (this.searchForm.flightNumber === 'MU2153' ||
-                    (this.searchForm.departureCity === '上海' && this.searchForm.arrivalCity === '西安')) {
-                    this.flightResults = [
-                        {
-                            flightNumber: 'MU2153',
-                            airline: '东方航空公司',
-                            departureCity: '上海',
-                            departureAirport: '浦东国际机场',
-                            departureTerminal: 'T1',
-                            arrivalCity: '西安',
-                            arrivalAirport: '咸阳国际机场',
-                            arrivalTerminal: 'T3',
-                            scheduledDepartureTime: '19:50',
-                            actualDepartureTime: '取消',
-                            scheduledArrivalTime: '22:05',
-                            actualArrivalTime: '取消',
-                            duration: '2小时15分',
-                            statusText: '已取消',
-                            statusClass: 'cancelled',
-                            departureDelayedClass: '',
-                            arrivalDelayedClass: '',
-                            delayReason: '',
-                            progressStep: 0,
-                            gate: '-',
-                            checkInCounter: '-',
-                            baggageClaim: '-',
-                            aircraft: 'Airbus A320'
-                        }
-                    ];
+            try {
+                let response;
+                const dateStr = this.formatDate(this.searchForm.date);
+                
+                if (this.searchType === 'flightNumber') {
+                    // 按航班号查询
+                    response = await api.flights.getList({ 
+                        flight_number: this.searchForm.flightNumber.toUpperCase()
+                    });
                 } else {
-                    this.flightResults = [];
+                    // 按航线查询
+                    response = await api.flights.search({
+                        departure_city: this.searchForm.departureCity,
+                        arrival_city: this.searchForm.arrivalCity,
+                        departure_date: dateStr
+                    });
                 }
-            }, 1000);
+                
+                // 处理响应数据
+                const flights = Array.isArray(response) ? response : (response.results || []);
+                this.flightResults = this.transformFlightData(flights);
+                
+                if (this.flightResults.length === 0) {
+                    this.$message.info('未找到符合条件的航班');
+                }
+            } catch (error) {
+                console.error('查询航班失败:', error);
+                this.$message.error('查询失败，请稍后重试');
+            } finally {
+                this.isSearching = false;
+            }
+        },
+        transformFlightData(flights) {
+            return flights.map(flight => {
+                const statusInfo = this.getStatusInfo(flight.status);
+                const durationMinutes = this.calculateDuration(flight.departure_time, flight.arrival_time);
+                
+                return {
+                    flightNumber: flight.flight_number,
+                    airline: flight.airline_name || '未知航空',
+                    departureCity: flight.departure_city,
+                    departureAirport: this.getAirportName(flight.departure_city),
+                    departureTerminal: 'T2',
+                    arrivalCity: flight.arrival_city,
+                    arrivalAirport: this.getAirportName(flight.arrival_city),
+                    arrivalTerminal: 'T2',
+                    scheduledDepartureTime: this.formatTime(flight.departure_time),
+                    actualDepartureTime: this.formatTime(flight.departure_time),
+                    scheduledArrivalTime: this.formatTime(flight.arrival_time),
+                    actualArrivalTime: this.formatTime(flight.arrival_time),
+                    duration: this.formatDuration(durationMinutes),
+                    statusText: statusInfo.text,
+                    statusClass: statusInfo.class,
+                    departureDelayedClass: flight.status === 'delayed' ? 'delayed' : '',
+                    arrivalDelayedClass: flight.status === 'delayed' ? 'delayed' : '',
+                    delayReason: flight.status === 'delayed' ? '航空管制' : '',
+                    progressStep: this.getProgressStep(flight.status),
+                    gate: '',
+                    checkInCounter: '',
+                    baggageClaim: '',
+                    aircraft: flight.aircraft_type || '未知机型'
+                };
+            });
+        },
+        getStatusInfo(status) {
+            const statusMap = {
+                'scheduled': { text: '计划中', class: 'on-time' },
+                'full': { text: '已满', class: 'on-time' },
+                'departed': { text: '已起飞', class: 'on-time' },
+                'canceled': { text: '已取消', class: 'cancelled' },
+                'delayed': { text: '已延误', class: 'delayed' }
+            };
+            return statusMap[status] || { text: '正常', class: 'on-time' };
+        },
+        getProgressStep(status) {
+            const stepMap = {
+                'scheduled': 1,
+                'full': 2,
+                'departed': 4,
+                'canceled': 0
+            };
+            return stepMap[status] || 1;
+        },
+        getAirportName(city) {
+            const airportMap = {
+                '北京': '首都国际机场',
+                '上海': '浦东国际机场',
+                '广州': '白云国际机场',
+                '深圳': '宝安国际机场',
+                '成都': '双流国际机场',
+                '杭州': '萧山国际机场',
+                '西安': '咸阳国际机场',
+                '重庆': '江北国际机场',
+                '南京': '禄口国际机场',
+                '武汉': '天河国际机场',
+                '厦门': '高崎国际机场',
+                '长沙': '黄花国际机场'
+            };
+            return airportMap[city] || `${city}机场`;
+        },
+        calculateDuration(departureTime, arrivalTime) {
+            const dep = new Date(departureTime);
+            const arr = new Date(arrivalTime);
+            return Math.round((arr - dep) / (1000 * 60));
+        },
+        formatDuration(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return hours > 0 ? `${hours}小时${mins}分` : `${mins}分钟`;
+        },
+        formatTime(dateTimeStr) {
+            if (!dateTimeStr) return '--:--';
+            const date = new Date(dateTimeStr);
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
+        },
+        async loadPopularRoutes() {
+            this.isLoadingPopular = true;
+            try {
+                // 获取一些航班作为热门航线展示
+                const response = await api.flights.getList({ page_size: 5 });
+                const flights = Array.isArray(response) ? response : (response.results || []);
+                
+                this.popularRoutes = flights.map(flight => {
+                    const statusInfo = this.getStatusInfo(flight.status);
+                    return {
+                        route: `${flight.departure_city}-${flight.arrival_city}`,
+                        flightNumber: flight.flight_number,
+                        scheduledTime: this.formatTime(flight.departure_time),
+                        status: statusInfo.text,
+                        statusType: this.getStatusType(flight.status)
+                    };
+                });
+            } catch (error) {
+                console.error('加载热门航线失败:', error);
+                // 失败时显示空列表
+                this.popularRoutes = [];
+            } finally {
+                this.isLoadingPopular = false;
+            }
+        },
+        getStatusType(status) {
+            const typeMap = {
+                'scheduled': 'success',
+                'full': 'warning',
+                'departed': 'info',
+                'canceled': 'danger',
+                'delayed': 'warning'
+            };
+            return typeMap[status] || 'success';
         },
         subscribeFlightUpdates(flight) {
-            this.$message.success(`已订阅 ${flight.flightNumber} 航班动态，我们将通过短信和APP通知您最新状态`);
+            this.$message.success(`已订阅 ${flight.flightNumber} 航班动态，我们将通过APP通知您最新状态`);
         },
         quickSearch(routeInfo) {
             this.searchType = 'flightNumber';
@@ -373,9 +416,10 @@ export default {
 
 <style scoped>
 .flight-status-view {
-    padding: 20px;
+    padding: 20px 40px;
     background-color: #f5f7fa;
-    min-height: 100vh;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .header-banner {
@@ -405,8 +449,9 @@ export default {
 }
 
 .search-box {
-    max-width: 800px;
-    margin: 0 auto;
+    width: 100%;
+    padding: 0 40px;
+    box-sizing: border-box;
 }
 
 .result-title {
@@ -632,9 +677,11 @@ export default {
 }
 
 .flight-status-tips {
-    max-width: 800px;
-    margin: 40px auto;
+    width: 100%;
+    margin: 40px 0;
+    padding: 0 40px;
     background-color: white;
+    box-sizing: border-box;
     border-radius: 8px;
     padding: 25px;
     box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);

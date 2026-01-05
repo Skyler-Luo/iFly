@@ -36,11 +36,6 @@
                 <span>收入管理</span>
             </router-link>
 
-            <router-link to="/admin/promotions" class="nav-item" active-class="active">
-                <i class="fas fa-tags"></i>
-                <span>优惠管理</span>
-            </router-link>
-
             <router-link to="/admin/settings" class="nav-item" active-class="active">
                 <i class="fas fa-cogs"></i>
                 <span>系统设置</span>
@@ -56,7 +51,7 @@
                 <div class="admin-role">超级管理员</div>
             </div>
             <div class="admin-actions">
-                <button class="action-button">
+                <button class="action-button" @click="logout" title="退出登录">
                     <i class="fas fa-sign-out-alt"></i>
                 </button>
             </div>
@@ -65,8 +60,29 @@
 </template>
 
 <script>
+import tokenManager from '../utils/tokenManager'
+import api from '../services/api'
+
 export default {
-    name: 'AdminNavigation'
+    name: 'AdminNavigation',
+    methods: {
+        async logout() {
+            try {
+                await api.accounts.logout()
+            } catch (error) {
+                console.warn('登出API调用失败:', error)
+            }
+            
+            // 清除本地认证信息
+            tokenManager.clearToken()
+            
+            // 触发登出事件
+            window.dispatchEvent(new CustomEvent('user-logout'))
+            
+            // 跳转到首页
+            this.$router.push('/')
+        }
+    }
 }
 </script>
 

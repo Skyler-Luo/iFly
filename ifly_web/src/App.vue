@@ -3,12 +3,10 @@
     <app-header class="full-width" />
 
     <el-container class="main-container">
-      <el-main>
-        <router-view />
-      </el-main>
+      <router-view />
     </el-container>
 
-    <app-footer class="full-width" />
+    <site-footer class="full-width" />
 
     <!-- 回到顶部按钮 -->
     <el-backtop :right="20" :bottom="100" />
@@ -17,13 +15,13 @@
 
 <script>
 import AppHeader from '@/components/AppHeader.vue'
-import AppFooter from '@/components/AppFooter.vue'
+import SiteFooter from '@/components/SiteFooter.vue'
 
 export default {
   name: 'App',
   components: {
     AppHeader,
-    AppFooter
+    SiteFooter
   }
 }
 </script>
@@ -44,7 +42,7 @@ body {
 body {
   font-family: 'Microsoft YaHei', Arial, sans-serif;
   color: #333;
-  background-color: #f5f7fa;
+  background-color: #ffffff;
 }
 
 .common-layout {
@@ -54,9 +52,12 @@ body {
 
 .main-container {
   width: 100%;
-  min-height: 100vh;
+  min-height: calc(100vh - 60px);
   display: flex;
   flex-direction: column;
+  margin-top: 60px;
+  padding: 0;
+  background: #ffffff;
 }
 
 .full-width {
@@ -73,10 +74,7 @@ body {
   height: auto !important;
 }
 
-.el-main {
-  padding: 20px 5%;
-  flex: 1;
-}
+ 
 
 .el-footer {
   padding: 0;

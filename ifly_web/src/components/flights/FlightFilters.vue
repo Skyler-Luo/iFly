@@ -105,9 +105,12 @@ export default {
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-    margin-right: 20px;
     width: 280px;
+    min-width: 280px;
     flex-shrink: 0;
+    align-self: flex-start;
+    position: sticky;
+    top: 80px;
 }
 
 .filters-header {
@@ -142,7 +145,7 @@ export default {
     margin-top: 10px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 992px) {
     .filters-panel {
         position: fixed;
         top: 0;
@@ -151,8 +154,10 @@ export default {
         bottom: 0;
         z-index: 2000;
         width: 100%;
+        min-width: unset;
         margin: 0;
         overflow-y: auto;
+        border-radius: 0;
     }
 }
 </style>

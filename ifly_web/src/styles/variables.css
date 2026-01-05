@@ -1,0 +1,324 @@
+/**
+ * iFly 设计系统 - CSS 变量定义
+ * 包含颜色、字体、间距、阴影等全局设计令牌
+ */
+
+:root {
+  /* ===== 颜色系统 ===== */
+  
+  /* 主色调 */
+  --color-primary: #1976d2;
+  --color-primary-light: #42a5f5;
+  --color-primary-dark: #1565c0;
+  --color-primary-hover: #1e88e5;
+  --color-primary-active: #1565c0;
+  
+  /* 辅助色 */
+  --color-secondary: #f57c00;
+  --color-secondary-light: #ffb74d;
+  --color-secondary-dark: #e65100;
+  
+  /* 状态色 */
+  --color-success: #4caf50;
+  --color-success-light: #81c784;
+  --color-success-dark: #388e3c;
+  
+  --color-warning: #ff9800;
+  --color-warning-light: #ffb74d;
+  --color-warning-dark: #f57400;
+  
+  --color-danger: #f44336;
+  --color-danger-light: #e57373;
+  --color-danger-dark: #d32f2f;
+  
+  --color-info: #2196f3;
+  --color-info-light: #64b5f6;
+  --color-info-dark: #1976d2;
+  
+  /* 中性色 */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  
+  --color-gray-50: #fafafa;
+  --color-gray-100: #f5f5f5;
+  --color-gray-200: #eeeeee;
+  --color-gray-300: #e0e0e0;
+  --color-gray-400: #bdbdbd;
+  --color-gray-500: #9e9e9e;
+  --color-gray-600: #757575;
+  --color-gray-700: #616161;
+  --color-gray-800: #424242;
+  --color-gray-900: #212121;
+  
+  /* 文本色 */
+  --color-text-primary: #212121;
+  --color-text-secondary: #757575;
+  --color-text-disabled: #bdbdbd;
+  --color-text-inverse: #ffffff;
+  
+  /* 背景色 */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f5f5f5;
+  --color-bg-tertiary: #fafafa;
+  --color-bg-overlay: rgba(0, 0, 0, 0.5);
+  --color-bg-mask: rgba(0, 0, 0, 0.3);
+  
+  /* 边框色 */
+  --color-border-light: #e0e0e0;
+  --color-border-medium: #bdbdbd;
+  --color-border-dark: #757575;
+  
+  /* ===== 字体系统 ===== */
+  
+  /* 字体族 */
+  --font-family-primary: 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+  --font-family-mono: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  
+  /* 字体大小 */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-size-4xl: 36px;
+  --font-size-5xl: 48px;
+  
+  /* 字体粗细 */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* 行高 */
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.6;
+  --line-height-loose: 2;
+  
+  /* ===== 间距系统 ===== */
+  
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+  --spacing-4xl: 96px;
+  
+  /* ===== 圆角系统 ===== */
+  
+  --border-radius-xs: 2px;
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
+  --border-radius-2xl: 24px;
+  --border-radius-full: 50%;
+  
+  /* ===== 阴影系统 ===== */
+  
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.15);
+  
+  /* ===== 过渡动画 ===== */
+  
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 300ms ease-in-out;
+  --transition-slow: 500ms ease-in-out;
+  
+  --transition-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --transition-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --transition-ease-in: cubic-bezier(0.55, 0.085, 0.68, 0.53);
+  
+  /* ===== 动画系统 (美化增强) ===== */
+  
+  /* 动画持续时间 */
+  --animation-duration-fast: 200ms;
+  --animation-duration-normal: 300ms;
+  --animation-duration-slow: 500ms;
+  
+  /* 动画缓动函数 */
+  --animation-easing-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --animation-easing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --animation-easing-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  
+  /* ===== 卡片系统 (美化增强) ===== */
+  
+  /* 卡片圆角 (8-16px 范围) */
+  --card-border-radius: 12px;
+  --card-border-radius-sm: 8px;
+  --card-border-radius-lg: 16px;
+  
+  /* 卡片阴影 */
+  --card-shadow-default: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --card-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --card-shadow-active: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
+  /* 卡片过渡 (200-400ms 范围) */
+  --card-transition-duration: 300ms;
+  --card-transition: transform var(--card-transition-duration) var(--animation-easing-smooth),
+                     box-shadow var(--card-transition-duration) var(--animation-easing-smooth);
+  
+  /* 卡片悬停效果 */
+  --card-hover-transform: translateY(-4px);
+  --card-active-transform: translateY(-2px);
+  
+  /* ===== 按钮系统 (美化增强) ===== */
+  
+  /* 按钮渐变背景 */
+  --button-gradient-primary: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  --button-gradient-hover: linear-gradient(135deg, var(--color-primary-hover) 0%, var(--color-primary-dark) 100%);
+  --button-gradient-secondary: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
+  
+  /* 按钮悬停阴影 */
+  --button-shadow-hover: 0 4px 12px rgba(25, 118, 210, 0.3);
+  --button-shadow-active: 0 2px 6px rgba(25, 118, 210, 0.2);
+  
+  /* 按钮过渡 */
+  --button-transition: all var(--animation-duration-fast) var(--animation-easing-smooth);
+  
+  /* ===== 区块间距系统 (美化增强) ===== */
+  
+  /* 区块内边距 */
+  --section-padding-y: 60px;
+  --section-padding-x: 20px;
+  
+  /* 区块间距 */
+  --section-gap: 80px;
+  --section-margin-bottom: 75px;
+  
+  /* 区块背景色 - 交替使用 */
+  --section-bg-primary: var(--color-bg-primary);
+  --section-bg-secondary: linear-gradient(135deg, #f8fcff 0%, #f0f7ff 100%);
+  --section-bg-tertiary: linear-gradient(135deg, #f5faff 0%, #edf7ff 100%);
+  --section-bg-accent: linear-gradient(135deg, #e8f4ff 0%, #d4ebff 100%);
+  
+  /* 区块标题样式 */
+  --section-title-font-size: 2.2em;
+  --section-title-font-weight: var(--font-weight-semibold);
+  --section-title-color: #003b7a;
+  --section-title-margin-bottom: 35px;
+  --section-title-padding-bottom: 28px;
+  --section-title-decoration-width: 70px;
+  --section-title-decoration-height: 3px;
+  --section-title-decoration-color: linear-gradient(to right, #0057a9, #0076c6, #42a5f5);
+  
+  /* ===== 层级系统 ===== */
+  
+  --z-index-dropdown: 1000;
+  --z-index-sticky: 1020;
+  --z-index-fixed: 1030;
+  --z-index-modal-backdrop: 1040;
+  --z-index-modal: 1050;
+  --z-index-popover: 1060;
+  --z-index-tooltip: 1070;
+  --z-index-toast: 1080;
+  
+  /* ===== 断点系统 ===== */
+  
+  --breakpoint-xs: 480px;
+  --breakpoint-sm: 768px;
+  --breakpoint-md: 992px;
+  --breakpoint-lg: 1200px;
+  --breakpoint-xl: 1400px;
+  
+  /* ===== 容器系统 ===== */
+  
+  --container-xs: 480px;
+  --container-sm: 768px;
+  --container-md: 992px;
+  --container-lg: 1200px;
+  --container-xl: 1400px;
+  
+  /* ===== 特殊颜色 (品牌相关) ===== */
+  
+  /* 航空主题色 */
+  --color-sky-blue: #87ceeb;
+  --color-cloud-white: #f8fcff;
+  --color-sunset-orange: #ff6b35;
+  --color-deep-ocean: #1e3a8a;
+  
+  /* 状态渐变 */
+  --gradient-primary: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  --gradient-success: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-light) 100%);
+  --gradient-warning: linear-gradient(135deg, var(--color-warning) 0%, var(--color-warning-light) 100%);
+  --gradient-danger: linear-gradient(135deg, var(--color-danger) 0%, var(--color-danger-light) 100%);
+  
+  /* Sky背景渐变 */
+  --gradient-sky: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+  --gradient-sunset: linear-gradient(135deg, #fd79a8 0%, #fdcb6e 50%, #e17055 100%);
+  --gradient-ocean: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+}
+
+/* ===== 暗色主题 ===== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* 重新定义暗色主题下的颜色 */
+    --color-bg-primary: #1a1a1a;
+    --color-bg-secondary: #2d2d2d;
+    --color-bg-tertiary: #404040;
+    
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #b3b3b3;
+    --color-text-disabled: #666666;
+    
+    --color-border-light: #404040;
+    --color-border-medium: #666666;
+    --color-border-dark: #999999;
+    
+    /* 调整阴影在暗色主题下的效果 */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4), 0 4px 6px rgba(0, 0, 0, 0.3);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.5), 0 10px 10px rgba(0, 0, 0, 0.3);
+    --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* ===== 打印样式 ===== */
+@media print {
+  :root {
+    --color-primary: #000000;
+    --color-text-primary: #000000;
+    --color-text-secondary: #666666;
+    --color-bg-primary: #ffffff;
+    --color-bg-secondary: #ffffff;
+    
+    /* 移除阴影以节省墨水 */
+    --shadow-xs: none;
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: none;
+    --shadow-xl: none;
+    --shadow-2xl: none;
+  }
+}
+
+/* ===== 高对比度模式 ===== */
+@media (prefers-contrast: high) {
+  :root {
+    --color-border-light: #000000;
+    --color-border-medium: #000000;
+    --color-border-dark: #000000;
+    
+    --color-text-secondary: #000000;
+  }
+}
+
+/* ===== 减少动画模式 ===== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 0ms;
+    --transition-normal: 0ms;
+    --transition-slow: 0ms;
+  }
+}

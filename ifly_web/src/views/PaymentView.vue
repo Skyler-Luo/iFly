@@ -40,19 +40,19 @@
                     <el-radio-group v-model="paymentMethod">
                         <el-radio value="alipay">
                             <div class="payment-option">
-                                <img src="https://picsum.photos/id/17/30/30" alt="支付宝" />
+                                <el-icon><Wallet /></el-icon>
                                 <span>支付宝</span>
                             </div>
                         </el-radio>
                         <el-radio value="wechat">
                             <div class="payment-option">
-                                <img src="https://picsum.photos/id/18/30/30" alt="微信支付" />
+                                <el-icon><ChatDotRound /></el-icon>
                                 <span>微信支付</span>
                             </div>
                         </el-radio>
                         <el-radio value="creditcard">
                             <div class="payment-option">
-                                <img src="https://picsum.photos/id/19/30/30" alt="信用卡" />
+                                <el-icon><CreditCard /></el-icon>
                                 <span>信用卡</span>
                             </div>
                         </el-radio>
@@ -96,9 +96,15 @@
 
 <script>
 import api from '@/services/api'
+import { Wallet, ChatDotRound, CreditCard } from '@element-plus/icons-vue'
 
 export default {
     name: 'PaymentView',
+    components: {
+        Wallet,
+        ChatDotRound,
+        CreditCard
+    },
     data() {
         return {
             isLoading: true,
@@ -204,16 +210,7 @@ export default {
                         })
                         .catch(secondError => {
                             console.error('备选支付方法也失败:', secondError);
-
-                            // 如果API调用都失败，但为了演示目的，我们仍然显示成功
-                            console.log('模拟支付成功（用于演示）');
-                            this.order.status = 'paid';
-                            this.paymentSuccess = true;
-                            this.$message({
-                                type: 'success',
-                                message: '支付成功！(演示模式)',
-                                duration: 3000
-                            });
+                            this.$message.error('支付失败，请稍后重试');
                         });
                 })
                 .finally(() => {
@@ -245,9 +242,10 @@ export default {
 
 <style scoped>
 .payment-view {
-    padding: 20px;
+    padding: 20px 40px;
     background-color: #f5f7fa;
-    min-height: 100vh;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .header-banner {
@@ -306,9 +304,10 @@ export default {
 }
 
 .payment-container {
-    max-width: 800px;
-    margin: 0 auto;
+    width: 100%;
+    padding: 20px 40px;
     background-color: white;
+    box-sizing: border-box;
     border-radius: 8px;
     padding: 30px;
     box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);

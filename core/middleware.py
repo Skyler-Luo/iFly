@@ -87,3 +87,42 @@ class CORSMiddleware:
             response["Access-Control-Allow-Headers"] = "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Pragma"
         
         return response 
+
+
+class FlightStatusUpdateMiddleware:
+    """
+    航班状态自动更新中间件。
+    
+    在请求处理过程中定期检查并更新航班状态。
+    使用缓存控制更新频率，避免每次请求都执行数据库操作。
+    """
+    
+    # 更新间隔（秒）
+    UPDATE_INTERVAL = 60
+    
+    # 上次更新时间（类变量，所有实例共享）
+    _last_update = None
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+    
+    def __call__(self, request):
+        # 检查是否需要更新航班状态
+        self._check_and_update()
+        
+        return self.get_response(request)
+    
+    def _check_and_update(self):
+        """检查并执行航班状态更新"""
+        now = timezone.now()
+        
+        # 检查是否超过更新间隔
+        if (FlightStatusUpdateMiddleware._last_update is None or 
+            (now - FlightStatusUpdateMiddleware._last_update).total_seconds() >= self.UPDATE_INTERVAL):
+            
+            try:
+                from flight.services import FlightStatusService
+                FlightStatusService.run_all_updates()
+                FlightStatusUpdateMiddleware._last_update = now
+            except Exception as e:
+                logger.error(f"航班状态更新失败: {e}")

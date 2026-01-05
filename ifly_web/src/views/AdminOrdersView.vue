@@ -3,25 +3,25 @@
         <h1 class="title">订单管理</h1>
 
         <div class="top-actions">
-            <div class="search-bar">
-                <input type="text" v-model="searchQuery" placeholder="搜索订单号、用户..." />
-                <button @click="handleSearch" class="btn-search">
+            <el-input
+                v-model="searchQuery"
+                placeholder="搜索订单号、用户..."
+                clearable
+                style="width: 300px"
+                @keyup.enter="handleSearch"
+            >
+                <template #prefix>
                     <i class="fas fa-search"></i>
-                </button>
-            </div>
+                </template>
+            </el-input>
 
-            <div class="filter-options">
-                <select v-model="statusFilter">
-                    <option value="">所有状态</option>
-                    <option value="pending">待付款</option>
-                    <option value="paid">已付款</option>
-                    <option value="completed">已完成</option>
-                    <option value="cancelled">已取消</option>
-                    <option value="refunded">已退款</option>
-                </select>
-
-                <input type="date" v-model="dateFilter" placeholder="日期筛选" />
-            </div>
+            <el-radio-group v-model="statusFilter" @change="handleSearch">
+                <el-radio-button value="">全部</el-radio-button>
+                <el-radio-button value="pending">待付款</el-radio-button>
+                <el-radio-button value="paid">已付款</el-radio-button>
+                <el-radio-button value="completed">已完成</el-radio-button>
+                <el-radio-button value="canceled">已取消</el-radio-button>
+            </el-radio-group>
 
             <button @click="exportOrders" class="btn btn-primary">
                 <i class="fas fa-download"></i> 导出数据
@@ -98,11 +98,8 @@
                                 <div class="dropdown-menu">
                                     <a @click="updateOrderStatus(order.id, 'completed')"
                                         v-if="order.status === 'paid'">标记为已完成</a>
-                                    <a @click="updateOrderStatus(order.id, 'cancelled')"
+                                    <a @click="updateOrderStatus(order.id, 'canceled')"
                                         v-if="order.status === 'pending'">取消订单</a>
-                                    <a @click="processRefund(order)"
-                                        v-if="order.status === 'paid' || order.status === 'completed'">处理退款</a>
-                                    <a @click="resendConfirmation(order.id)">重发确认邮件</a>
                                     <a @click="viewPaymentDetails(order.id)">查看支付详情</a>
                                 </div>
                             </div>
@@ -112,13 +109,13 @@
             </table>
 
             <div class="pagination">
-                <button @click="prevPage" :disabled="currentPage === 1" class="btn-page">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
-                <button @click="nextPage" :disabled="currentPage === totalPages" class="btn-page">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
+                <el-pagination
+                    v-model:current-page="currentPage"
+                    :page-size="pageSize"
+                    :total="processedOrders.length"
+                    layout="total, prev, pager, next"
+                    background
+                />
             </div>
         </div>
 
@@ -182,7 +179,7 @@ export default {
             sortKey: '',
             sortDirection: 'asc',
             currentPage: 1,
-            pageSize: 5,
+            pageSize: 8,
             showRefundModal: false,
             selectedOrder: null,
             refundAmount: 0,
@@ -191,244 +188,176 @@ export default {
         }
     },
     computed: {
-        filteredOrders() {
-            let result = [...this.orders]
-
-            // 应用搜索
+        processedOrders() {
+            let result = [...this.orders];
             if (this.searchQuery) {
-                const query = this.searchQuery.toLowerCase()
+                const query = this.searchQuery.toLowerCase();
                 result = result.filter(order =>
-                    order.id.toLowerCase().includes(query) ||
+                    String(order.id).toLowerCase().includes(query) ||
                     order.username.toLowerCase().includes(query) ||
                     order.flightInfo.toLowerCase().includes(query)
-                )
+                );
             }
-
-            // 应用状态过滤
             if (this.statusFilter) {
-                result = result.filter(order => order.status === this.statusFilter)
+                result = result.filter(order => order.status === this.statusFilter);
             }
-
-            // 应用日期过滤
             if (this.dateFilter) {
-                const filterDate = new Date(this.dateFilter).toISOString().split('T')[0]
+                const filterDate = this.dateFilter;
                 result = result.filter(order => {
-                    const orderDate = new Date(order.createdAt).toISOString().split('T')[0]
-                    return orderDate === filterDate
-                })
+                    const orderDate = new Date(order.createdAt).toISOString().split('T')[0];
+                    return orderDate === filterDate;
+                });
             }
-
-            // 应用排序
             if (this.sortKey) {
                 result.sort((a, b) => {
-                    let aValue = a[this.sortKey]
-                    let bValue = b[this.sortKey]
-
-                    // 日期排序特殊处理
+                    let aValue = a[this.sortKey];
+                    let bValue = b[this.sortKey];
                     if (this.sortKey === 'createdAt') {
-                        aValue = new Date(aValue).getTime()
-                        bValue = new Date(bValue).getTime()
+                        aValue = new Date(aValue).getTime();
+                        bValue = new Date(bValue).getTime();
                     }
-
-                    if (aValue < bValue) return this.sortDirection === 'asc' ? -1 : 1
-                    if (aValue > bValue) return this.sortDirection === 'asc' ? 1 : -1
-                    return 0
-                })
+                    if (aValue < bValue) return this.sortDirection === 'asc' ? -1 : 1;
+                    if (aValue > bValue) return this.sortDirection === 'asc' ? 1 : -1;
+                    return 0;
+                });
             }
-
-            // 分页
-            const startIndex = (this.currentPage - 1) * this.pageSize
-            const endIndex = startIndex + this.pageSize
-            return result.slice(startIndex, endIndex)
+            return result;
+        },
+        filteredOrders() {
+            const start = (this.currentPage - 1) * this.pageSize;
+            const end = start + this.pageSize;
+            return this.processedOrders.slice(start, end);
         },
         totalPages() {
-            // 应用所有过滤条件后的总页数
-            let filtered = [...this.orders]
-
-            if (this.searchQuery) {
-                const query = this.searchQuery.toLowerCase()
-                filtered = filtered.filter(order =>
-                    order.id.toLowerCase().includes(query) ||
-                    order.username.toLowerCase().includes(query) ||
-                    order.flightInfo.toLowerCase().includes(query)
-                )
-            }
-
-            if (this.statusFilter) {
-                filtered = filtered.filter(order => order.status === this.statusFilter)
-            }
-
-            if (this.dateFilter) {
-                const filterDate = new Date(this.dateFilter).toISOString().split('T')[0]
-                filtered = filtered.filter(order => {
-                    const orderDate = new Date(order.createdAt).toISOString().split('T')[0]
-                    return orderDate === filterDate
-                })
-            }
-
-            return Math.ceil(filtered.length / this.pageSize)
+            return Math.ceil(this.processedOrders.length / this.pageSize) || 1;
         }
     },
     methods: {
-        // 获取订单数据
         async fetchOrders() {
             this.isLoading = true;
             this.error = null;
-
             try {
                 const params = {};
                 if (this.searchQuery) params.search = this.searchQuery;
                 if (this.statusFilter) params.status = this.statusFilter;
                 if (this.dateFilter) params.date = this.dateFilter;
-
                 const response = await api.admin.orders.getList(params);
-                if (Array.isArray(response.data)) {
-                    this.orders = response.data;
-                } else {
-                    console.warn('API返回的订单数据不是数组，使用空数组');
-                    this.orders = [];
-                }
-
-                console.log('获取到订单数据:', this.orders);
-
-                // 如果返回的数据为空，使用模拟数据
-                if (!this.orders || this.orders.length === 0) {
-                    console.warn('API返回的订单数据为空，使用默认数据');
-                    this.useDefaultData();
-                }
+                const data = Array.isArray(response) ? response : (response?.results || []);
+                this.orders = data.map(order => {
+                    const tickets = order.tickets || [];
+                    const firstTicket = tickets[0] || {};
+                    const flightInfo = firstTicket.flight_number 
+                        ? `${firstTicket.flight_number} ${firstTicket.departure_city || ''}-${firstTicket.arrival_city || ''}`
+                        : '无航班信息';
+                    return {
+                        id: order.order_number || order.id,
+                        username: order.contact_name || '未知用户',
+                        flightInfo: flightInfo,
+                        amount: parseFloat(order.total_price) || 0,
+                        passengerCount: tickets.length,
+                        status: order.status,
+                        createdAt: order.created_at,
+                        paymentMethod: order.payment_method || '',
+                        contactPhone: order.contact_phone || '',
+                        contactEmail: order.contact_email || ''
+                    };
+                });
+                console.log('获取到订单数据:', this.orders.length, '条');
             } catch (error) {
                 console.error('获取订单数据失败:', error);
                 this.error = '获取订单数据失败，请稍后再试';
-
-                // 确保orders是数组
                 this.orders = [];
-                // API调用失败，使用模拟数据
-                this.useDefaultData();
             } finally {
                 this.isLoading = false;
             }
         },
-
         handleSearch() {
             this.currentPage = 1;
             this.fetchOrders();
         },
         sortBy(key) {
             if (this.sortKey === key) {
-                // 如果已经按这个键排序，切换排序方向
-                this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc'
+                this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
             } else {
-                // 如果是新的排序键，设置为升序
-                this.sortKey = key
-                this.sortDirection = 'asc'
+                this.sortKey = key;
+                this.sortDirection = 'asc';
             }
         },
         getSortIconClass(key) {
-            if (this.sortKey !== key) return 'fa-sort'
-            return this.sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down'
+            if (this.sortKey !== key) return 'fa-sort';
+            return this.sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
         },
         formatDate(dateStr) {
-            const date = new Date(dateStr)
-            return date.toLocaleString()
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN');
         },
         getStatusText(status) {
             const statusMap = {
                 pending: '待付款',
                 paid: '已付款',
                 completed: '已完成',
-                cancelled: '已取消',
-                refunded: '已退款'
-            }
-            return statusMap[status] || status
-        },
-        prevPage() {
-            if (this.currentPage > 1) {
-                this.currentPage--
-            }
-        },
-        nextPage() {
-            if (this.currentPage < this.totalPages) {
-                this.currentPage++
-            }
+                canceled: '已取消'
+            };
+            return statusMap[status] || status;
         },
         viewOrderDetail(orderId) {
-            this.$router.push(`/admin/orders/${orderId}`)
+            this.$router.push(`/admin/orders/${orderId}`);
         },
-        // 更新订单状态
         async updateOrderStatus(orderId, newStatus) {
             try {
                 await api.admin.orders.updateStatus(orderId, newStatus);
                 const order = this.orders.find(o => o.id === orderId);
-                if (order) {
-                    order.status = newStatus;
-                }
+                if (order) order.status = newStatus;
             } catch (error) {
                 console.error('更新订单状态失败:', error);
                 alert('更新订单状态失败，请稍后再试');
             }
         },
-        // 处理退款
         processRefund(order) {
-            this.selectedOrder = order
-            this.refundAmount = order.amount
-            this.refundReason = 'customer_request'
-            this.refundComment = ''
-            this.showRefundModal = true
+            this.selectedOrder = order;
+            this.refundAmount = order.amount;
+            this.refundReason = 'customer_request';
+            this.refundComment = '';
+            this.showRefundModal = true;
         },
-        // 处理退款
         async confirmRefund() {
             if (!this.selectedOrder || this.refundAmount <= 0) return;
-
             try {
                 const data = {
                     amount: this.refundAmount,
                     reason: this.refundReason,
                     comment: this.refundComment
                 };
-
                 await api.admin.orders.refund(this.selectedOrder.id, data);
-
-                // 更新本地订单数据
                 const order = this.orders.find(o => o.id === this.selectedOrder.id);
                 if (order) {
                     order.status = 'refunded';
                     order.refundAmount = this.refundAmount;
                     order.refundReason = this.refundReason;
                 }
-
                 this.showRefundModal = false;
             } catch (error) {
                 console.error('处理退款失败:', error);
                 alert('处理退款失败，请稍后再试');
             }
         },
-        // 重发确认邮件
-        async resendConfirmation() {
-            // 模拟API调用
-            alert('确认邮件已重发');
-        },
-        // 查看支付详情
         async viewPaymentDetails(orderId) {
             try {
                 const response = await api.admin.orders.getPaymentInfo(orderId);
                 console.log('支付详情:', response.data);
-                // 这里可以添加显示支付详情的逻辑
                 alert('支付详情已在控制台输出');
             } catch (error) {
                 console.error('获取支付详情失败:', error);
                 alert('获取支付详情失败，请稍后再试');
             }
         },
-        // 导出数据
         async exportOrders() {
             try {
                 const params = {};
                 if (this.statusFilter) params.status = this.statusFilter;
                 if (this.dateFilter) params.date = this.dateFilter;
-
                 const response = await api.admin.reports.exportReport('orders', params);
-
-                // 处理下载逻辑
                 const url = window.URL.createObjectURL(new Blob([response]));
                 const link = document.createElement('a');
                 link.href = url;
@@ -440,46 +369,6 @@ export default {
                 console.error('导出订单数据失败:', error);
                 alert('导出订单数据失败，请稍后再试');
             }
-        },
-        // 如果API调用失败，使用默认数据
-        useDefaultData() {
-            this.orders = [
-                {
-                    id: 'ORD20230712001',
-                    username: '张伟',
-                    flightInfo: 'CA1234 北京-上海 2023-07-15',
-                    amount: 1580.00,
-                    passengerCount: 1,
-                    status: 'completed',
-                    createdAt: '2023-07-12T10:30:00',
-                    paymentMethod: '支付宝',
-                    contactPhone: '13800138001',
-                    contactEmail: 'zhangwei@example.com'
-                },
-                {
-                    id: 'ORD20230713002',
-                    username: '李明',
-                    flightInfo: 'MU5678 广州-成都 2023-07-20',
-                    amount: 3260.00,
-                    passengerCount: 2,
-                    status: 'paid',
-                    createdAt: '2023-07-13T14:15:00',
-                    paymentMethod: '微信支付',
-                    contactPhone: '13900139002',
-                    contactEmail: 'liming@example.com'
-                },
-                {
-                    id: 'ORD20230714003',
-                    username: '王静',
-                    flightInfo: 'CZ3961 深圳-北京 2023-07-18',
-                    amount: 2150.00,
-                    passengerCount: 1,
-                    status: 'pending',
-                    createdAt: '2023-07-14T09:45:00',
-                    contactPhone: '13700137003',
-                    contactEmail: 'wangjing@example.com'
-                }
-            ];
         }
     },
     mounted() {
@@ -489,51 +378,10 @@ export default {
 </script>
 
 <style scoped>
-/* 加载和错误状态 */
-.loading-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    min-height: 200px;
-}
-
-.spinner {
-    border: 4px solid rgba(0, 0, 0, 0.1);
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border-left-color: #3498db;
-    animation: spin 1s linear infinite;
-    margin-bottom: 1rem;
-}
-
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-.error-container {
-    text-align: center;
-    padding: 2rem;
-    color: #e74c3c;
-}
-
-.error-container i {
-    font-size: 2rem;
-    margin-bottom: 1rem;
-}
-
 .admin-orders {
-    padding: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
+    padding: 20px 40px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .title {
@@ -546,57 +394,10 @@ export default {
 
 .top-actions {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.search-bar {
-    display: flex;
-    align-items: center;
-    background: white;
-    border-radius: 4px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    flex: 1;
-    max-width: 400px;
-}
-
-.search-bar input {
-    border: none;
-    padding: 10px 15px;
-    flex: 1;
-    outline: none;
-    font-size: 14px;
-}
-
-.btn-search {
-    background: #f5f5f5;
-    border: none;
-    height: 40px;
-    width: 40px;
-    cursor: pointer;
-    color: #555;
-}
-
-.btn-search:hover {
-    background: #eaeaea;
-}
-
-.filter-options {
-    display: flex;
-    gap: 10px;
-}
-
-.filter-options select,
-.filter-options input {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    outline: none;
-    font-size: 14px;
+    gap: 20px;
 }
 
 .btn {
@@ -659,7 +460,6 @@ export default {
     font-weight: 600;
     cursor: pointer;
     user-select: none;
-    position: relative;
 }
 
 .data-table th i {
@@ -673,10 +473,6 @@ export default {
 
 .data-table tbody tr:hover {
     background: #f9f9f9;
-}
-
-.data-table tbody tr:last-child td {
-    border-bottom: none;
 }
 
 .status-badge {
@@ -702,14 +498,9 @@ export default {
     color: #2e7d32;
 }
 
-.status-cancelled {
+.status-canceled {
     background: #f5f5f5;
     color: #757575;
-}
-
-.status-refunded {
-    background: #ffebee;
-    color: #c62828;
 }
 
 .actions-cell {
@@ -781,34 +572,6 @@ export default {
     align-items: center;
     padding: 15px;
     border-top: 1px solid #eee;
-}
-
-.btn-page {
-    background: #f5f5f5;
-    border: none;
-    width: 32px;
-    height: 32px;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: #555;
-}
-
-.btn-page:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.btn-page:not(:disabled):hover {
-    background: #e0e0e0;
-}
-
-.page-info {
-    margin: 0 15px;
-    font-size: 14px;
-    color: #666;
 }
 
 .modal {
@@ -884,6 +647,7 @@ export default {
     border-radius: 4px;
     font-size: 14px;
     outline: none;
+    box-sizing: border-box;
 }
 
 .form-actions {
@@ -893,23 +657,38 @@ export default {
     margin-top: 20px;
 }
 
-@media (max-width: 768px) {
-    .top-actions {
-        flex-direction: column;
-        align-items: stretch;
-    }
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    min-height: 200px;
+}
 
-    .search-bar {
-        max-width: none;
-    }
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border-left-color: #3498db;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
 
-    .filter-options {
-        flex-direction: column;
-    }
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 
-    .data-table {
-        display: block;
-        overflow-x: auto;
-    }
+.error-container {
+    text-align: center;
+    padding: 2rem;
+    color: #e74c3c;
+}
+
+.error-container i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
 }
 </style>

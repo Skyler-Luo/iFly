@@ -53,10 +53,7 @@ urlpatterns = [
     path('api/bookings/', include('booking.urls')),
     path('api/notifications/', include('notifications.urls')),
     path('api/payments/', include('payments.urls')),
-    path('api/support/', include('support.urls')),
     path('api/analytics/', include('analytics.urls')),
-    path('api/promotions/', include('promotions.urls')),
-    path('api/points/', include('points.urls')),
     path('api/core/', include('core.urls')),
     path('api/messages/', include('user_messages.urls')),
     path('api/admin/', include('admin_api.urls')),  # 添加管理员API路径

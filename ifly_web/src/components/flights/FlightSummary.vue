@@ -77,12 +77,6 @@ export default {
             default: 'economy'
         }
     },
-    mounted() {
-        console.log('FlightSummary组件已挂载，接收到的航班数据:', this.flight);
-    },
-    updated() {
-        console.log('FlightSummary组件已更新，当前航班数据:', this.flight);
-    },
     computed: {
         cabinLabel() {
             const cabinLabels = {

@@ -1,15 +1,16 @@
 import datetime
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import permissions
-from django.db.models import Sum, Count, Avg, F, Q
-from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
-from booking.models import Order, Ticket
-from django.utils.timezone import now
-from flight.models import Flight
-from accounts.models import User
-import datetime
 import random
+
+from django.db.models import Sum, Count, Avg, F
+from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
+from django.utils.timezone import now
+from rest_framework import permissions
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from accounts.models import User
+from booking.models import Order, Ticket
+from flight.models import Flight
 
 class AnalyticsOverview(APIView):
     """提供数据分析与报表概览接口，仅管理员可访问"""
@@ -56,13 +57,6 @@ class AnalyticsOverview(APIView):
             paid_at__date__gte=start_date
         ).aggregate(total=Sum('total_price'))['total'] or 0
         
-        print(f"==== 调试信息 ====")
-        print(f"计算期间: {start_date} 到 {today}")
-        print(f"当前航班数: {current_flights}")
-        print(f"当前用户数: {current_users}")
-        print(f"当前订单数: {current_orders}")
-        print(f"当前收入: {current_revenue}")
-        
         # 计算对比周期数据
         compare_flights = Flight.objects.filter(
             departure_time__date__gte=compare_start_date,
@@ -93,11 +87,6 @@ class AnalyticsOverview(APIView):
         total_users = User.objects.count()
         total_orders = Order.objects.count()
         total_revenue = Order.objects.filter(status='paid').aggregate(total=Sum('total_price'))['total'] or 0
-        
-        print(f"总航班数: {total_flights}")
-        print(f"总用户数: {total_users}")
-        print(f"总订单数: {total_orders}")
-        print(f"总收入: {total_revenue}")
         
         # 最近7天销售趋势
         trend = []
@@ -170,13 +159,6 @@ class AnalyticsOverview(APIView):
                 'value': status['count']
             })
         
-        # 实时监控数据
-        # 使用last_login代替last_activity
-        current_online = User.objects.filter(last_login__gte=now() - datetime.timedelta(minutes=15)).count() 
-        # 如果没有足够的活跃用户，提供一个合理的估计值
-        if current_online < 10:
-            current_online = max(total_users // 20, 10)  # 假设约5%的用户在线，至少10人
-        
         return Response({
             'stats': {
                 'flights': total_flights,
@@ -185,21 +167,14 @@ class AnalyticsOverview(APIView):
                 'usersGrowth': users_growth,
                 'orders': total_orders,
                 'ordersGrowth': orders_growth,
-                'revenue': float(total_revenue or 0),  # 确保转换为float
+                'revenue': float(total_revenue or 0),
                 'revenueGrowth': revenue_growth
             },
             'revenueData': trend,
             'popularDestinations': popular_destinations,
             'seatUtilization': seat_utilization,
             'userGrowthData': user_growth_data,
-            'orderStatusData': order_status_data,
-            'realtimeStats': {
-                'onlineUsers': current_online,
-                'activeOrders': Order.objects.filter(status='pending').count(),
-                'cpuUsage': 42,  # 模拟值
-                'memoryUsage': 68,  # 模拟值 
-                'diskUsage': 35   # 模拟值
-            }
+            'orderStatusData': order_status_data
         })
 
 def calculate_growth(current, previous):
@@ -407,17 +382,26 @@ class DataVisualization(APIView):
             })
         city_data.sort(key=lambda x: x['total'], reverse=True)
         
-        # 按舱位等级销售分布（假设有舱位等级字段）
-        # 注意：这是模拟数据，实际实现需要在Ticket模型中添加cabin_class字段
-        cabin_distribution = [
-            {'cabin_class': '经济舱', 'count': 1000, 'revenue': 500000},
-            {'cabin_class': '商务舱', 'count': 200, 'revenue': 300000},
-            {'cabin_class': '头等舱', 'count': 50, 'revenue': 200000}
-        ]
+        # 按舱位等级销售分布 - 从 Ticket.cabin_class 聚合计算真实数据
+        cabin_class_labels = {
+            'economy': '经济舱',
+            'business': '商务舱',
+            'first': '头等舱'
+        }
+        cabin_data = Ticket.objects.values('cabin_class').annotate(
+            count=Count('id'),
+            revenue=Sum('price')
+        )
+        cabin_distribution = []
+        for item in cabin_data:
+            cabin_distribution.append({
+                'cabin_class': cabin_class_labels.get(item['cabin_class'], item['cabin_class']),
+                'count': item['count'],
+                'revenue': float(item['revenue']) if item['revenue'] else 0
+            })
         
-        # 添加票价区间分布数据
-        # 从数据库获取票价数据
-        tickets = Ticket.objects.filter(status='confirmed')
+        # 票价区间分布 - 从 Ticket.price 聚合计算真实数据
+        tickets = Ticket.objects.all()
         
         # 定义票价区间
         price_ranges = [
@@ -436,65 +420,225 @@ class DataVisualization(APIView):
                 'name': price_range['name'],
                 'value': count
             })
-            
-        # 如果没有数据，提供一些默认数据以便前端显示
-        if sum(item['value'] for item in ticket_price_ranges) == 0:
-            ticket_price_ranges = [
-                {'name': '0-500元', 'value': 120},
-                {'name': '500-1000元', 'value': 350},
-                {'name': '1000-1500元', 'value': 280},
-                {'name': '1500-2000元', 'value': 180},
-                {'name': '2000元以上', 'value': 70}
-            ]
+        
+        # 支付方式分布 - 从 Order.payment_method 聚合计算真实数据
+        payment_data = Order.objects.filter(
+            status='paid',
+            payment_method__isnull=False
+        ).exclude(
+            payment_method=''
+        ).values('payment_method').annotate(
+            value=Count('id')
+        )
+        payment_methods = []
+        for item in payment_data:
+            payment_methods.append({
+                'name': item['payment_method'],
+                'value': item['value']
+            })
             
         return Response({
             'city_data': city_data[:10],  # 只返回前10个城市
             'cabin_distribution': cabin_distribution,
-            'ticket_price_ranges': ticket_price_ranges,  # 添加票价区间数据
-            'payment_methods': [  # 添加支付方式数据
-                {'name': '支付宝', 'value': 450},
-                {'name': '微信支付', 'value': 380},
-                {'name': '银行卡', 'value': 220},
-                {'name': '信用卡', 'value': 150}
-            ]
+            'ticket_price_ranges': ticket_price_ranges,
+            'payment_methods': payment_methods
         })
 
 class SystemLog(APIView):
-    """系统日志接口，仅管理员可访问"""
+    """系统日志接口，仅管理员可访问
+    
+    从 Django 日志文件读取真实日志记录。
+    
+    参数:
+    - level: 日志级别筛选 (INFO, WARNING, ERROR)
+    - start_date: 开始日期 (YYYY-MM-DD)
+    - end_date: 结束日期 (YYYY-MM-DD)
+    - limit: 返回数量限制 (默认 100)
+    
+    日志文件格式: LEVEL YYYY-MM-DD HH:MM:SS,mmm source PID TID message
+    """
     permission_classes = [permissions.IsAuthenticated]
+    
+    # 日志文件路径
+    LOG_FILE_PATH = 'logs/django.log'
+    
+    # 支持的日志级别
+    SUPPORTED_LEVELS = ['INFO', 'WARNING', 'ERROR']
+    
+    # 默认返回数量
+    DEFAULT_LIMIT = 100
     
     def get(self, request):
         user = request.user
         if not hasattr(user, 'role') or user.role != 'admin':
             return Response({'detail': '权限不足'}, status=403)
         
-        # 这里应该是从实际日志系统获取数据
-        # 目前返回模拟数据作为示例
-        system_logs = [
-            {
-                'timestamp': '2023-04-01T12:34:56',
-                'level': 'INFO',
-                'message': '系统启动',
-                'source': 'system'
-            },
-            {
-                'timestamp': '2023-04-01T13:45:12',
-                'level': 'ERROR',
-                'message': '数据库连接失败',
-                'source': 'database'
-            },
-            {
-                'timestamp': '2023-04-01T14:22:45',
-                'level': 'WARNING',
-                'message': '用户尝试访问未授权资源',
-                'source': 'security'
-            }
-        ]
+        # 获取筛选参数
+        level = request.query_params.get('level')
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        limit = request.query_params.get('limit', self.DEFAULT_LIMIT)
         
-        return Response({
-            'logs': system_logs,
-            'total': len(system_logs)
-        })
+        try:
+            limit = int(limit)
+            if limit <= 0:
+                limit = self.DEFAULT_LIMIT
+        except (ValueError, TypeError):
+            limit = self.DEFAULT_LIMIT
+        
+        # 验证日志级别参数
+        if level and level.upper() not in self.SUPPORTED_LEVELS:
+            level = None
+        elif level:
+            level = level.upper()
+        
+        # 解析日期参数
+        parsed_start_date = None
+        parsed_end_date = None
+        
+        if start_date:
+            try:
+                parsed_start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+        
+        if end_date:
+            try:
+                parsed_end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+        
+        # 读取并解析日志文件
+        logs, message = self._read_log_file(level, parsed_start_date, parsed_end_date, limit)
+        
+        response_data = {
+            'logs': logs,
+            'total': len(logs)
+        }
+        
+        if message:
+            response_data['message'] = message
+        
+        return Response(response_data)
+    
+    def _read_log_file(self, level=None, start_date=None, end_date=None, limit=100):
+        """从日志文件读取并解析日志记录
+        
+        Args:
+            level: 日志级别筛选
+            start_date: 开始日期
+            end_date: 结束日期
+            limit: 返回数量限制
+            
+        Returns:
+            tuple: (日志列表, 消息)
+        """
+        import os
+        from django.conf import settings
+        
+        log_file_path = os.path.join(settings.BASE_DIR, self.LOG_FILE_PATH)
+        
+        # 检查日志文件是否存在
+        if not os.path.exists(log_file_path):
+            return [], '日志文件不存在'
+        
+        logs = []
+        
+        try:
+            with open(log_file_path, 'r', encoding='utf-8', errors='replace') as f:
+                # 读取所有行
+                lines = f.readlines()
+                
+                # 从后往前读取，获取最新的日志
+                for line in reversed(lines):
+                    log_entry = self._parse_log_line(line.strip())
+                    
+                    if log_entry is None:
+                        continue
+                    
+                    # 应用日志级别筛选
+                    if level and log_entry['level'] != level:
+                        continue
+                    
+                    # 应用时间范围筛选
+                    if start_date or end_date:
+                        try:
+                            log_date = datetime.datetime.strptime(
+                                log_entry['timestamp'][:10], '%Y-%m-%d'
+                            ).date()
+                            
+                            if start_date and log_date < start_date:
+                                continue
+                            if end_date and log_date > end_date:
+                                continue
+                        except (ValueError, IndexError):
+                            continue
+                    
+                    logs.append(log_entry)
+                    
+                    # 达到数量限制时停止
+                    if len(logs) >= limit:
+                        break
+            
+            return logs, None
+            
+        except IOError as e:
+            return [], f'读取日志文件失败: {str(e)}'
+    
+    def _parse_log_line(self, line):
+        """解析单行日志
+        
+        日志格式: LEVEL YYYY-MM-DD HH:MM:SS,mmm source PID TID message
+        
+        Args:
+            line: 日志行字符串
+            
+        Returns:
+            dict: 解析后的日志条目，解析失败返回 None
+        """
+        if not line:
+            return None
+        
+        # 尝试解析日志行
+        # 格式: LEVEL YYYY-MM-DD HH:MM:SS,mmm source PID TID message
+        parts = line.split(' ', 6)
+        
+        if len(parts) < 5:
+            return None
+        
+        level = parts[0]
+        
+        # 验证日志级别
+        if level not in self.SUPPORTED_LEVELS:
+            return None
+        
+        try:
+            # 解析日期和时间
+            date_str = parts[1]
+            time_str = parts[2]
+            timestamp = f"{date_str}T{time_str.replace(',', '.')}"
+            
+            # 解析来源
+            source = parts[3] if len(parts) > 3 else 'unknown'
+            
+            # 解析消息（剩余部分）
+            # 跳过 PID 和 TID
+            if len(parts) >= 7:
+                message = parts[6]
+            elif len(parts) >= 6:
+                message = parts[5]
+            else:
+                message = ' '.join(parts[4:]) if len(parts) > 4 else ''
+            
+            return {
+                'timestamp': timestamp,
+                'level': level,
+                'message': message,
+                'source': source
+            }
+            
+        except (IndexError, ValueError):
+            return None
 
 class SalesTrend(APIView):
     """销售趋势分析接口"""
@@ -568,39 +712,40 @@ class UserAnalytics(APIView):
         if not hasattr(user, 'role') or user.role != 'admin':
             return Response({'detail': '权限不足'}, status=403)
         
-        # 用户年龄分布（假设有age字段）
-        # 注意：这是模拟数据，实际实现需要在User模型中添加age或出生日期字段
-        age_distribution = [
-            {'age_range': '18岁以下', 'count': 50},
-            {'age_range': '18-25岁', 'count': 280},
-            {'age_range': '26-35岁', 'count': 350},
-            {'age_range': '36-50岁', 'count': 220},
-            {'age_range': '50岁以上', 'count': 100}
+        # 用户年龄分布 - 从 Passenger.birth_date 计算真实年龄
+        from accounts.models import Passenger
+        
+        today = now().date()
+        
+        # 定义年龄区间
+        age_ranges = [
+            {'name': '18岁以下', 'min': 0, 'max': 18},
+            {'name': '18-25岁', 'min': 18, 'max': 26},
+            {'name': '26-35岁', 'min': 26, 'max': 36},
+            {'name': '36-50岁', 'min': 36, 'max': 51},
+            {'name': '50岁以上', 'min': 51, 'max': 200}
         ]
         
-        # 用户属性雷达图数据
-        user_attributes = {
-            'indicators': [
-                {'name': '消费能力', 'max': 100},
-                {'name': '出行频率', 'max': 100},
-                {'name': '忠诚度', 'max': 100},
-                {'name': '对价格敏感度', 'max': 100},
-                {'name': '对服务要求', 'max': 100}
-            ],
-            'series': [
-                {
-                    'name': '商务客户',
-                    'value': [85, 90, 70, 40, 85]
-                },
-                {
-                    'name': '休闲旅客',
-                    'value': [50, 45, 60, 80, 65]
-                }
-            ]
-        }
+        # 计算每个年龄区间的乘客数量
+        age_distribution = []
+        for age_range in age_ranges:
+            # 计算出生日期范围
+            # 年龄 >= min_age 意味着 birth_date <= today - min_age 年
+            # 年龄 < max_age 意味着 birth_date > today - max_age 年
+            max_birth_date = today.replace(year=today.year - age_range['min'])
+            min_birth_date = today.replace(year=today.year - age_range['max'])
+            
+            count = Passenger.objects.filter(
+                birth_date__gt=min_birth_date,
+                birth_date__lte=max_birth_date
+            ).count()
+            
+            age_distribution.append({
+                'age_range': age_range['name'],
+                'count': count
+            })
         
-        # 用户增长趋势
-        # 注意：这需要User模型中的date_joined字段
+        # 用户增长趋势 - 从 User.date_joined 聚合计算真实数据
         end_date = now().date()
         start_date = end_date - datetime.timedelta(days=365)  # 过去一年
         
@@ -619,7 +764,7 @@ class UserAnalytics(APIView):
                 date_joined__lt=next_month_date
             ).count()
             
-            # 当月活跃用户数（假设有last_login字段）
+            # 当月活跃用户数（基于 last_login 字段）
             active_users = User.objects.filter(
                 last_login__gte=current_date,
                 last_login__lt=next_month_date
@@ -636,22 +781,74 @@ class UserAnalytics(APIView):
         
         return Response({
             'age_distribution': age_distribution,
-            'user_attributes': user_attributes,
             'user_growth': user_growth
         })
 
 class FlightVisualization(APIView):
-    """航班可视化分析接口"""
+    """航班可视化分析接口
+    
+    提供航班上座率和航线地图数据，所有数据均来自真实数据库查询。
+    
+    返回数据:
+    - flight_load: 各航线的平均上座率
+    - route_map: 航线地图数据（城市坐标和航线信息）
+    """
     permission_classes = [permissions.IsAuthenticated]
+    
+    # 城市坐标数据（用于航线地图展示）
+    CITY_COORDINATES = {
+        '北京': [116.405285, 39.904989],
+        '上海': [121.472644, 31.231706],
+        '广州': [113.280637, 23.125178],
+        '深圳': [114.085947, 22.547],
+        '成都': [104.065735, 30.659462],
+        '西安': [108.948024, 34.263161],
+        '杭州': [120.153576, 30.287459],
+        '重庆': [106.504962, 29.533155],
+        '南京': [118.767413, 32.041544],
+        '武汉': [114.298572, 30.584355],
+        '天津': [117.190182, 39.125596],
+        '青岛': [120.355173, 36.082982],
+        '大连': [121.618622, 38.914590],
+        '厦门': [118.089425, 24.479834],
+        '昆明': [102.712251, 25.040609],
+        '长沙': [112.982279, 28.19409],
+        '郑州': [113.665412, 34.757975],
+        '沈阳': [123.429096, 41.796767],
+        '哈尔滨': [126.642464, 45.756967],
+        '三亚': [109.508268, 18.247872],
+        '海口': [110.33119, 20.031971],
+        '贵阳': [106.713478, 26.578343],
+        '南宁': [108.320004, 22.82402],
+        '福州': [119.306239, 26.075302],
+        '合肥': [117.283042, 31.86119],
+        '济南': [117.000923, 36.675807],
+        '石家庄': [114.502461, 38.045474],
+        '太原': [112.549248, 37.857014],
+        '兰州': [103.823557, 36.058039],
+        '乌鲁木齐': [87.617733, 43.792818],
+        '拉萨': [91.132212, 29.660361],
+        '银川': [106.278179, 38.46637],
+        '西宁': [101.778916, 36.623178],
+        '呼和浩特': [111.670801, 40.818311],
+        '长春': [125.3245, 43.886841],
+        '南昌': [115.892151, 28.676493],
+        '珠海': [113.553986, 22.224979],
+        '无锡': [120.301663, 31.574729],
+        '宁波': [121.549792, 29.868388],
+        '温州': [120.672111, 28.000575],
+        '烟台': [121.391382, 37.539297],
+    }
     
     def get(self, request):
         user = request.user
         if not hasattr(user, 'role') or user.role != 'admin':
             return Response({'detail': '权限不足'}, status=403)
         
-        # 获取航线载客率数据
+        # 获取航线载客率数据 - 使用真实数据
+        # 上座率 = (capacity - available_seats) / capacity * 100
         routes = Flight.objects.values('departure_city', 'arrival_city').annotate(
-            avg_occupancy=Avg(100 * (1 - F('available_seats') / F('capacity'))),
+            avg_occupancy=Avg(100 * (F('capacity') - F('available_seats')) / F('capacity')),
             flight_count=Count('id')
         ).order_by('-flight_count')[:10]  # 取前10条热门航线
         
@@ -662,30 +859,27 @@ class FlightVisualization(APIView):
                 'value': round(route['avg_occupancy']) if route['avg_occupancy'] else 0
             })
         
-        # 航班准点率数据（假设有actual_departure_time和scheduled_departure_time字段）
-        # 这里使用模拟数据，实际实现需要在Flight模型中添加相关字段
-        on_time_data = [
-            {'name': '北京-上海', 'value': 87},
-            {'name': '上海-广州', 'value': 92},
-            {'name': '北京-成都', 'value': 84},
-            {'name': '广州-深圳', 'value': 95},
-            {'name': '成都-西安', 'value': 90}
-        ]
+        # 构建航线地图数据 - 使用真实航线数据
+        # 获取所有航线及其航班数量
+        all_routes = Flight.objects.values('departure_city', 'arrival_city').annotate(
+            count=Count('id')
+        ).order_by('-count')
         
-        # 航班地图数据（获取所有航线的坐标信息）
-        # 注意：这需要城市坐标信息，这里使用模拟数据
-        city_coordinates = {
-            '北京': [116.405285, 39.904989],
-            '上海': [121.472644, 31.231706],
-            '广州': [113.280637, 23.125178],
-            '深圳': [114.085947, 22.547],
-            '成都': [104.065735, 30.659462],
-            '西安': [108.948024, 34.263161]
-        }
+        # 收集所有涉及的城市
+        cities_in_routes = set()
+        for route in all_routes:
+            cities_in_routes.add(route['departure_city'])
+            cities_in_routes.add(route['arrival_city'])
+        
+        # 构建城市坐标数据（只包含有航线的城市）
+        city_coordinates = {}
+        for city in cities_in_routes:
+            if city in self.CITY_COORDINATES:
+                city_coordinates[city] = self.CITY_COORDINATES[city]
         
         # 构建航线数据
         route_lines = []
-        for route in routes:
+        for route in all_routes:
             dep = route['departure_city']
             arr = route['arrival_city']
             
@@ -695,153 +889,14 @@ class FlightVisualization(APIView):
                     'from': dep,
                     'to': arr,
                     'coords': [city_coordinates[dep], city_coordinates[arr]],
-                    'value': route['flight_count']
+                    'value': route['count']
                 })
         
         return Response({
             'flight_load': flight_load,
-            'on_time_data': on_time_data,
             'route_map': {
                 'cities': city_coordinates,
                 'routes': route_lines
-            }
-        })
-
-class SalesPrediction(APIView):
-    """销售预测分析接口"""
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get(self, request):
-        user = request.user
-        if not hasattr(user, 'role') or user.role != 'admin':
-            return Response({'detail': '权限不足'}, status=403)
-        
-        # 获取预测周期参数(week, month, quarter)
-        prediction_period = request.query_params.get('period', 'week')
-        
-        # 获取历史销售数据作为预测基础
-        end_date = now().date()
-        
-        if prediction_period == 'month':
-            # 预测未来30天
-            days_to_predict = 30
-            # 使用过去90天数据预测
-            start_date = end_date - datetime.timedelta(days=90)
-        elif prediction_period == 'quarter':
-            # 预测未来90天
-            days_to_predict = 90
-            # 使用过去一年数据预测
-            start_date = end_date - datetime.timedelta(days=365)
-        else:
-            # 默认预测未来7天
-            days_to_predict = 7
-            # 使用过去30天数据预测
-            start_date = end_date - datetime.timedelta(days=30)
-        
-        # 获取历史订单数据
-        historical_orders = Order.objects.filter(
-            created_at__gte=start_date,
-            created_at__lte=end_date,
-            status='paid'
-        )
-        
-        # 按天聚合历史销售数据
-        historical_data = historical_orders.annotate(
-            date=TruncDay('created_at')
-        ).values('date').annotate(
-            revenue=Sum('total_price'),
-            orders=Count('id')
-        ).order_by('date')
-        
-        # 准备历史数据列表
-        dates = []
-        revenues = []
-        order_counts = []
-        
-        for item in historical_data:
-            dates.append(item['date'].strftime('%Y-%m-%d'))
-            revenues.append(float(item['revenue'] or 0))
-            order_counts.append(item['orders'])
-        
-        # 在实际应用中，这里应该使用统计模型进行预测
-        # 这里简单使用移动平均+随机波动模拟预测结果
-        
-        # 计算移动平均
-        if len(revenues) > 0:
-            avg_revenue = sum(revenues) / len(revenues)
-            avg_orders = sum(order_counts) / len(order_counts)
-        else:
-            avg_revenue = 0
-            avg_orders = 0
-        
-        # 生成预测数据
-        prediction_dates = []
-        predicted_revenues = []
-        predicted_orders = []
-        
-        import random
-        current_date = end_date + datetime.timedelta(days=1)
-        
-        for _ in range(days_to_predict):
-            # 增加一点随机波动（±15%）
-            revenue_fluctuation = random.uniform(0.85, 1.15)
-            order_fluctuation = random.uniform(0.85, 1.15)
-            
-            predicted_revenue = avg_revenue * revenue_fluctuation
-            predicted_order_count = int(avg_orders * order_fluctuation)
-            
-            prediction_dates.append(current_date.strftime('%Y-%m-%d'))
-            predicted_revenues.append(round(predicted_revenue, 2))
-            predicted_orders.append(predicted_order_count)
-            
-            current_date += datetime.timedelta(days=1)
-        
-        # 计算总预测结果与增长率
-        total_historical_revenue = sum(revenues)
-        total_historical_orders = sum(order_counts)
-        total_predicted_revenue = sum(predicted_revenues)
-        total_predicted_orders = sum(predicted_orders)
-        
-        # 计算上一个相同周期的历史数据
-        previous_start = start_date - datetime.timedelta(days=days_to_predict)
-        previous_end = end_date - datetime.timedelta(days=days_to_predict)
-        
-        previous_orders = Order.objects.filter(
-            created_at__gte=previous_start,
-            created_at__lte=previous_end,
-            status='paid'
-        )
-        
-        previous_revenue = previous_orders.aggregate(total=Sum('total_price'))['total'] or 0
-        previous_order_count = previous_orders.count()
-        
-        # 计算增长率
-        revenue_growth = calculate_growth(total_predicted_revenue, previous_revenue)
-        order_growth = calculate_growth(total_predicted_orders, previous_order_count)
-        
-        # 计算平均订单价值和增长率
-        avg_order_value = total_predicted_revenue / total_predicted_orders if total_predicted_orders else 0
-        previous_avg_order_value = previous_revenue / previous_order_count if previous_order_count else 0
-        aov_growth = calculate_growth(avg_order_value, previous_avg_order_value)
-        
-        return Response({
-            'historical_data': {
-                'dates': dates,
-                'revenues': revenues,
-                'order_counts': order_counts
-            },
-            'prediction_data': {
-                'dates': prediction_dates,
-                'revenues': predicted_revenues,
-                'order_counts': predicted_orders
-            },
-            'summary': {
-                'total_revenue': total_predicted_revenue,
-                'total_orders': total_predicted_orders,
-                'average_order_value': avg_order_value,
-                'growth_rate': revenue_growth,
-                'order_growth_rate': order_growth,
-                'aov_growth_rate': aov_growth
             }
         })
 
@@ -901,254 +956,6 @@ class RouteAnalytics(APIView):
         return Response({
             'metric': metric,
             'route_data': route_data
-        })
-
-class PriceElasticity(APIView):
-    """价格弹性分析接口"""
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get(self, request):
-        user = request.user
-        if not hasattr(user, 'role') or user.role != 'admin':
-            return Response({'detail': '权限不足'}, status=403)
-        
-        # 获取航线参数
-        route = request.query_params.get('route', 'beijing-shanghai')
-        
-        # 在实际应用中，应该通过分析历史价格变化和销量数据来计算价格弹性
-        # 这里使用模拟数据
-        
-        # 价格区间和对应的销量数据（模拟）
-        price_points = [800, 1000, 1200, 1400, 1600, 1800, 2000]
-        sales_volume = [95, 88, 76, 65, 54, 42, 30]  # 越贵卖得越少
-        
-        # 计算各个点的弹性值
-        elasticity_data = []
-        for i in range(1, len(price_points)):
-            price_change = (price_points[i] - price_points[i-1]) / price_points[i-1]
-            volume_change = (sales_volume[i] - sales_volume[i-1]) / sales_volume[i-1]
-            elasticity = volume_change / price_change if price_change != 0 else 0
-            
-            elasticity_data.append({
-                'price': price_points[i],
-                'volume': sales_volume[i],
-                'elasticity': abs(round(elasticity, 2))  # 取绝对值
-            })
-        
-        # 计算最优定价点（这通常是弹性接近于1的价格点）
-        # 实际中需要更复杂的模型
-        optimal_price = 0
-        min_distance_to_one = float('inf')
-        
-        for item in elasticity_data:
-            distance_to_one = abs(item['elasticity'] - 1.0)
-            if distance_to_one < min_distance_to_one:
-                min_distance_to_one = distance_to_one
-                optimal_price = item['price']
-        
-        return Response({
-            'route': route,
-            'price_volume_data': [
-                {'price': price_points[i], 'volume': sales_volume[i]} 
-                for i in range(len(price_points))
-            ],
-            'elasticity_data': elasticity_data,
-            'optimal_price': optimal_price
-        })
-
-class CustomerLTV(APIView):
-    """客户终身价值分析接口"""
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get(self, request):
-        user = request.user
-        if not hasattr(user, 'role') or user.role != 'admin':
-            return Response({'detail': '权限不足'}, status=403)
-        
-        # 在实际应用中，应该通过计算客户平均订单价值、购买频率和客户留存率来计算LTV
-        # 这里使用模拟数据
-        
-        # 按用户类型划分的LTV数据
-        user_segments = [
-            {
-                'segment': '商务旅客',
-                'ltv': 12500,
-                'avg_order_value': 2500,
-                'purchase_frequency': 5,  # 每年
-                'retention_rate': 0.85,   # 留存率85%
-                'percentage': 20          # 占用户总数的百分比
-            },
-            {
-                'segment': '经常出行者',
-                'ltv': 8000,
-                'avg_order_value': 2000,
-                'purchase_frequency': 4,
-                'retention_rate': 0.75,
-                'percentage': 30
-            },
-            {
-                'segment': '休闲旅客',
-                'ltv': 4000,
-                'avg_order_value': 1600,
-                'purchase_frequency': 2.5,
-                'retention_rate': 0.65,
-                'percentage': 40
-            },
-            {
-                'segment': '偶尔出行者',
-                'ltv': 1500,
-                'avg_order_value': 1500,
-                'purchase_frequency': 1,
-                'retention_rate': 0.40,
-                'percentage': 10
-            }
-        ]
-        
-        # 计算平均LTV
-        weighted_ltv_sum = sum(segment['ltv'] * segment['percentage'] for segment in user_segments)
-        total_percentage = sum(segment['percentage'] for segment in user_segments)
-        avg_ltv = weighted_ltv_sum / total_percentage if total_percentage > 0 else 0
-        
-        return Response({
-            'user_segments': user_segments,
-            'average_ltv': avg_ltv
-        })
-
-class SeasonalityAnalysis(APIView):
-    """季节性分析接口"""
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get(self, request):
-        user = request.user
-        if not hasattr(user, 'role') or user.role != 'admin':
-            return Response({'detail': '权限不足'}, status=403)
-        
-        # 获取航线参数
-        route = request.query_params.get('route', 'beijing-shanghai')
-        
-        # 在实际应用中，应该分析最近几年同一航线在不同月份的销售数据
-        # 这里使用模拟数据
-        
-        # 一年12个月的销售指标数据
-        months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
-        
-        # 不同航线的季节性数据
-        route_data = {
-            'beijing-shanghai': {
-                'load_factor': [75, 68, 82, 85, 89, 92, 95, 96, 90, 88, 83, 78],  # 载客率
-                'ticket_price': [1200, 1150, 1300, 1350, 1400, 1500, 1600, 1650, 1400, 1350, 1300, 1250]  # 票价
-            },
-            'beijing-guangzhou': {
-                'load_factor': [80, 72, 78, 82, 85, 88, 92, 94, 86, 84, 82, 85],
-                'ticket_price': [1800, 1700, 1750, 1800, 1850, 1900, 2000, 2100, 1900, 1850, 1800, 1850]
-            },
-            'shanghai-chengdu': {
-                'load_factor': [76, 70, 75, 80, 84, 88, 90, 92, 85, 82, 78, 76],
-                'ticket_price': [1500, 1450, 1500, 1550, 1600, 1650, 1700, 1750, 1600, 1550, 1500, 1500]
-            }
-        }
-        
-        # 获取选定航线的数据或默认数据
-        selected_data = route_data.get(route, route_data['beijing-shanghai'])
-        
-        # 计算季节性指标
-        peak_month_index = selected_data['load_factor'].index(max(selected_data['load_factor']))
-        peak_month = months[peak_month_index]
-        low_month_index = selected_data['load_factor'].index(min(selected_data['load_factor']))
-        low_month = months[low_month_index]
-        
-        seasonality_ratio = max(selected_data['load_factor']) / min(selected_data['load_factor']) if min(selected_data['load_factor']) > 0 else 0
-        
-        return Response({
-            'route': route,
-            'months': months,
-            'load_factor': selected_data['load_factor'],
-            'ticket_price': selected_data['ticket_price'],
-            'peak_month': peak_month,
-            'low_month': low_month,
-            'seasonality_ratio': round(seasonality_ratio, 2),
-            'available_routes': list(route_data.keys())
-        })
-
-class AnomalyDetection(APIView):
-    """异常检测分析接口"""
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get(self, request):
-        user = request.user
-        if not hasattr(user, 'role') or user.role != 'admin':
-            return Response({'detail': '权限不足'}, status=403)
-        
-        # 在实际应用中，应该使用统计方法或机器学习模型来检测销售数据中的异常
-        # 这里使用模拟数据
-        
-        # 获取过去30天的销售数据
-        end_date = now().date()
-        start_date = end_date - datetime.timedelta(days=30)
-        
-        # 模拟每日销售数据和标准差
-        dates = []
-        sales = []
-        expected_values = []
-        upper_bounds = []
-        lower_bounds = []
-        
-        # 生成日期序列
-        current_date = start_date
-        while current_date <= end_date:
-            dates.append(current_date.strftime('%Y-%m-%d'))
-            current_date += datetime.timedelta(days=1)
-        
-        # 生成模拟数据
-        import random
-        import numpy as np
-        
-        baseline = 50000  # 基准日销售额
-        std_dev = baseline * 0.15  # 标准差
-        
-        for i in range(len(dates)):
-            # 正常范围内的随机波动
-            expected = baseline + random.uniform(-baseline*0.1, baseline*0.1)
-            expected_values.append(expected)
-            
-            # 上下限（3个标准差）
-            upper_bounds.append(expected + 3 * std_dev)
-            lower_bounds.append(max(0, expected - 3 * std_dev))
-            
-            # 有10%的概率生成异常值
-            if random.random() < 0.1:
-                # 生成异常值
-                if random.random() < 0.5:
-                    # 异常高值
-                    sales.append(expected + random.uniform(3 * std_dev, 5 * std_dev))
-                else:
-                    # 异常低值
-                    sales.append(max(0, expected - random.uniform(3 * std_dev, 5 * std_dev)))
-            else:
-                # 正常值
-                sales.append(expected + random.normalvariate(0, std_dev))
-        
-        # 检测异常
-        anomalies = []
-        for i in range(len(sales)):
-            if sales[i] > upper_bounds[i] or sales[i] < lower_bounds[i]:
-                severity = 'high' if abs(sales[i] - expected_values[i]) > 4 * std_dev else 'medium'
-                anomalies.append({
-                    'date': dates[i],
-                    'value': round(sales[i], 2),
-                    'expected': round(expected_values[i], 2),
-                    'deviation': round((sales[i] - expected_values[i]) / expected_values[i] * 100, 2),
-                    'severity': severity,
-                    'description': f"销售额{'高于' if sales[i] > expected_values[i] else '低于'}预期 ({round(abs(sales[i] - expected_values[i]) / expected_values[i] * 100, 2)}%)"
-                })
-        
-        return Response({
-            'dates': dates,
-            'sales': [round(x, 2) for x in sales],
-            'expected_values': [round(x, 2) for x in expected_values],
-            'upper_bounds': [round(x, 2) for x in upper_bounds],
-            'lower_bounds': [round(x, 2) for x in lower_bounds],
-            'anomalies': anomalies
         })
 
 class SalesAnalytics(APIView):
@@ -1226,7 +1033,120 @@ class SalesAnalytics(APIView):
         })
 
 class CustomerSegments(APIView):
-    """客户分群分析接口"""
+    """客户分群分析接口
+    
+    基于用户消费总额将用户分为高/中/低价值三个群体：
+    - 高价值: 消费总额 >= 3000 元
+    - 中价值: 1000 元 <= 消费总额 < 3000 元
+    - 低价值: 消费总额 < 1000 元
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    # 分群阈值常量
+    HIGH_VALUE_THRESHOLD = 3000
+    MEDIUM_VALUE_THRESHOLD = 1000
+    
+    def get(self, request):
+        user = request.user
+        if not hasattr(user, 'role') or user.role != 'admin':
+            return Response({'detail': '权限不足'}, status=403)
+        
+        # 基于 Order.total_price 聚合计算每个用户的消费总额
+        user_spending = Order.objects.filter(
+            status='paid'
+        ).values('user').annotate(
+            total_spend=Sum('total_price')
+        )
+        
+        # 初始化分群数据
+        high_value = {'count': 0, 'total_spend': 0, 'users': []}
+        medium_value = {'count': 0, 'total_spend': 0, 'users': []}
+        low_value = {'count': 0, 'total_spend': 0, 'users': []}
+        
+        # 按消费金额分群
+        for user_data in user_spending:
+            spend = float(user_data['total_spend']) if user_data['total_spend'] else 0
+            
+            if spend >= self.HIGH_VALUE_THRESHOLD:
+                high_value['count'] += 1
+                high_value['total_spend'] += spend
+            elif spend >= self.MEDIUM_VALUE_THRESHOLD:
+                medium_value['count'] += 1
+                medium_value['total_spend'] += spend
+            else:
+                low_value['count'] += 1
+                low_value['total_spend'] += spend
+        
+        # 计算总用户数
+        total_users = high_value['count'] + medium_value['count'] + low_value['count']
+        
+        # 构建返回数据
+        segments = []
+        
+        # 高价值客户
+        if high_value['count'] > 0:
+            segments.append({
+                'name': '高价值客户',
+                'count': high_value['count'],
+                'avg_spend': round(high_value['total_spend'] / high_value['count'], 2),
+                'total_spend': round(high_value['total_spend'], 2),
+                'percentage': round(high_value['count'] / total_users * 100, 1) if total_users > 0 else 0
+            })
+        else:
+            segments.append({
+                'name': '高价值客户',
+                'count': 0,
+                'avg_spend': 0,
+                'total_spend': 0,
+                'percentage': 0
+            })
+        
+        # 中价值客户
+        if medium_value['count'] > 0:
+            segments.append({
+                'name': '中价值客户',
+                'count': medium_value['count'],
+                'avg_spend': round(medium_value['total_spend'] / medium_value['count'], 2),
+                'total_spend': round(medium_value['total_spend'], 2),
+                'percentage': round(medium_value['count'] / total_users * 100, 1) if total_users > 0 else 0
+            })
+        else:
+            segments.append({
+                'name': '中价值客户',
+                'count': 0,
+                'avg_spend': 0,
+                'total_spend': 0,
+                'percentage': 0
+            })
+        
+        # 低价值客户
+        if low_value['count'] > 0:
+            segments.append({
+                'name': '低价值客户',
+                'count': low_value['count'],
+                'avg_spend': round(low_value['total_spend'] / low_value['count'], 2),
+                'total_spend': round(low_value['total_spend'], 2),
+                'percentage': round(low_value['count'] / total_users * 100, 1) if total_users > 0 else 0
+            })
+        else:
+            segments.append({
+                'name': '低价值客户',
+                'count': 0,
+                'avg_spend': 0,
+                'total_spend': 0,
+                'percentage': 0
+            })
+        
+        return Response({
+            'segments': segments,
+            'total_users': total_users
+        })
+
+class CustomerLoyalty(APIView):
+    """客户忠诚度分析接口
+    
+    分析客户的忠诚度指数、乘机频率和消费水平，用于散点图展示。
+    """
     permission_classes = [permissions.IsAuthenticated]
     
     def get(self, request):
@@ -1234,73 +1154,131 @@ class CustomerSegments(APIView):
         if not hasattr(user, 'role') or user.role != 'admin':
             return Response({'detail': '权限不足'}, status=403)
         
-        # 在实际应用中，应该根据用户的订单历史、消费金额等进行客户分群
-        # 这里使用模拟数据
+        # 获取时间范围参数
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
         
-        segments = [
-            {
-                'name': '商务精英',
-                'value': 25,
-                'avg_spend': 2800,
-                'avg_frequency': 8.5,  # 每年平均乘坐航班次数
-                'attributes': {
-                    '年龄段': '30-45岁',
-                    '偏好': '商务舱、头等舱',
-                    '出行特点': '短途频繁、多为工作日出行',
-                    '敏感因素': '时间 > 价格'
-                }
-            },
-            {
-                'name': '休闲家庭',
-                'value': 35,
-                'avg_spend': 1600,
-                'avg_frequency': 3.2,
-                'attributes': {
-                    '年龄段': '25-40岁',
-                    '偏好': '经济舱',
-                    '出行特点': '节假日出行、多人同行',
-                    '敏感因素': '价格 > 时间'
-                }
-            },
-            {
-                'name': '学生群体',
-                'value': 20,
-                'avg_spend': 1100,
-                'avg_frequency': 4.5,
-                'attributes': {
-                    '年龄段': '18-25岁',
-                    '偏好': '经济舱、特价票',
-                    '出行特点': '学期初末、假期',
-                    '敏感因素': '价格 >> 时间'
-                }
-            },
-            {
-                'name': '退休旅行者',
-                'value': 10,
-                'avg_spend': 2200,
-                'avg_frequency': 2.8,
-                'attributes': {
-                    '年龄段': '60岁以上',
-                    '偏好': '舒适座位、特殊服务',
-                    '出行特点': '淡季、长途',
-                    '敏感因素': '服务 > 时间 > 价格'
-                }
-            },
-            {
-                'name': '其他',
-                'value': 10,
-                'avg_spend': 1500,
-                'avg_frequency': 1.5,
-                'attributes': {
-                    '特点': '混合群体',
-                }
-            }
-        ]
+        # 基础查询
+        orders = Order.objects.filter(status='paid')
+        if start_date:
+            orders = orders.filter(created_at__date__gte=start_date)
+        if end_date:
+            orders = orders.filter(created_at__date__lte=end_date)
+        
+        # 计算每个用户的订单数和消费总额
+        user_stats = orders.values('user').annotate(
+            order_count=Count('id'),
+            total_spend=Sum('total_price')
+        )
+        
+        # 计算最大订单数用于归一化忠诚度指数
+        max_orders = max([u['order_count'] for u in user_stats], default=1)
+        
+        # 构建忠诚度数据点
+        loyalty_levels = []
+        for user_data in user_stats:
+            order_count = user_data['order_count']
+            total_spend = float(user_data['total_spend']) if user_data['total_spend'] else 0
+            avg_spend = total_spend / order_count if order_count > 0 else 0
+            
+            # 忠诚度指数 = 订单数 / 最大订单数 (0-1)
+            loyalty_index = round(order_count / max_orders, 2) if max_orders > 0 else 0
+            
+            loyalty_levels.append({
+                'name': f'用户{user_data["user"]}',
+                'value': [loyalty_index, order_count, round(avg_spend, 2)]
+            })
+        
+        # 计算留存趋势（按月统计回购用户比例）
+        retention_trend = self._calculate_retention_trend(orders)
+        
+        # 按忠诚度分组的消费统计
+        loyalty_spending = self._calculate_loyalty_spending(user_stats)
         
         return Response({
-            'segments': segments,
-            'total_users': sum(segment['value'] for segment in segments)
+            'loyalty_levels': loyalty_levels,
+            'retention_trend': retention_trend,
+            'loyalty_spending': loyalty_spending
         })
+    
+    def _calculate_retention_trend(self, orders):
+        """计算留存趋势"""
+        from django.db.models.functions import TruncMonth
+        
+        # 按月统计有订单的用户数
+        monthly_users = orders.annotate(
+            month=TruncMonth('created_at')
+        ).values('month').annotate(
+            user_count=Count('user', distinct=True)
+        ).order_by('month')
+        
+        months = []
+        rates = []
+        prev_users = set()
+        
+        for month_data in monthly_users:
+            month_str = month_data['month'].strftime('%Y-%m') if month_data['month'] else ''
+            months.append(month_str)
+            
+            # 获取当月用户
+            current_month_users = set(orders.filter(
+                created_at__year=month_data['month'].year,
+                created_at__month=month_data['month'].month
+            ).values_list('user', flat=True))
+            
+            # 计算回购率（当月用户中有多少是之前的用户）
+            if prev_users:
+                returning = len(current_month_users & prev_users)
+                rate = round(returning / len(current_month_users) * 100, 1) if current_month_users else 0
+            else:
+                rate = 0
+            
+            rates.append(rate)
+            prev_users = prev_users | current_month_users
+        
+        return {
+            'months': months,
+            'rates': rates
+        }
+    
+    def _calculate_loyalty_spending(self, user_stats):
+        """按忠诚度分组计算消费统计"""
+        # 分组：低频(1-2次)、中频(3-5次)、高频(6次以上)
+        low_freq = {'count': 0, 'total_spend': 0}
+        mid_freq = {'count': 0, 'total_spend': 0}
+        high_freq = {'count': 0, 'total_spend': 0}
+        
+        for user_data in user_stats:
+            order_count = user_data['order_count']
+            spend = float(user_data['total_spend']) if user_data['total_spend'] else 0
+            
+            if order_count <= 2:
+                low_freq['count'] += 1
+                low_freq['total_spend'] += spend
+            elif order_count <= 5:
+                mid_freq['count'] += 1
+                mid_freq['total_spend'] += spend
+            else:
+                high_freq['count'] += 1
+                high_freq['total_spend'] += spend
+        
+        return [
+            {
+                'name': '低频用户(1-2次)',
+                'user_count': low_freq['count'],
+                'avg_spend': round(low_freq['total_spend'] / low_freq['count'], 2) if low_freq['count'] > 0 else 0
+            },
+            {
+                'name': '中频用户(3-5次)',
+                'user_count': mid_freq['count'],
+                'avg_spend': round(mid_freq['total_spend'] / mid_freq['count'], 2) if mid_freq['count'] > 0 else 0
+            },
+            {
+                'name': '高频用户(6次+)',
+                'user_count': high_freq['count'],
+                'avg_spend': round(high_freq['total_spend'] / high_freq['count'], 2) if high_freq['count'] > 0 else 0
+            }
+        ]
 
 class RouteMap(APIView):
     """航线地图分析接口"""
@@ -1376,58 +1354,25 @@ class RouteMap(APIView):
             'cities': city_data
         })
 
-class CustomerLoyalty(APIView):
-    """客户忠诚度分析接口"""
+class PivotData(APIView):
+    """数据透视表接口
+    
+    支持的维度:
+    - city: 按城市聚合航班和收入数据
+    - paymentMethod: 按支付方式聚合订单数据
+    - flight: 按航班聚合数据
+    - userType: 按用户类型聚合数据
+    
+    支持的指标:
+    - revenue: 销售额
+    - orders: 订单数
+    - averageValue: 平均客单价
+    - refundRate: 退票率
+    """
     permission_classes = [permissions.IsAuthenticated]
     
-    def get(self, request):
-        user = request.user
-        if not hasattr(user, 'role') or user.role != 'admin':
-            return Response({'detail': '权限不足'}, status=403)
-        
-        # 在实际应用中，应该根据用户的复购率、会员等级、积分情况等分析忠诚度
-        # 这里使用模拟数据
-        
-        # 忠诚度等级分布
-        loyalty_levels = [
-            {'name': '钻石会员', 'value': 5, 'retention_rate': 92},
-            {'name': '白金会员', 'value': 10, 'retention_rate': 85},
-            {'name': '金卡会员', 'value': 15, 'retention_rate': 78},
-            {'name': '银卡会员', 'value': 30, 'retention_rate': 65},
-            {'name': '普通会员', 'value': 40, 'retention_rate': 45}
-        ]
-        
-        # 忠诚度随时间变化的趋势（模拟数据）
-        months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
-        retention_trend = [68, 67, 70, 72, 73, 75, 78, 80, 79, 77, 76, 79]  # 月度留存率
-        
-        # 忠诚度与消费关系
-        loyalty_spending = [
-            {'loyalty_score': 10, 'avg_spending': 800},
-            {'loyalty_score': 20, 'avg_spending': 1200},
-            {'loyalty_score': 30, 'avg_spending': 1500},
-            {'loyalty_score': 40, 'avg_spending': 1800},
-            {'loyalty_score': 50, 'avg_spending': 2100},
-            {'loyalty_score': 60, 'avg_spending': 2400},
-            {'loyalty_score': 70, 'avg_spending': 2800},
-            {'loyalty_score': 80, 'avg_spending': 3200},
-            {'loyalty_score': 90, 'avg_spending': 3800},
-            {'loyalty_score': 100, 'avg_spending': 4500}
-        ]
-        
-        return Response({
-            'loyalty_levels': loyalty_levels,
-            'retention_trend': {
-                'months': months,
-                'rates': retention_trend
-            },
-            'loyalty_spending': loyalty_spending,
-            'overall_retention_rate': sum(retention_trend) / len(retention_trend)
-        })
-
-class PivotData(APIView):
-    """数据透视表接口"""
-    permission_classes = [permissions.IsAuthenticated]
+    # 支持的维度列表
+    SUPPORTED_DIMENSIONS = ['city', 'paymentMethod', 'flight', 'userType']
     
     def get(self, request):
         user = request.user
@@ -1435,83 +1380,26 @@ class PivotData(APIView):
             return Response({'detail': '权限不足'}, status=403)
         
         # 获取维度和指标参数
-        dimension = request.query_params.get('dimension', 'flight')  # flight, city, userType, paymentMethod
-        metric = request.query_params.get('metric', 'revenue')  # revenue, orders, averageValue, refundRate
+        dimension = request.query_params.get('dimension', 'city')
+        metric = request.query_params.get('metric', 'revenue')
         
-        # 在实际应用中，应该根据参数从数据库聚合数据
-        # 这里使用模拟数据
+        # 验证维度参数
+        if dimension not in self.SUPPORTED_DIMENSIONS:
+            return Response({
+                'detail': f'不支持的维度: {dimension}',
+                'supported_dimensions': self.SUPPORTED_DIMENSIONS
+            }, status=400)
         
         pivot_data = []
         
-        if dimension == 'flight':
-            # 按航班号维度
-            flights = ['CA1234', 'MU5678', 'CZ9012', 'HU3456', 'FM7890', 
-                      'CA5432', 'MU9876', 'CZ5432', 'HU1098', 'FM7654']
-            for flight in flights:
-                # 随机生成数据
-                value = random.uniform(80000, 500000) if metric == 'revenue' else \
-                        random.randint(100, 500) if metric == 'orders' else \
-                        random.uniform(800, 3000) if metric == 'averageValue' else \
-                        random.uniform(0.01, 0.15)  # refundRate
-                
-                pivot_data.append({
-                    'dimension': flight,
-                    'value': round(value, 2 if metric in ['revenue', 'averageValue', 'refundRate'] else 0),
-                    'previousValue': round(value * random.uniform(0.8, 1.2), 2 if metric in ['revenue', 'averageValue', 'refundRate'] else 0),
-                    'trend': round((random.uniform(-20, 30)), 2),
-                    'percentage': round(random.uniform(1, 20), 2)
-                })
-        
-        elif dimension == 'city':
-            # 按城市维度
-            cities = ['北京', '上海', '广州', '深圳', '成都', '武汉', '西安', '重庆', '杭州', '南京']
-            for city in cities:
-                value = random.uniform(500000, 2500000) if metric == 'revenue' else \
-                        random.randint(800, 5000) if metric == 'orders' else \
-                        random.uniform(1000, 2500) if metric == 'averageValue' else \
-                        random.uniform(0.02, 0.12)  # refundRate
-                
-                pivot_data.append({
-                    'dimension': city,
-                    'value': round(value, 2 if metric in ['revenue', 'averageValue', 'refundRate'] else 0),
-                    'previousValue': round(value * random.uniform(0.85, 1.15), 2 if metric in ['revenue', 'averageValue', 'refundRate'] else 0),
-                    'trend': round((random.uniform(-15, 25)), 2),
-                    'percentage': round(random.uniform(5, 25), 2)
-                })
-        
+        if dimension == 'city':
+            pivot_data = self._aggregate_by_city(metric)
+        elif dimension == 'paymentMethod':
+            pivot_data = self._aggregate_by_payment_method(metric)
+        elif dimension == 'flight':
+            pivot_data = self._aggregate_by_flight(metric)
         elif dimension == 'userType':
-            # 按用户类型维度
-            user_types = ['商务旅客', '休闲旅客', '家庭出行', '学生', '老年人', '其他']
-            for user_type in user_types:
-                value = random.uniform(300000, 1500000) if metric == 'revenue' else \
-                        random.randint(300, 2000) if metric == 'orders' else \
-                        random.uniform(900, 3500) if metric == 'averageValue' else \
-                        random.uniform(0.01, 0.18)  # refundRate
-                
-                pivot_data.append({
-                    'dimension': user_type,
-                    'value': round(value, 2 if metric in ['revenue', 'averageValue', 'refundRate'] else 0),
-                    'previousValue': round(value * random.uniform(0.9, 1.1), 2 if metric in ['revenue', 'averageValue', 'refundRate'] else 0),
-                    'trend': round((random.uniform(-12, 20)), 2),
-                    'percentage': round(random.uniform(10, 35), 2)
-                })
-        
-        else:  # paymentMethod
-            # 按支付方式维度
-            payment_methods = ['支付宝', '微信支付', '银联', '信用卡', '储蓄卡', '其他']
-            for method in payment_methods:
-                value = random.uniform(250000, 1800000) if metric == 'revenue' else \
-                        random.randint(250, 2500) if metric == 'orders' else \
-                        random.uniform(1000, 3000) if metric == 'averageValue' else \
-                        random.uniform(0.01, 0.1)  # refundRate
-                
-                pivot_data.append({
-                    'dimension': method,
-                    'value': round(value, 2 if metric in ['revenue', 'averageValue', 'refundRate'] else 0),
-                    'previousValue': round(value * random.uniform(0.9, 1.1), 2 if metric in ['revenue', 'averageValue', 'refundRate'] else 0),
-                    'trend': round((random.uniform(-10, 18)), 2),
-                    'percentage': round(random.uniform(8, 30), 2)
-                })
+            pivot_data = self._aggregate_by_user_type(metric)
         
         # 排序
         pivot_data.sort(key=lambda x: x['value'], reverse=True)
@@ -1530,6 +1418,243 @@ class PivotData(APIView):
             'metric_label': metric_labels.get(metric, metric),
             'data': pivot_data
         })
+    
+    def _calculate_refund_rate(self, tickets_queryset):
+        """计算退票率"""
+        total_tickets = tickets_queryset.count()
+        if total_tickets == 0:
+            return 0
+        refunded_tickets = tickets_queryset.filter(status='refunded').count()
+        return round(refunded_tickets / total_tickets * 100, 2)
+    
+    def _aggregate_by_city(self, metric):
+        """按城市维度聚合数据"""
+        # 获取所有城市（出发城市和到达城市）
+        cities = set()
+        
+        departure_cities = Flight.objects.values_list('departure_city', flat=True).distinct()
+        arrival_cities = Flight.objects.values_list('arrival_city', flat=True).distinct()
+        
+        cities.update(departure_cities)
+        cities.update(arrival_cities)
+        
+        pivot_data = []
+        total_value = 0
+        
+        for city in cities:
+            # 获取该城市相关的航班（出发或到达）
+            city_flights = Flight.objects.filter(
+                departure_city=city
+            ) | Flight.objects.filter(
+                arrival_city=city
+            )
+            flight_ids = city_flights.values_list('id', flat=True)
+            
+            # 获取该城市相关的机票
+            city_tickets = Ticket.objects.filter(flight_id__in=flight_ids)
+            
+            if metric == 'revenue':
+                # 销售额：该城市相关机票的总收入
+                value = city_tickets.aggregate(total=Sum('price'))['total'] or 0
+                value = float(value)
+            elif metric == 'orders':
+                # 订单数：该城市相关机票的订单数
+                value = city_tickets.values('order_id').distinct().count()
+            elif metric == 'averageValue':
+                # 平均客单价：该城市相关订单的平均金额
+                order_ids = city_tickets.values_list('order_id', flat=True).distinct()
+                avg_result = Order.objects.filter(id__in=order_ids, status='paid').aggregate(
+                    avg=Avg('total_price')
+                )
+                value = float(avg_result['avg']) if avg_result['avg'] else 0
+            elif metric == 'refundRate':
+                # 退票率：该城市相关机票的退票率
+                value = self._calculate_refund_rate(city_tickets)
+            else:
+                value = 0
+            
+            total_value += value
+            
+            pivot_data.append({
+                'dimension': city,
+                'value': round(value, 2) if metric in ['revenue', 'averageValue'] else value,
+                'flight_count': city_flights.count()
+            })
+        
+        # 计算百分比
+        for item in pivot_data:
+            if total_value > 0:
+                item['percentage'] = round(item['value'] / total_value * 100, 2)
+            else:
+                item['percentage'] = 0
+        
+        return pivot_data
+    
+    def _aggregate_by_payment_method(self, metric):
+        """按支付方式维度聚合数据"""
+        # 获取所有支付方式
+        payment_methods = Order.objects.filter(
+            status='paid',
+            payment_method__isnull=False
+        ).exclude(
+            payment_method=''
+        ).values_list('payment_method', flat=True).distinct()
+        
+        pivot_data = []
+        total_value = 0
+        
+        for payment_method in payment_methods:
+            # 获取该支付方式的订单
+            method_orders = Order.objects.filter(
+                status='paid',
+                payment_method=payment_method
+            )
+            
+            if metric == 'revenue':
+                # 销售额：该支付方式的总收入
+                value = method_orders.aggregate(total=Sum('total_price'))['total'] or 0
+                value = float(value)
+            elif metric == 'orders':
+                # 订单数：该支付方式的订单数量
+                value = method_orders.count()
+            elif metric == 'averageValue':
+                # 平均客单价：该支付方式的平均订单金额
+                avg_result = method_orders.aggregate(avg=Avg('total_price'))
+                value = float(avg_result['avg']) if avg_result['avg'] else 0
+            elif metric == 'refundRate':
+                # 退票率：该支付方式订单的退票率
+                order_ids = method_orders.values_list('id', flat=True)
+                method_tickets = Ticket.objects.filter(order_id__in=order_ids)
+                value = self._calculate_refund_rate(method_tickets)
+            else:
+                value = 0
+            
+            total_value += value
+            
+            pivot_data.append({
+                'dimension': payment_method,
+                'value': round(value, 2) if metric in ['revenue', 'averageValue'] else value,
+                'order_count': method_orders.count()
+            })
+        
+        # 计算百分比
+        for item in pivot_data:
+            if total_value > 0:
+                item['percentage'] = round(item['value'] / total_value * 100, 2)
+            else:
+                item['percentage'] = 0
+        
+        return pivot_data
+    
+    def _aggregate_by_flight(self, metric):
+        """按航班维度聚合数据"""
+        # 获取有机票的航班
+        flights = Flight.objects.filter(tickets__isnull=False).distinct()[:20]  # 限制前20个
+        
+        pivot_data = []
+        total_value = 0
+        
+        for flight in flights:
+            flight_tickets = Ticket.objects.filter(flight=flight)
+            flight_label = f"{flight.flight_number} ({flight.departure_city}-{flight.arrival_city})"
+            
+            if metric == 'revenue':
+                value = flight_tickets.aggregate(total=Sum('price'))['total'] or 0
+                value = float(value)
+            elif metric == 'orders':
+                value = flight_tickets.values('order_id').distinct().count()
+            elif metric == 'averageValue':
+                order_ids = flight_tickets.values_list('order_id', flat=True).distinct()
+                avg_result = Order.objects.filter(id__in=order_ids, status='paid').aggregate(
+                    avg=Avg('total_price')
+                )
+                value = float(avg_result['avg']) if avg_result['avg'] else 0
+            elif metric == 'refundRate':
+                value = self._calculate_refund_rate(flight_tickets)
+            else:
+                value = 0
+            
+            total_value += value
+            
+            pivot_data.append({
+                'dimension': flight_label,
+                'value': round(value, 2) if metric in ['revenue', 'averageValue', 'refundRate'] else value,
+                'ticket_count': flight_tickets.count()
+            })
+        
+        # 计算百分比
+        for item in pivot_data:
+            if total_value > 0:
+                item['percentage'] = round(item['value'] / total_value * 100, 2)
+            else:
+                item['percentage'] = 0
+        
+        return pivot_data
+    
+    def _aggregate_by_user_type(self, metric):
+        """按用户类型维度聚合数据"""
+        # 用户类型定义：根据订单数量分类
+        # VIP: 订单数 >= 5
+        # 常客: 订单数 >= 2
+        # 新用户: 订单数 = 1
+        
+        user_types = [
+            {'name': 'VIP用户', 'min_orders': 5, 'max_orders': None},
+            {'name': '常客', 'min_orders': 2, 'max_orders': 4},
+            {'name': '新用户', 'min_orders': 1, 'max_orders': 1},
+        ]
+        
+        pivot_data = []
+        total_value = 0
+        
+        for user_type in user_types:
+            # 获取符合条件的用户
+            user_order_counts = Order.objects.filter(status='paid').values('user').annotate(
+                order_count=Count('id')
+            )
+            
+            if user_type['max_orders'] is None:
+                qualified_users = user_order_counts.filter(order_count__gte=user_type['min_orders'])
+            else:
+                qualified_users = user_order_counts.filter(
+                    order_count__gte=user_type['min_orders'],
+                    order_count__lte=user_type['max_orders']
+                )
+            
+            user_ids = [u['user'] for u in qualified_users]
+            type_orders = Order.objects.filter(user_id__in=user_ids, status='paid')
+            
+            if metric == 'revenue':
+                value = type_orders.aggregate(total=Sum('total_price'))['total'] or 0
+                value = float(value)
+            elif metric == 'orders':
+                value = type_orders.count()
+            elif metric == 'averageValue':
+                avg_result = type_orders.aggregate(avg=Avg('total_price'))
+                value = float(avg_result['avg']) if avg_result['avg'] else 0
+            elif metric == 'refundRate':
+                order_ids = type_orders.values_list('id', flat=True)
+                type_tickets = Ticket.objects.filter(order_id__in=order_ids)
+                value = self._calculate_refund_rate(type_tickets)
+            else:
+                value = 0
+            
+            total_value += value
+            
+            pivot_data.append({
+                'dimension': user_type['name'],
+                'value': round(value, 2) if metric in ['revenue', 'averageValue', 'refundRate'] else value,
+                'user_count': len(user_ids)
+            })
+        
+        # 计算百分比
+        for item in pivot_data:
+            if total_value > 0:
+                item['percentage'] = round(item['value'] / total_value * 100, 2)
+            else:
+                item['percentage'] = 0
+        
+        return pivot_data
 
 class RealtimeData(APIView):
     """实时数据监控接口"""
@@ -1593,4 +1718,452 @@ class RealtimeData(APIView):
                 'conversion_rate': conversion_history,
                 'searches_per_minute': search_history
             }
-        }) 
+        })
+
+
+# ============================================================================
+# 多维度分析模块 API - 满足 Requirements 3, 4, 5
+# ============================================================================
+
+class MultiDimensionAnalysisView(APIView):
+    """
+    多维度分析 API - 满足 Requirement 3。
+    
+    POST /api/analytics/business-intelligence/multi-dimension/
+    
+    支持按时间、航线、舱位、用户分群等维度进行数据分析，
+    计算收入、订单数、平均票价等关键指标。
+    
+    请求参数:
+    - dimensions: 分析维度列表 ['time', 'route', 'cabin_class', 'user_segment']
+    - metrics: 指标列表 ['revenue', 'order_count', 'avg_price', 'ticket_count']
+    - start_date: 开始日期 (YYYY-MM-DD 或 ISO 格式)
+    - end_date: 结束日期 (YYYY-MM-DD 或 ISO 格式)
+    - time_granularity: 时间粒度 (day, week, month, quarter, year)
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        """POST /api/analytics/business-intelligence/multi-dimension/"""
+        user = request.user
+        if not hasattr(user, 'role') or user.role != 'admin':
+            return Response({'detail': '权限不足'}, status=403)
+        
+        from .services import MultiDimensionAnalytics
+        
+        # 解析请求参数
+        dimensions = request.data.get('dimensions', ['time'])
+        metrics = request.data.get('metrics', ['revenue', 'order_count'])
+        start_date = self._parse_date(request.data.get('start_date'))
+        end_date = self._parse_date(request.data.get('end_date'))
+        time_granularity = request.data.get('time_granularity', 'month')
+        
+        # 验证维度参数
+        valid_dimensions = ['time', 'route', 'cabin_class', 'user_segment']
+        for dim in dimensions:
+            if dim not in valid_dimensions:
+                return Response({
+                    'detail': f'不支持的维度: {dim}',
+                    'valid_dimensions': valid_dimensions
+                }, status=400)
+        
+        # 验证指标参数
+        valid_metrics = ['revenue', 'order_count', 'avg_price', 'ticket_count']
+        for metric in metrics:
+            if metric not in valid_metrics:
+                return Response({
+                    'detail': f'不支持的指标: {metric}',
+                    'valid_metrics': valid_metrics
+                }, status=400)
+        
+        # 执行多维度分析
+        analytics = MultiDimensionAnalytics()
+        result = analytics.analyze(
+            dimensions=dimensions,
+            metrics=metrics,
+            start_date=start_date,
+            end_date=end_date,
+            time_granularity=time_granularity,
+        )
+        
+        return Response(result)
+    
+    def _parse_date(self, date_str):
+        """解析日期字符串为 datetime 对象"""
+        if not date_str:
+            return None
+        
+        try:
+            # 尝试解析 ISO 格式
+            if 'T' in str(date_str):
+                return datetime.datetime.fromisoformat(str(date_str).replace('Z', '+00:00'))
+            # 尝试解析 YYYY-MM-DD 格式
+            return datetime.datetime.strptime(str(date_str), '%Y-%m-%d')
+        except (ValueError, TypeError):
+            return None
+
+
+
+class PivotDataView(APIView):
+    """
+    透视表数据 API - 满足 Requirement 4。
+    
+    POST /api/analytics/pivot-data/
+    
+    支持动态配置行维度、列维度和聚合方式，生成透视表数据。
+    
+    请求参数:
+    - row_dimensions: 行维度列表 ['departure_city', 'arrival_city', 'cabin_class', 'payment_method']
+    - col_dimensions: 列维度列表
+    - value_metric: 值指标 (total_price, revenue, ticket_price, ticket_count)
+    - aggregation: 聚合方式 (sum, count, avg)
+    - start_date: 开始日期
+    - end_date: 结束日期
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        """POST /api/analytics/pivot-data/"""
+        user = request.user
+        if not hasattr(user, 'role') or user.role != 'admin':
+            return Response({'detail': '权限不足'}, status=403)
+        
+        from .services import PivotTableEngine
+        
+        # 解析请求参数
+        row_dimensions = request.data.get('row_dimensions', [])
+        col_dimensions = request.data.get('col_dimensions', [])
+        value_metric = request.data.get('value_metric', 'total_price')
+        aggregation = request.data.get('aggregation', 'sum')
+        start_date = self._parse_date(request.data.get('start_date'))
+        end_date = self._parse_date(request.data.get('end_date'))
+        
+        # 验证聚合方式
+        valid_aggregations = ['sum', 'count', 'avg']
+        if aggregation not in valid_aggregations:
+            return Response({
+                'detail': f'不支持的聚合方式: {aggregation}',
+                'valid_aggregations': valid_aggregations
+            }, status=400)
+        
+        # 生成透视表数据
+        engine = PivotTableEngine()
+        result = engine.generate(
+            row_dimensions=row_dimensions,
+            col_dimensions=col_dimensions,
+            value_metric=value_metric,
+            aggregation=aggregation,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        
+        return Response(result)
+    
+    def _parse_date(self, date_str):
+        """解析日期字符串为 datetime 对象"""
+        if not date_str:
+            return None
+        
+        try:
+            if 'T' in str(date_str):
+                return datetime.datetime.fromisoformat(str(date_str).replace('Z', '+00:00'))
+            return datetime.datetime.strptime(str(date_str), '%Y-%m-%d')
+        except (ValueError, TypeError):
+            return None
+
+
+class PivotExportView(APIView):
+    """
+    透视表导出 API - 满足 Requirement 4.5。
+    
+    POST /api/analytics/pivot-data/export/
+    
+    将透视表数据导出为 CSV 格式。
+    
+    请求参数与 PivotDataView 相同。
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        """POST /api/analytics/pivot-data/export/"""
+        user = request.user
+        if not hasattr(user, 'role') or user.role != 'admin':
+            return Response({'detail': '权限不足'}, status=403)
+        
+        from django.http import HttpResponse
+        from .services import PivotTableEngine
+        
+        # 解析请求参数
+        row_dimensions = request.data.get('row_dimensions', [])
+        col_dimensions = request.data.get('col_dimensions', [])
+        value_metric = request.data.get('value_metric', 'total_price')
+        aggregation = request.data.get('aggregation', 'sum')
+        start_date = self._parse_date(request.data.get('start_date'))
+        end_date = self._parse_date(request.data.get('end_date'))
+        
+        # 生成透视表数据
+        engine = PivotTableEngine()
+        pivot_result = engine.generate(
+            row_dimensions=row_dimensions,
+            col_dimensions=col_dimensions,
+            value_metric=value_metric,
+            aggregation=aggregation,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        
+        # 导出为 CSV
+        csv_content = engine.export_csv(pivot_result['data'])
+        
+        # 返回 CSV 文件响应
+        response = HttpResponse(csv_content, content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="pivot_data.csv"'
+        return response
+    
+    def _parse_date(self, date_str):
+        """解析日期字符串为 datetime 对象"""
+        if not date_str:
+            return None
+        
+        try:
+            if 'T' in str(date_str):
+                return datetime.datetime.fromisoformat(str(date_str).replace('Z', '+00:00'))
+            return datetime.datetime.strptime(str(date_str), '%Y-%m-%d')
+        except (ValueError, TypeError):
+            return None
+
+
+
+class TrendsView(APIView):
+    """
+    趋势分析 API - 满足 Requirement 5。
+    
+    GET /api/analytics/business-intelligence/trends/
+    
+    提供移动平均计算、同比分析、异常检测和季节性模式识别功能。
+    
+    查询参数:
+    - start_date: 开始日期 (YYYY-MM-DD)
+    - end_date: 结束日期 (YYYY-MM-DD)
+    - metric: 分析指标 (revenue, order_count)，默认 revenue
+    - window_size: 移动平均窗口大小，默认 7
+    - anomaly_threshold: 异常检测阈值（Z-score），默认 2.0
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        """GET /api/analytics/business-intelligence/trends/"""
+        user = request.user
+        if not hasattr(user, 'role') or user.role != 'admin':
+            return Response({'detail': '权限不足'}, status=403)
+        
+        try:
+            from .services import MultiDimensionAnalytics, TrendAnalyzer
+            
+            # 解析查询参数
+            start_date = self._parse_date(request.query_params.get('start_date'))
+            end_date = self._parse_date(request.query_params.get('end_date'))
+            metric = request.query_params.get('metric', 'revenue')
+            
+            try:
+                window_size = int(request.query_params.get('window_size', 7))
+                if window_size < 1:
+                    window_size = 7
+            except (ValueError, TypeError):
+                window_size = 7
+            
+            try:
+                anomaly_threshold = float(request.query_params.get('anomaly_threshold', 2.0))
+                if anomaly_threshold <= 0:
+                    anomaly_threshold = 2.0
+            except (ValueError, TypeError):
+                anomaly_threshold = 2.0
+            
+            # 验证指标参数
+            valid_metrics = ['revenue', 'order_count']
+            if metric not in valid_metrics:
+                return Response({
+                    'detail': f'不支持的指标: {metric}',
+                    'valid_metrics': valid_metrics
+                }, status=400)
+            
+            # 获取基础时间序列数据
+            analytics = MultiDimensionAnalytics()
+            base_data = analytics.analyze(
+                dimensions=['time'],
+                metrics=['revenue', 'order_count'],
+                start_date=start_date,
+                end_date=end_date,
+                time_granularity='day',
+            )
+            
+            data = base_data.get('data', [])
+            
+            # 为数据添加 period 字段（用于季节性分析）
+            for item in data:
+                if 'time_period' in item:
+                    item['period'] = item['time_period']
+            
+            # 初始化趋势分析器
+            analyzer = TrendAnalyzer()
+            
+            # 计算移动平均 - 满足 Requirement 5.1
+            with_ma = analyzer.calculate_moving_average(data, metric, window_size)
+            
+            # 检测异常 - 满足 Requirement 5.5
+            with_anomalies = analyzer.detect_anomalies(with_ma, metric, anomaly_threshold)
+            
+            # 识别季节性模式 - 满足 Requirement 5.2
+            seasonal = analyzer.identify_seasonal_patterns(data, metric)
+            
+            # 计算同比数据 - 满足 Requirement 5.3
+            # 获取去年同期数据
+            yoy_data = []
+            if start_date and end_date:
+                prev_start = start_date.replace(year=start_date.year - 1)
+                prev_end = end_date.replace(year=end_date.year - 1)
+                
+                prev_data = analytics.analyze(
+                    dimensions=['time'],
+                    metrics=['revenue', 'order_count'],
+                    start_date=prev_start,
+                    end_date=prev_end,
+                    time_granularity='day',
+                )
+                
+                prev_items = prev_data.get('data', [])
+                for item in prev_items:
+                    if 'time_period' in item:
+                        item['period'] = item['time_period']
+                
+                yoy_data = analyzer.year_over_year(data, prev_items, metric)
+            
+            # 计算整体置信度 - 满足 Requirement 5.4
+            anomaly_count = sum(1 for item in with_anomalies if item.get('is_anomaly', False))
+            total_count = len(with_anomalies)
+            
+            if total_count == 0:
+                confidence = 'low'
+            elif anomaly_count / total_count > 0.2:
+                confidence = 'low'
+            elif anomaly_count / total_count > 0.1:
+                confidence = 'medium'
+            else:
+                confidence = 'high'
+            
+            return Response({
+                'trend_data': with_anomalies,
+                'seasonal_patterns': seasonal,
+                'year_over_year': yoy_data,
+                'confidence': confidence,
+                'parameters': {
+                    'metric': metric,
+                    'window_size': window_size,
+                    'anomaly_threshold': anomaly_threshold,
+                },
+                'summary': {
+                    'total_records': total_count,
+                    'anomaly_count': anomaly_count,
+                    'peak_month': seasonal.get('peak_month'),
+                    'low_month': seasonal.get('low_month'),
+                }
+            })
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"趋势分析失败: {str(e)}", exc_info=True)
+            return Response({
+                'trend_data': [],
+                'seasonal_patterns': {},
+                'year_over_year': [],
+                'confidence': 'low',
+                'error': str(e),
+                'summary': {
+                    'total_records': 0,
+                    'anomaly_count': 0,
+                    'peak_month': None,
+                    'low_month': None,
+                }
+            })
+    
+    def _parse_date(self, date_str):
+        """解析日期字符串为 datetime 对象"""
+        if not date_str:
+            return None
+        
+        try:
+            if 'T' in str(date_str):
+                return datetime.datetime.fromisoformat(str(date_str).replace('Z', '+00:00'))
+            return datetime.datetime.strptime(str(date_str), '%Y-%m-%d')
+        except (ValueError, TypeError):
+            return None
+
+
+class RouteRecommendationView(APIView):
+    """
+    航线推荐 API - 满足 Requirement 4。
+
+    为用户提供个性化航线推荐：
+    - 已登录用户：基于协同过滤算法的个性化推荐
+    - 未登录用户或冷启动用户：热门航线推荐
+
+    Query Params:
+        limit: int (default=5) - 返回推荐数量
+
+    Response:
+        {
+            'recommendation_type': 'collaborative' | 'popular',
+            'recommendations': [...],
+            'total': int
+        }
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        """
+        GET /api/analytics/recommendations/routes/
+
+        返回当前用户的航线推荐。
+        """
+        from .services import CollaborativeFilteringEngine, PopularRouteService
+
+        # 获取 limit 参数，默认为 5
+        try:
+            limit = int(request.query_params.get('limit', 5))
+            if limit <= 0:
+                limit = 5
+        except (ValueError, TypeError):
+            limit = 5
+
+        # 检查用户是否已登录
+        user = request.user
+        if user.is_authenticated:
+            # 已登录用户：尝试协同过滤推荐
+            engine = CollaborativeFilteringEngine()
+            recommendations = engine.generate_recommendations(
+                user_id=user.id,
+                limit=limit
+            )
+
+            if recommendations:
+                # 有推荐结果，返回协同过滤推荐
+                return Response({
+                    'recommendation_type': 'collaborative',
+                    'recommendations': recommendations,
+                    'total': len(recommendations)
+                })
+
+        # 未登录用户或冷启动用户：返回热门航线推荐
+        popular_service = PopularRouteService()
+        popular_routes = popular_service.get_popular_routes(limit=limit)
+
+        # 为热门航线添加 predicted_score 字段以保持响应格式一致
+        for route in popular_routes:
+            if 'predicted_score' not in route:
+                route['predicted_score'] = None
+
+        return Response({
+            'recommendation_type': 'popular',
+            'recommendations': popular_routes,
+            'total': len(popular_routes)
+        })

@@ -85,7 +85,7 @@
 <script>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-// import api from '@/services/api' // 暂时不使用API
+import api from '@/services/api'
 
 export default {
     name: 'PassengerListTab',
@@ -131,66 +131,38 @@ export default {
         }
 
         // 获取乘客列表
-        const fetchPassengers = () => {
+        const fetchPassengers = async () => {
             loading.value = true
 
-            // 使用模拟数据（因为API尚未接入）
-            setTimeout(() => {
-                // 模拟乘客数据
-                passengers.value = [
-                    {
-                        id: 1,
-                        name: '张三',
-                        id_card_type: 'IDENTITY_CARD',
-                        id_card_type_display: '身份证',
-                        id_card: '310000********0000',
-                        phone: '13800138000',
-                        passenger_type: 'ADULT'
-                    },
-                    {
-                        id: 2,
-                        name: '李四',
-                        id_card_type: 'PASSPORT',
-                        id_card_type_display: '护照',
-                        id_card: 'P12345678',
-                        phone: '13900139000',
-                        passenger_type: 'ADULT'
-                    },
-                    {
-                        id: 3,
-                        name: '小明',
-                        id_card_type: 'IDENTITY_CARD',
-                        id_card_type_display: '身份证',
-                        id_card: '330000********0000',
-                        phone: '13700137000',
-                        passenger_type: 'CHILD'
-                    }
-                ]
-                loading.value = false
-            }, 500)
-
-            /* 实际API调用代码（暂时注释掉）
             try {
-              const response = await api.passengers.getAll()
-              passengers.value = response.map(item => {
-                // 添加证件类型显示名称
+                const response = await api.passengers.getAll()
+                const data = response.results || response || []
+                
+                // 证件类型映射
                 const idCardTypeMap = {
-                  'IDENTITY_CARD': '身份证',
-                  'PASSPORT': '护照',
-                  'MILITARY_ID': '军官证',
-                  'HK_MACAO_PASS': '港澳通行证',
-                  'TAIWAN_PASS': '台湾通行证'
+                    '身份证': '身份证',
+                    'IDENTITY_CARD': '身份证',
+                    'PASSPORT': '护照',
+                    'MILITARY_ID': '军官证',
+                    'HK_MACAO_PASS': '港澳通行证',
+                    'TAIWAN_PASS': '台湾通行证'
                 }
-                item.id_card_type_display = idCardTypeMap[item.id_card_type] || item.id_card_type
-                return item
-              })
+                
+                passengers.value = data.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    id_card_type: item.id_type || item.id_card_type || 'IDENTITY_CARD',
+                    id_card_type_display: idCardTypeMap[item.id_type] || idCardTypeMap[item.id_card_type] || item.id_type || '身份证',
+                    id_card: item.id_number || item.id_card,
+                    phone: item.phone || '',
+                    passenger_type: item.passenger_type || 'ADULT'
+                }))
             } catch (error) {
-              console.error('获取乘客列表失败:', error)
-              ElMessage.error('获取乘客列表失败，请稍后重试')
+                console.error('获取乘客列表失败:', error)
+                ElMessage.error('获取乘客列表失败，请稍后重试')
             } finally {
-              loading.value = false
+                loading.value = false
             }
-            */
         }
 
         // 显示添加对话框
@@ -234,65 +206,29 @@ export default {
                 if (valid) {
                     submitting.value = true
 
-                    // 模拟提交（因为API尚未接入）
-                    setTimeout(() => {
+                    try {
+                        const data = {
+                            name: passengerForm.name,
+                            id_type: passengerForm.id_card_type,
+                            id_number: passengerForm.id_card,
+                            phone: passengerForm.phone
+                        }
+
                         if (isEdit.value) {
-                            // 更新乘客
-                            const index = passengers.value.findIndex(item => item.id === passengerForm.id)
-                            if (index !== -1) {
-                                passengers.value[index] = {
-                                    ...passengerForm,
-                                    id_card_type_display: {
-                                        'IDENTITY_CARD': '身份证',
-                                        'PASSPORT': '护照',
-                                        'MILITARY_ID': '军官证',
-                                        'HK_MACAO_PASS': '港澳通行证',
-                                        'TAIWAN_PASS': '台湾通行证'
-                                    }[passengerForm.id_card_type] || passengerForm.id_card_type
-                                }
-                            }
+                            await api.passengers.update(passengerForm.id, data)
                             ElMessage.success('乘客信息更新成功')
                         } else {
-                            // 添加乘客
-                            const newId = passengers.value.length > 0
-                                ? Math.max(...passengers.value.map(p => p.id)) + 1
-                                : 1
-
-                            passengers.value.push({
-                                ...passengerForm,
-                                id: newId,
-                                id_card_type_display: {
-                                    'IDENTITY_CARD': '身份证',
-                                    'PASSPORT': '护照',
-                                    'MILITARY_ID': '军官证',
-                                    'HK_MACAO_PASS': '港澳通行证',
-                                    'TAIWAN_PASS': '台湾通行证'
-                                }[passengerForm.id_card_type] || passengerForm.id_card_type
-                            })
+                            await api.passengers.create(data)
                             ElMessage.success('乘客添加成功')
                         }
                         dialogVisible.value = false
-                        submitting.value = false
-                    }, 500)
-
-                    /* 实际API调用代码（暂时注释掉）
-                    try {
-                      if (isEdit.value) {
-                        await api.passengers.update(passengerForm.id, passengerForm)
-                        ElMessage.success('乘客信息更新成功')
-                      } else {
-                        await api.passengers.create(passengerForm)
-                        ElMessage.success('乘客添加成功')
-                      }
-                      dialogVisible.value = false
-                      fetchPassengers()
+                        fetchPassengers()
                     } catch (error) {
-                      console.error('保存乘客信息失败:', error)
-                      ElMessage.error('保存乘客信息失败，请稍后重试')
+                        console.error('保存乘客信息失败:', error)
+                        ElMessage.error('保存乘客信息失败，请稍后重试')
                     } finally {
-                      submitting.value = false
+                        submitting.value = false
                     }
-                    */
                 }
             })
         }
@@ -304,35 +240,22 @@ export default {
         }
 
         // 确认删除
-        const confirmDelete = () => {
+        const confirmDelete = async () => {
             if (!currentPassenger.value || !currentPassenger.value.id) return
 
             deleting.value = true
 
-            // 模拟删除（因为API尚未接入）
-            setTimeout(() => {
-                const index = passengers.value.findIndex(item => item.id === currentPassenger.value.id)
-                if (index !== -1) {
-                    passengers.value.splice(index, 1)
-                }
+            try {
+                await api.passengers.delete(currentPassenger.value.id)
                 ElMessage.success('乘客删除成功')
                 deleteDialogVisible.value = false
-                deleting.value = false
-            }, 500)
-
-            /* 实际API调用代码（暂时注释掉）
-            try {
-              await api.passengers.delete(currentPassenger.value.id)
-              ElMessage.success('乘客删除成功')
-              deleteDialogVisible.value = false
-              fetchPassengers()
+                fetchPassengers()
             } catch (error) {
-              console.error('删除乘客失败:', error)
-              ElMessage.error('删除乘客失败，请稍后重试')
+                console.error('删除乘客失败:', error)
+                ElMessage.error('删除乘客失败，请稍后重试')
             } finally {
-              deleting.value = false
+                deleting.value = false
             }
-            */
         }
 
         onMounted(() => {

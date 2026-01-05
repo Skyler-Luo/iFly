@@ -2,337 +2,496 @@
     <div class="admin-flight-analytics">
         <h1 class="title">航班数据分析</h1>
 
-        <div class="filter-section">
-            <div class="date-range">
-                <label>时间范围：</label>
-                <select v-model="timeRange">
-                    <option value="week">最近一周</option>
-                    <option value="month">最近一个月</option>
-                    <option value="quarter">最近三个月</option>
-                    <option value="year">最近一年</option>
-                    <option value="custom">自定义范围</option>
-                </select>
-                <div v-if="timeRange === 'custom'" class="custom-date">
-                    <input type="date" v-model="customStartDate">
-                    <span>至</span>
-                    <input type="date" v-model="customEndDate">
-                    <button class="btn btn-sm" @click="applyCustomDate">应用</button>
-                </div>
-            </div>
-
-            <div class="route-filter">
-                <label>航线筛选：</label>
-                <select v-model="routeFilter">
-                    <option value="">所有航线</option>
-                    <option v-for="route in popularRoutes" :key="route.id" :value="route.id">
-                        {{ route.departureCity }} - {{ route.arrivalCity }}
-                    </option>
-                </select>
-            </div>
+        <!-- 加载状态 -->
+        <div v-if="loading" class="loading-container">
+            <i class="el-icon-loading"></i>
+            <span>加载中...</span>
         </div>
 
-        <div class="analytics-cards">
-            <div class="analytics-card">
-                <h2>座位利用率</h2>
-                <div class="chart-container">
-                    <div class="mock-chart seat-utilization">
-                        <div class="chart-value">{{ seatUtilization }}%</div>
-                        <div class="progress-bar">
-                            <div class="progress" :style="{ width: seatUtilization + '%' }"></div>
-                        </div>
-                    </div>
-                    <div class="chart-footer">
-                        <div class="comparison">
-                            <i class="fas fa-arrow-up"></i> 较上期上升 2.5%
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="analytics-card">
-                <h2>平均票价</h2>
-                <div class="chart-container">
-                    <div class="mock-chart average-price">
-                        <div class="chart-value">¥{{ averagePrice }}</div>
-                        <div class="trend-indicator positive">
-                            <i class="fas fa-arrow-up"></i> 5.2%
-                        </div>
-                    </div>
-                    <div class="price-distribution">
-                        <div class="price-type">
-                            <span>经济舱</span>
-                            <span>¥{{ priceDistribution.economy }}</span>
-                        </div>
-                        <div class="price-type">
-                            <span>商务舱</span>
-                            <span>¥{{ priceDistribution.business }}</span>
-                        </div>
-                        <div class="price-type">
-                            <span>头等舱</span>
-                            <span>¥{{ priceDistribution.first }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="analytics-card">
-                <h2>准点率</h2>
-                <div class="chart-container">
-                    <div class="mock-chart punctuality">
-                        <div class="chart-value">{{ punctualityRate }}%</div>
-                        <div class="trend-indicator" :class="punctualityTrend.type">
-                            <i :class="punctualityTrend.icon"></i> {{ punctualityTrend.value }}%
-                        </div>
-                    </div>
-                    <div class="status-breakdown">
-                        <div class="status-item">
-                            <span class="status-label">准点</span>
-                            <div class="status-bar">
-                                <div class="status-progress on-time"
-                                    :style="{ width: punctualityBreakdown.onTime + '%' }"></div>
-                            </div>
-                            <span class="status-value">{{ punctualityBreakdown.onTime }}%</span>
-                        </div>
-                        <div class="status-item">
-                            <span class="status-label">延误</span>
-                            <div class="status-bar">
-                                <div class="status-progress delayed"
-                                    :style="{ width: punctualityBreakdown.delayed + '%' }"></div>
-                            </div>
-                            <span class="status-value">{{ punctualityBreakdown.delayed }}%</span>
-                        </div>
-                        <div class="status-item">
-                            <span class="status-label">取消</span>
-                            <div class="status-bar">
-                                <div class="status-progress cancelled"
-                                    :style="{ width: punctualityBreakdown.cancelled + '%' }"></div>
-                            </div>
-                            <span class="status-value">{{ punctualityBreakdown.cancelled }}%</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <!-- 错误提示 -->
+        <div v-else-if="error" class="error-container">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>{{ error }}</span>
+            <button class="btn-retry" @click="fetchData">重试</button>
         </div>
 
-        <div class="charts-row">
-            <div class="chart-card full-width">
-                <h2>航班载客量趋势</h2>
-                <div class="line-chart-container">
-                    <div class="mock-line-chart">
-                        <div class="chart-grid">
-                            <div v-for="n in 5" :key="n" class="grid-line"></div>
+        <template v-else>
+            <div class="filter-section">
+                <div class="date-range">
+                    <label>时间范围：</label>
+                    <select v-model="timeRange" @change="updateData">
+                        <option value="week">最近一周</option>
+                        <option value="month">最近一个月</option>
+                        <option value="quarter">最近三个月</option>
+                        <option value="year">最近一年</option>
+                        <option value="custom">自定义范围</option>
+                    </select>
+                    <div v-if="timeRange === 'custom'" class="custom-date">
+                        <input type="date" v-model="customStartDate">
+                        <span>至</span>
+                        <input type="date" v-model="customEndDate">
+                        <button class="btn btn-sm" @click="applyCustomDate">应用</button>
+                    </div>
+                </div>
+
+                <div class="route-filter">
+                    <label>航线筛选：</label>
+                    <select v-model="routeFilter" @change="updateData">
+                        <option value="">所有航线</option>
+                        <option v-for="route in popularRoutes" :key="route.id" :value="route.id">
+                            {{ route.departureCity }} - {{ route.arrivalCity }}
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="analytics-cards">
+                <div class="analytics-card">
+                    <h2>座位利用率</h2>
+                    <div class="chart-container">
+                        <div class="mock-chart seat-utilization">
+                            <div class="chart-value" v-if="seatUtilization !== null">{{ seatUtilization }}%</div>
+                            <div class="chart-value no-data" v-else>数据暂无</div>
+                            <div class="progress-bar" v-if="seatUtilization !== null">
+                                <div class="progress" :style="{ width: seatUtilization + '%' }"></div>
+                            </div>
                         </div>
-                        <div class="line-path" :style="getPathStyle()"></div>
-                        <div class="data-points">
-                            <div v-for="(point, index) in passengerTrendData" :key="index" class="data-point"
-                                :style="getPointStyle(point, index)">
-                                <div class="point-tooltip">{{ point.date }}: {{ point.value }}人</div>
+                        <div class="chart-footer" v-if="seatUtilizationTrend !== null">
+                            <div class="comparison" :class="seatUtilizationTrend >= 0 ? 'positive' : 'negative'">
+                                <i :class="seatUtilizationTrend >= 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+                                较上期{{ seatUtilizationTrend >= 0 ? '上升' : '下降' }} {{ Math.abs(seatUtilizationTrend) }}%
                             </div>
                         </div>
                     </div>
-                    <div class="chart-legend">
-                        <div v-for="(month, index) in trendMonths" :key="index" class="legend-item">
-                            {{ month }}
+                </div>
+
+                <div class="analytics-card">
+                    <h2>平均票价</h2>
+                    <div class="chart-container">
+                        <div class="mock-chart average-price">
+                            <div class="chart-value" v-if="averagePrice !== null">¥{{ averagePrice }}</div>
+                            <div class="chart-value no-data" v-else>数据暂无</div>
+                            <div class="trend-indicator" :class="averagePriceTrend >= 0 ? 'positive' : 'negative'" v-if="averagePriceTrend !== null">
+                                <i :class="averagePriceTrend >= 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i> {{ Math.abs(averagePriceTrend) }}%
+                            </div>
+                        </div>
+                        <div class="price-distribution" v-if="priceDistribution.economy !== null">
+                            <div class="price-type">
+                                <span>经济舱</span>
+                                <span>¥{{ priceDistribution.economy || '暂无' }}</span>
+                            </div>
+                            <div class="price-type">
+                                <span>商务舱</span>
+                                <span>¥{{ priceDistribution.business || '暂无' }}</span>
+                            </div>
+                            <div class="price-type">
+                                <span>头等舱</span>
+                                <span>¥{{ priceDistribution.first || '暂无' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="analytics-card">
+                    <h2>准点率</h2>
+                    <div class="chart-container">
+                        <div class="mock-chart punctuality">
+                            <div class="chart-value" v-if="punctualityRate !== null">{{ punctualityRate }}%</div>
+                            <div class="chart-value no-data" v-else>数据暂无</div>
+                            <div class="trend-indicator" :class="punctualityTrend.type" v-if="punctualityTrend.value !== null">
+                                <i :class="punctualityTrend.icon"></i> {{ Math.abs(punctualityTrend.value) }}%
+                            </div>
+                        </div>
+                        <div class="status-breakdown" v-if="punctualityBreakdown.onTime !== null">
+                            <div class="status-item">
+                                <span class="status-label">准点</span>
+                                <div class="status-bar">
+                                    <div class="status-progress on-time"
+                                        :style="{ width: punctualityBreakdown.onTime + '%' }"></div>
+                                </div>
+                                <span class="status-value">{{ punctualityBreakdown.onTime }}%</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">延误</span>
+                                <div class="status-bar">
+                                    <div class="status-progress delayed"
+                                        :style="{ width: punctualityBreakdown.delayed + '%' }"></div>
+                                </div>
+                                <span class="status-value">{{ punctualityBreakdown.delayed }}%</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">取消</span>
+                                <div class="status-bar">
+                                    <div class="status-progress cancelled"
+                                        :style="{ width: punctualityBreakdown.cancelled + '%' }"></div>
+                                </div>
+                                <span class="status-value">{{ punctualityBreakdown.cancelled }}%</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="analytics-tables">
-            <div class="table-card">
-                <h2>最受欢迎航线</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>排名</th>
-                            <th>出发城市</th>
-                            <th>到达城市</th>
-                            <th>平均载客率</th>
-                            <th>平均票价</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="(route, index) in topRoutes" :key="route.id">
-                            <td class="rank">{{ index + 1 }}</td>
-                            <td>{{ route.departureCity }}</td>
-                            <td>{{ route.arrivalCity }}</td>
-                            <td>{{ route.loadFactor }}%</td>
-                            <td>¥{{ route.averagePrice }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="charts-row">
+                <div class="chart-card full-width">
+                    <h2>航班载客量趋势</h2>
+                    <div class="line-chart-container">
+                        <div class="mock-line-chart" v-if="passengerTrendData.length > 0">
+                            <div class="chart-grid">
+                                <div v-for="n in 5" :key="n" class="grid-line"></div>
+                            </div>
+                            <div class="line-path" :style="getPathStyle()"></div>
+                            <div class="data-points">
+                                <div v-for="(point, index) in passengerTrendData" :key="index" class="data-point"
+                                    :style="getPointStyle(point, index)">
+                                    <div class="point-tooltip">{{ point.date }}: {{ point.value }}人</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else class="no-data-chart">
+                            <i class="fas fa-chart-line"></i>
+                            <span>数据暂无</span>
+                        </div>
+                        <div class="chart-legend" v-if="trendMonths.length > 0">
+                            <div v-for="(month, index) in trendMonths" :key="index" class="legend-item">
+                                {{ month }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="table-card">
-                <h2>异常航班</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>航班号</th>
-                            <th>日期</th>
-                            <th>航线</th>
-                            <th>状态</th>
-                            <th>延误时间</th>
-                            <th>原因</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="flight in irregularFlights" :key="flight.id">
-                            <td>{{ flight.flightNumber }}</td>
-                            <td>{{ flight.date }}</td>
-                            <td>{{ flight.route }}</td>
-                            <td><span :class="'status-' + flight.status.toLowerCase()">{{ getStatusText(flight.status)
-                                    }}</span></td>
-                            <td>{{ flight.delayTime || '-' }}</td>
-                            <td>{{ flight.reason || '-' }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="analytics-tables">
+                <div class="table-card">
+                    <h2>最受欢迎航线</h2>
+                    <table v-if="topRoutes.length > 0">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>出发城市</th>
+                                <th>到达城市</th>
+                                <th>平均载客率</th>
+                                <th>平均票价</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(route, index) in topRoutes" :key="route.id || index">
+                                <td class="rank">{{ index + 1 }}</td>
+                                <td>{{ route.departureCity || route.departure_city }}</td>
+                                <td>{{ route.arrivalCity || route.arrival_city }}</td>
+                                <td>{{ route.loadFactor || route.count || 0 }}%</td>
+                                <td>¥{{ route.averagePrice || '-' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div v-else class="no-data-table">
+                        <i class="fas fa-inbox"></i>
+                        <span>数据暂无</span>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <h2>异常航班</h2>
+                    <table v-if="irregularFlights.length > 0">
+                        <thead>
+                            <tr>
+                                <th>航班号</th>
+                                <th>日期</th>
+                                <th>航线</th>
+                                <th>状态</th>
+                                <th>延误时间</th>
+                                <th>原因</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="flight in irregularFlights" :key="flight.id">
+                                <td>{{ flight.flightNumber }}</td>
+                                <td>{{ flight.date }}</td>
+                                <td>{{ flight.route }}</td>
+                                <td><span :class="'status-' + flight.status.toLowerCase()">{{ getStatusText(flight.status) }}</span></td>
+                                <td>{{ flight.delayTime || '-' }}</td>
+                                <td>{{ flight.reason || '-' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div v-else class="no-data-table">
+                        <i class="fas fa-inbox"></i>
+                        <span>数据暂无</span>
+                    </div>
+                </div>
             </div>
-        </div>
+        </template>
     </div>
 </template>
 
+
 <script>
+import api from '@/services/api'
+
 export default {
     name: 'AdminFlightAnalyticsView',
     data() {
         return {
+            // 加载状态
+            loading: false,
+            error: null,
+            
+            // 筛选条件
             timeRange: 'month',
             customStartDate: '',
             customEndDate: '',
             routeFilter: '',
-            seatUtilization: 78.5,
-            averagePrice: 1250,
-            punctualityRate: 86.5,
+            
+            // 座位利用率
+            seatUtilization: null,
+            seatUtilizationTrend: null,
+            
+            // 平均票价
+            averagePrice: null,
+            averagePriceTrend: null,
+            
+            // 准点率
+            punctualityRate: null,
             punctualityTrend: {
-                type: 'negative',
-                icon: 'fas fa-arrow-down',
-                value: 2.3
+                type: 'positive',
+                icon: 'fas fa-arrow-up',
+                value: null
             },
             punctualityBreakdown: {
-                onTime: 86.5,
-                delayed: 10.8,
-                cancelled: 2.7
+                onTime: null,
+                delayed: null,
+                cancelled: null
             },
+            
+            // 票价分布
             priceDistribution: {
-                economy: 820,
-                business: 2600,
-                first: 4800
+                economy: null,
+                business: null,
+                first: null
             },
-            passengerTrendData: [
-                { date: '1月', value: 62 },
-                { date: '2月', value: 58 },
-                { date: '3月', value: 65 },
-                { date: '4月', value: 75 },
-                { date: '5月', value: 70 },
-                { date: '6月', value: 85 },
-                { date: '7月', value: 92 },
-                { date: '8月', value: 88 }
-            ],
-            trendMonths: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月'],
-            topRoutes: [
-                { id: 1, departureCity: '北京', arrivalCity: '上海', loadFactor: 92, averagePrice: 1200 },
-                { id: 2, departureCity: '广州', arrivalCity: '北京', loadFactor: 88, averagePrice: 1450 },
-                { id: 3, departureCity: '深圳', arrivalCity: '成都', loadFactor: 85, averagePrice: 1320 },
-                { id: 4, departureCity: '上海', arrivalCity: '广州', loadFactor: 82, averagePrice: 1050 },
-                { id: 5, departureCity: '成都', arrivalCity: '杭州', loadFactor: 79, averagePrice: 980 },
-            ],
-            popularRoutes: [
-                { id: 1, departureCity: '北京', arrivalCity: '上海' },
-                { id: 2, departureCity: '广州', arrivalCity: '北京' },
-                { id: 3, departureCity: '深圳', arrivalCity: '成都' },
-                { id: 4, departureCity: '上海', arrivalCity: '广州' },
-                { id: 5, departureCity: '成都', arrivalCity: '杭州' },
-            ],
-            irregularFlights: [
-                {
-                    id: 1,
-                    flightNumber: 'CA1235',
-                    date: '2023-07-25',
-                    route: '北京 - 上海',
-                    status: 'DELAYED',
-                    delayTime: '1小时30分钟',
-                    reason: '天气原因'
-                },
-                {
-                    id: 2,
-                    flightNumber: 'MU5642',
-                    date: '2023-07-24',
-                    route: '广州 - 成都',
-                    status: 'CANCELLED',
-                    delayTime: null,
-                    reason: '机械故障'
-                },
-                {
-                    id: 3,
-                    flightNumber: 'CZ3382',
-                    date: '2023-07-25',
-                    route: '深圳 - 北京',
-                    status: 'DELAYED',
-                    delayTime: '45分钟',
-                    reason: '空中交通管制'
-                },
-                {
-                    id: 4,
-                    flightNumber: 'HU7809',
-                    date: '2023-07-23',
-                    route: '上海 - 西安',
-                    status: 'DELAYED',
-                    delayTime: '2小时15分钟',
-                    reason: '天气原因'
-                },
-            ]
+            
+            // 载客趋势数据
+            passengerTrendData: [],
+            trendMonths: [],
+            
+            // 热门航线
+            topRoutes: [],
+            popularRoutes: [],
+            
+            // 异常航班
+            irregularFlights: []
         }
     },
     methods: {
-        applyCustomDate() {
-            console.log('应用自定义日期范围:', this.customStartDate, '至', this.customEndDate);
-            // 实际应用中这里需要调用API获取该时间段的数据
+        // 获取日期范围参数
+        getDateParams() {
+            const today = new Date()
+            let startDate, endDate
+            
+            switch (this.timeRange) {
+                case 'week':
+                    startDate = new Date(today)
+                    startDate.setDate(today.getDate() - 7)
+                    endDate = today
+                    break
+                case 'month':
+                    startDate = new Date(today)
+                    startDate.setDate(today.getDate() - 30)
+                    endDate = today
+                    break
+                case 'quarter':
+                    startDate = new Date(today)
+                    startDate.setDate(today.getDate() - 90)
+                    endDate = today
+                    break
+                case 'year':
+                    startDate = new Date(today)
+                    startDate.setFullYear(today.getFullYear() - 1)
+                    endDate = today
+                    break
+                case 'custom':
+                    startDate = this.customStartDate ? new Date(this.customStartDate) : null
+                    endDate = this.customEndDate ? new Date(this.customEndDate) : null
+                    break
+                default:
+                    startDate = new Date(today)
+                    startDate.setDate(today.getDate() - 30)
+                    endDate = today
+            }
+            
+            return {
+                start_date: startDate ? startDate.toISOString().split('T')[0] : undefined,
+                end_date: endDate ? endDate.toISOString().split('T')[0] : undefined
+            }
         },
+        
+        async fetchData() {
+            this.loading = true
+            this.error = null
+            
+            try {
+                const params = this.getDateParams()
+                const response = await api.admin.analytics.getFlightStats(params)
+                
+                // 处理返回数据
+                this.processFlightData(response)
+            } catch (err) {
+                console.error('获取航班分析数据失败:', err)
+                this.error = err.message || '获取数据失败，请稍后重试'
+                // 清空数据
+                this.clearData()
+            } finally {
+                this.loading = false
+            }
+        },
+
+        processFlightData(data) {
+            // 处理平均上座率
+            if (data.avg_occupancy_rate !== undefined && data.avg_occupancy_rate !== null) {
+                this.seatUtilization = Math.round(data.avg_occupancy_rate * 10) / 10
+            } else {
+                this.seatUtilization = null
+            }
+            
+            // 处理热门航线
+            if (data.popular_routes && data.popular_routes.length > 0) {
+                this.topRoutes = data.popular_routes.map((route, index) => ({
+                    id: index + 1,
+                    departureCity: route.departure_city,
+                    arrivalCity: route.arrival_city,
+                    loadFactor: route.count || 0,
+                    averagePrice: '-'
+                }))
+                
+                // 同时更新筛选器中的航线列表
+                this.popularRoutes = this.topRoutes.slice(0, 5)
+            } else {
+                this.topRoutes = []
+                this.popularRoutes = []
+            }
+            
+            // 处理航线收入数据
+            if (data.route_revenue && data.route_revenue.length > 0) {
+                // 更新热门航线的票价信息
+                data.route_revenue.forEach(routeRev => {
+                    const matchingRoute = this.topRoutes.find(r => 
+                        `${r.departureCity} - ${r.arrivalCity}` === routeRev.route
+                    )
+                    if (matchingRoute && routeRev.revenue && routeRev.flight_count) {
+                        matchingRoute.averagePrice = Math.round(routeRev.revenue / routeRev.flight_count)
+                    }
+                })
+            }
+            
+            // 准点率数据（后端暂不支持，显示为暂无）
+            this.punctualityRate = null
+            this.punctualityTrend.value = null
+            this.punctualityBreakdown = {
+                onTime: null,
+                delayed: null,
+                cancelled: null
+            }
+            
+            // 票价分布（后端暂不支持，显示为暂无）
+            this.priceDistribution = {
+                economy: null,
+                business: null,
+                first: null
+            }
+            this.averagePrice = null
+            this.averagePriceTrend = null
+            
+            // 载客趋势数据（后端暂不支持）
+            this.passengerTrendData = []
+            this.trendMonths = []
+            
+            // 异常航班（后端暂不支持）
+            this.irregularFlights = []
+        },
+        
+        clearData() {
+            this.seatUtilization = null
+            this.seatUtilizationTrend = null
+            this.averagePrice = null
+            this.averagePriceTrend = null
+            this.punctualityRate = null
+            this.punctualityTrend = {
+                type: 'positive',
+                icon: 'fas fa-arrow-up',
+                value: null
+            }
+            this.punctualityBreakdown = {
+                onTime: null,
+                delayed: null,
+                cancelled: null
+            }
+            this.priceDistribution = {
+                economy: null,
+                business: null,
+                first: null
+            }
+            this.passengerTrendData = []
+            this.trendMonths = []
+            this.topRoutes = []
+            this.popularRoutes = []
+            this.irregularFlights = []
+        },
+        
+        updateData() {
+            this.fetchData()
+        },
+        
+        applyCustomDate() {
+            this.fetchData()
+        },
+        
         getStatusText(status) {
             const statusMap = {
                 'DELAYED': '延误',
                 'CANCELLED': '取消',
                 'DIVERTED': '备降'
-            };
-            return statusMap[status] || status;
+            }
+            return statusMap[status] || status
         },
+        
         getPathStyle() {
-            // 模拟生成趋势线路径
-            // 实际项目中应使用数据点坐标生成SVG路径
             return {
                 backgroundImage: 'linear-gradient(transparent, transparent), linear-gradient(to right, transparent, #3f51b5)'
-            };
+            }
         },
+        
         getPointStyle(point, index) {
-            // 计算点的位置
-            const x = (index / (this.passengerTrendData.length - 1)) * 100;
-            const y = 100 - ((point.value - 50) / 50) * 100;
+            if (this.passengerTrendData.length === 0) return {}
+            const x = (index / (this.passengerTrendData.length - 1)) * 100
+            const maxValue = Math.max(...this.passengerTrendData.map(p => p.value)) || 100
+            const y = ((point.value / maxValue) * 80) + 10
             return {
                 left: `${x}%`,
                 bottom: `${y}%`
-            };
+            }
         }
     },
     mounted() {
-        // 设置默认自定义日期为当前日期前30天到今天
-        const today = new Date();
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(today.getDate() - 30);
+        // 设置默认自定义日期
+        const today = new Date()
+        const thirtyDaysAgo = new Date()
+        thirtyDaysAgo.setDate(today.getDate() - 30)
 
-        this.customEndDate = today.toISOString().split('T')[0];
-        this.customStartDate = thirtyDaysAgo.toISOString().split('T')[0];
+        this.customEndDate = today.toISOString().split('T')[0]
+        this.customStartDate = thirtyDaysAgo.toISOString().split('T')[0]
+        
+        // 获取数据
+        this.fetchData()
     }
 }
 </script>
 
+
 <style scoped>
 .admin-flight-analytics {
-    padding: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
+    padding: 20px 40px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .title {
@@ -341,6 +500,39 @@ export default {
     margin-bottom: 20px;
     border-bottom: 2px solid #3f51b5;
     padding-bottom: 10px;
+}
+
+.loading-container,
+.error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.loading-container i,
+.error-container i {
+    font-size: 48px;
+    color: #999;
+    margin-bottom: 16px;
+}
+
+.error-container i {
+    color: #F44336;
+}
+
+.btn-retry {
+    margin-top: 16px;
+    padding: 8px 24px;
+    background-color: #3f51b5;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
 .filter-section {
@@ -433,6 +625,11 @@ export default {
     margin-bottom: 10px;
 }
 
+.chart-value.no-data {
+    color: #999;
+    font-size: 18px;
+}
+
 .progress-bar {
     height: 10px;
     background-color: #e0e0e0;
@@ -454,8 +651,15 @@ export default {
 }
 
 .comparison {
-    color: #4CAF50;
     font-size: 14px;
+}
+
+.comparison.positive {
+    color: #4CAF50;
+}
+
+.comparison.negative {
+    color: #F44336;
 }
 
 .trend-indicator {
@@ -564,6 +768,22 @@ export default {
     position: relative;
 }
 
+.no-data-chart,
+.no-data-table {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: #999;
+}
+
+.no-data-chart i,
+.no-data-table i {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
 .mock-line-chart {
     height: 200px;
     position: relative;
@@ -579,25 +799,11 @@ export default {
     background-color: rgba(0, 0, 0, 0.05);
 }
 
-.chart-grid .grid-line:nth-child(1) {
-    bottom: 20%;
-}
-
-.chart-grid .grid-line:nth-child(2) {
-    bottom: 40%;
-}
-
-.chart-grid .grid-line:nth-child(3) {
-    bottom: 60%;
-}
-
-.chart-grid .grid-line:nth-child(4) {
-    bottom: 80%;
-}
-
-.chart-grid .grid-line:nth-child(5) {
-    bottom: 100%;
-}
+.chart-grid .grid-line:nth-child(1) { bottom: 20%; }
+.chart-grid .grid-line:nth-child(2) { bottom: 40%; }
+.chart-grid .grid-line:nth-child(3) { bottom: 60%; }
+.chart-grid .grid-line:nth-child(4) { bottom: 80%; }
+.chart-grid .grid-line:nth-child(5) { bottom: 100%; }
 
 .line-path {
     position: absolute;

@@ -58,9 +58,8 @@
                         <template #prefix>
                             <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z">
-                                </path>
-                                <polyline points="22,6 12,14.01 2,6"></polyline>
+                                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                                <line x1="12" y1="18" x2="12.01" y2="18"></line>
                             </svg>
                         </template>
                     </el-input>
@@ -168,6 +167,7 @@
 import { ElMessage } from 'element-plus';
 import TermsOfService from '@/components/TermsOfService.vue';
 import PrivacyPolicy from '@/components/PrivacyPolicy.vue';
+import { createValidationRules } from '@/utils/validators';
 import api from '@/services/api';
 
 export default {
@@ -212,20 +212,12 @@ export default {
                 agreement: false
             },
             rules: {
-                username: [
-                    { required: true, message: '请输入用户名', trigger: 'blur' },
-                    { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' }
-                ],
-                email: [
-                    { required: true, message: '请输入电子邮箱', trigger: 'blur' },
-                    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
-                ],
-                phone: [
-                    { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号码', trigger: 'blur' }
-                ],
+                username: createValidationRules.length(3, 20),
+                email: createValidationRules.email(),
+                phone: createValidationRules.mobile(false), // 手机号可选
                 password: [
                     { required: true, message: '请输入密码', trigger: 'blur' },
-                    { min: 6, max: 20, message: '长度在 6 到 20 个字符', trigger: 'blur' },
+                    { min: 8, message: '密码长度不能少于8位', trigger: 'blur' },
                     { validator: validatePass, trigger: 'blur' }
                 ],
                 confirmPassword: [
@@ -268,19 +260,21 @@ export default {
                             this.$router.push('/login');
                         })
                         .catch(error => {
+                            // api.js 拦截器已处理并返回标准化错误对象 { status, message, data }
                             let errorMsg = '注册失败';
-                            // 处理后端返回的具体错误信息
-                            if (error.response && error.response.data) {
-                                const errors = error.response.data;
+                            if (error.data && typeof error.data === 'object') {
+                                const errors = error.data;
                                 if (errors.username) {
-                                    errorMsg = `用户名错误: ${errors.username[0]}`;
+                                    errorMsg = `用户名错误: ${Array.isArray(errors.username) ? errors.username[0] : errors.username}`;
                                 } else if (errors.email) {
-                                    errorMsg = `邮箱错误: ${errors.email[0]}`;
+                                    errorMsg = `邮箱错误: ${Array.isArray(errors.email) ? errors.email[0] : errors.email}`;
                                 } else if (errors.password) {
-                                    errorMsg = `密码错误: ${errors.password[0]}`;
+                                    errorMsg = `密码错误: ${Array.isArray(errors.password) ? errors.password[0] : errors.password}`;
                                 } else if (errors.non_field_errors) {
-                                    errorMsg = errors.non_field_errors[0];
+                                    errorMsg = Array.isArray(errors.non_field_errors) ? errors.non_field_errors[0] : errors.non_field_errors;
                                 }
+                            } else if (error.message) {
+                                errorMsg = error.message;
                             }
                             ElMessage.error(errorMsg);
                             console.error('注册错误:', error);
@@ -302,12 +296,17 @@ export default {
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    min-height: calc(100vh - 60px);
+    width: calc(100% + 10%);
+    min-height: calc(100vh - 60px - 30px);
+    margin-left: -5%;
+    margin-right: -5%;
+    margin-top: -10px;
+    margin-bottom: -10px;
     background: linear-gradient(135deg, #0a192f 0%, #112240 100%);
-    padding: 40px;
-    padding-right: 8%;
+    padding: 40px 8% 40px 40px;
     position: relative;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 @keyframes rotate {

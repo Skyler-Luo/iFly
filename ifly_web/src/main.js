@@ -6,7 +6,22 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
+// 忽略 ResizeObserver 循环错误（ECharts 图表调整大小时的常见警告）
+const resizeObserverErr = window.onerror
+window.onerror = (message, ...args) => {
+  if (typeof message === 'string' && message.includes('ResizeObserver loop')) {
+    return true
+  }
+  return resizeObserverErr ? resizeObserverErr(message, ...args) : false
+}
+
+// 导入全局错误处理器
+import errorHandler from './utils/errorHandler'
+
 // 导入 Leaflet 样式
+import './assets/main.css'
+import './styles/responsive.css'
+import './styles/animations.css'
 import 'leaflet/dist/leaflet.css'
 
 // 导入 ECharts 和 Vue-ECharts
@@ -60,6 +75,10 @@ use([
 ])
 
 const app = createApp(App)
+
+// 初始化全局错误处理器
+errorHandler.init(app)
+
 app.use(store)
 app.use(router)
 app.use(ElementPlus)
