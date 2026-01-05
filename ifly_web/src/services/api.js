@@ -145,6 +145,11 @@ const api = {
       apiClient.put('/accounts/profile/change-password/', data)
   },
 
+  // accounts 别名，兼容旧代码调用
+  get accounts() {
+    return this.auth
+  },
+
   // 航班相关
   flights: {
     // 获取航班列表（支持筛选）

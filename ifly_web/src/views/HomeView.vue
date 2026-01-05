@@ -1,4 +1,4 @@
-     <template>
+<template>
   <div class="home">
     <!-- 搜索航班区域 -->
     <div class="banner" :style="bannerStyle">
@@ -58,8 +58,6 @@ export default {
   },
   methods: {
     handleSearchFlights(searchParams) {
-      /* debug */ console.log('HomeView收到搜索参数:', searchParams)
-
       // 将搜索参数添加到查询参数中
       this.$router.push({
         path: '/flights',

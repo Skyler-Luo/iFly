@@ -199,14 +199,15 @@ export default {
         try {
           const response = await api.accounts.getProfile()
 
-          if (response.data) {
-            userName.value = response.data.username || userName.value
-            userRole.value = response.data.role || userRole.value
-            userAvatar.value = response.data.avatar_url || response.data.avatar || ''
+          // 响应拦截器已解包 data，response 即为用户数据
+          if (response) {
+            userName.value = response.username || userName.value
+            userRole.value = response.role || userRole.value
+            userAvatar.value = response.avatar_url || response.avatar || ''
           }
         } catch (error) {
           // 如果是401错误，说明token无效，需要退出登录
-          if (error.response && error.response.status === 401) {
+          if (error.status === 401) {
             tokenManager.clearToken()
             isLoggedIn.value = false
           }
