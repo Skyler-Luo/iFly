@@ -2,8 +2,11 @@
     <div class="flight-detail-card">
         <div class="flight-info-header">
             <div class="airline-info">
-                <div class="airline-logo"
-                    :style="{ backgroundImage: `url(${flight.airline_logo || flight.airlineLogo})` }"></div>
+                <div class="airline-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+                    </svg>
+                </div>
                 <div>
                     <div class="airline-name">{{ flight.airline_name || flight.airlineName }}</div>
                     <div class="flight-number">{{ flight.flight_number || flight.flightNumber }}</div>
@@ -230,13 +233,21 @@ export default {
     align-items: center;
 }
 
-.airline-logo {
+.airline-icon {
     width: 40px;
     height: 40px;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
     margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1976d2, #42a5f5);
+    border-radius: 8px;
+    color: white;
+}
+
+.airline-icon svg {
+    width: 24px;
+    height: 24px;
 }
 
 .airline-name {

@@ -16,8 +16,8 @@
             </div>
             <div class="footer-section contact">
                 <h3>联系我们</h3>
-                <p><i class="el-icon-location"></i> 北京市朝阳区建国路88号</p>
-                <p><i class="el-icon-phone"></i> 400-888-8888</p>
+                <p><i class="el-icon-location"></i> xx市xx区xx路xx号</p>
+                <p><i class="el-icon-phone"></i> xxx-xxx-xxxx</p>
                 <p><i class="el-icon-message"></i> support@ifly.com</p>
             </div>
         </div>

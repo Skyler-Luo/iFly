@@ -1,8 +1,7 @@
-<p align="center">
-  <img src="ifly_web/public/favicon.ico" alt="iFly Logo" width="64" height="64">
-</p>
-
-<h1 align="center">✈️ iFly 飞机订票系统</h1>
+<h1 align="center">
+  <img src="ifly_web/public/favicon.ico" alt="iFly Logo" width="48" height="48" style="vertical-align: middle;">
+  &nbsp;iFly 飞机订票系统
+</h1>
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python&logoColor=white)
 ![Django](https://img.shields.io/badge/Django-5.1.4-green?logo=django&logoColor=white)
@@ -15,10 +14,9 @@ iFly 是一个功能完善的飞机订票系统，采用前后端分离架构，
 
 系统涵盖航班查询与筛选、在线订票与选座、订单管理、在线支付、电子值机、机票改签与退票、乘客信息管理、航班动态通知等核心业务功能，同时提供完整的管理后台，支持航班管理、订单处理、用户管理、数据分析与商业智能报表等运营功能。
 
-项目采用 JWT + Token 双认证模式，支持 Swagger/ReDoc API 文档自动生成，适合作为学习全栈开发或二次开发的基础项目。
-
 ## 📋 目录
 
+- [截图展示](#-截图展示)
 - [功能特性](#-功能特性)
 - [技术栈](#-技术栈)
 - [项目结构](#-项目结构)
@@ -26,6 +24,25 @@ iFly 是一个功能完善的飞机订票系统，采用前后端分离架构，
 - [API 文档](#-api-文档)
 - [配置说明](#-配置说明)
 - [许可证](#-许可证)
+
+## 📸 截图展示
+
+<div align="center">
+
+![注册](img/register.png)
+*注册*
+
+![登录](img/login.png)
+*登录*
+
+![首页](img/home.png)
+*首页*
+
+
+
+</div>
+
+
 
 ## ✨ 功能特性
 
@@ -189,8 +206,6 @@ npm run build
 |------|------|
 | Django 后端 | http://127.0.0.1:8000 |
 | Vue 前端 | http://localhost:8080 |
-| API 文档 (Swagger) | http://127.0.0.1:8000/api/docs/ |
-| API 文档 (ReDoc) | http://127.0.0.1:8000/api/redoc/ |
 | Django Admin | http://127.0.0.1:8000/admin/ |
 
 ## 📖 API 文档
@@ -284,12 +299,10 @@ Order (booking)
 
 ## 📝 许可证
 
-本项目采用 [LICENSE](LICENSE) 文件中指定的许可证。
-
-## 🤝 贡献
-
-欢迎提交 Issue 和 Pull Request！
+本项目采用 [LICENSE](LICENSE) 许可协议。
 
 ---
 
-Made with ❤️ by iFly Team
+<p align="center">
+  ⭐ 如果这个项目对你有帮助，请点个 Star 支持一下！ ⭐
+</p>
