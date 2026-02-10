@@ -1,18 +1,26 @@
-<h1 align="center">
-  <img src="ifly_web/public/favicon.ico" alt="iFly Logo" width="48" height="48" style="vertical-align: middle;">
-  &nbsp;iFly 飞机订票系统
-</h1>
+<div align="center" style="margin-top: 12px;">
+  <img src="ifly_web/public/favicon.ico" alt="iFly Logo" width="72" height="72" style="vertical-align: middle; border-radius: 12px;">
+  <h1 style="margin: 8px 0 0;">iFly 飞机订票系统</h1>
+  <p style="margin: 6px 0 12px;">现代化、前后端分离的在线订票与运营平台</p>
+  <p>
+    <img src="https://img.shields.io/badge/Python-3.10+-blue?logo=python&logoColor=white">
+    <img src="https://img.shields.io/badge/Django-5.1.4-green?logo=django&logoColor=white">
+    <img src="https://img.shields.io/badge/DRF-3.15.0-red?logo=django&logoColor=white">
+    <img src="https://img.shields.io/badge/Vue.js-3.2.13-brightgreen?logo=vue.js&logoColor=white">
+    <img src="https://img.shields.io/badge/Element%20Plus-2.10.2-409eff?logo=element&logoColor=white">
+    <img src="https://img.shields.io/badge/SQLite-3-blue?logo=sqlite&logoColor=white">
+  </p>
+</div>
 
-![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python&logoColor=white)
-![Django](https://img.shields.io/badge/Django-5.1.4-green?logo=django&logoColor=white)
-![DRF](https://img.shields.io/badge/DRF-3.15.0-red?logo=django&logoColor=white)
-![Vue.js](https://img.shields.io/badge/Vue.js-3.2.13-brightgreen?logo=vue.js&logoColor=white)
-![Element Plus](https://img.shields.io/badge/Element%20Plus-2.10.2-409eff?logo=element&logoColor=white)
-![SQLite](https://img.shields.io/badge/SQLite-3-blue?logo=sqlite&logoColor=white)
+<hr>
 
-iFly 是一个功能完善的飞机订票系统，采用前后端分离架构，后端基于 Django 5.x + Django REST Framework 构建 RESTful API，前端使用 Vue.js 3.x + Element Plus 实现响应式用户界面。
+<p align="center">
+  iFly 是一个功能完善的飞机订票系统，采用前后端分离架构，后端基于 Django 5.x + Django REST Framework 构建 RESTful API，前端使用 Vue.js 3.x + Element Plus 实现响应式用户界面。
+</p>
 
+<p align="center">
 系统涵盖航班查询与筛选、在线订票与选座、订单管理、在线支付、线上值机、机票改签与退票、乘客信息管理、航班动态通知等核心业务功能，同时提供完整的管理后台，支持航班管理、订单处理、用户管理、数据分析与商业智能报表等运营功能。
+</p>
 
 ## 📋 目录
 
@@ -48,61 +56,61 @@ iFly 是一个功能完善的飞机订票系统，采用前后端分离架构，
 
 ### 用户端功能
 
-| 功能模块 | 说明 |
-|---------|------|
+| 功能模块 | 说明                                       |
+| -------- | ------------------------------------------ |
 | 航班搜索 | 支持出发地、目的地、日期、价格等多条件筛选 |
-| 在线订票 | 选择航班、填写乘客信息、座位选择 |
-| 支付中心 | 支持多种支付方式完成订单支付 |
-| 在线值机 | 提前值机、选座、获取电子登机牌 |
-| 改签退票 | 机票改签申请、退票处理、差价结算 |
-| 乘客管理 | 添加/编辑常用乘客信息，快速下单 |
-| 订单中心 | 查看历史订单、订单详情、电子行程单 |
-| 航班动态 | 实时航班状态推送、延误/取消通知 |
-| 站内消息 | 系统公告、个人消息、客服沟通 |
+| 在线订票 | 选择航班、填写乘客信息、座位选择           |
+| 支付中心 | 支持多种支付方式完成订单支付               |
+| 在线值机 | 提前值机、选座、获取电子登机牌             |
+| 改签退票 | 机票改签申请、退票处理、差价结算           |
+| 乘客管理 | 添加/编辑常用乘客信息，快速下单            |
+| 订单中心 | 查看历史订单、订单详情、电子行程单         |
+| 航班动态 | 实时航班状态推送、延误/取消通知            |
+| 站内消息 | 系统公告、个人消息、客服沟通               |
 
 ### 管理端功能
 
-| 功能模块 | 说明 |
-|---------|------|
-| 数据仪表盘 | 核心业务指标概览、实时数据监控 |
-| 航班管理 | 航班信息增删改查、状态管理、定价设置 |
-| 订单管理 | 订单查询、状态处理、退改审批 |
-| 用户管理 | 用户列表、权限配置、账户状态管理 |
-| 收入统计 | 销售额统计、收入趋势、支付渠道分析 |
-| 商业智能 | 航线分析、客流预测、运营报表 |
-| 系统设置 | 参数配置、操作日志、系统维护 |
+| 功能模块   | 说明                                 |
+| ---------- | ------------------------------------ |
+| 数据仪表盘 | 核心业务指标概览、实时数据监控       |
+| 航班管理   | 航班信息增删改查、状态管理、定价设置 |
+| 订单管理   | 订单查询、状态处理、退改审批         |
+| 用户管理   | 用户列表、权限配置、账户状态管理     |
+| 收入统计   | 销售额统计、收入趋势、支付渠道分析   |
+| 商业智能   | 航线分析、客流预测、运营报表         |
+| 系统设置   | 参数配置、操作日志、系统维护         |
 
 ## 🛠️ 技术栈
 
 ### 后端
-| 技术 | 版本 | 说明 |
-|------|------|------|
-| Python | 3.10+ | 运行时环境 |
-| Django | 5.1.4 | Web 框架，提供 ORM、Admin、中间件等核心功能 |
+| 技术                  | 版本   | 说明                                           |
+| --------------------- | ------ | ---------------------------------------------- |
+| Python                | 3.10+  | 运行时环境                                     |
+| Django                | 5.1.4  | Web 框架，提供 ORM、Admin、中间件等核心功能    |
 | Django REST Framework | 3.15.0 | RESTful API 框架，支持序列化、视图集、权限控制 |
-| SimpleJWT | 5.3.1 | JWT 认证，支持 Token 刷新与验证 |
-| django-filter | 24.1 | 查询过滤器，支持多条件筛选 |
-| drf-yasg | 1.21.8 | 自动生成 Swagger/ReDoc API 文档 |
-| django-cors-headers | 4.4.0 | 跨域资源共享支持 |
-| Channels | 4.0.0 | WebSocket 支持，用于实时通知推送 |
-| Pillow | 10.3.0 | 图片处理，用于用户头像上传与处理 |
+| SimpleJWT             | 5.3.1  | JWT 认证，支持 Token 刷新与验证                |
+| django-filter         | 24.1   | 查询过滤器，支持多条件筛选                     |
+| drf-yasg              | 1.21.8 | 自动生成 Swagger/ReDoc API 文档                |
+| django-cors-headers   | 4.4.0  | 跨域资源共享支持                               |
+| Channels              | 4.0.0  | WebSocket 支持，用于实时通知推送               |
+| Pillow                | 10.3.0 | 图片处理，用于用户头像上传与处理               |
 
 ### 前端
-| 技术 | 版本 | 说明 |
-|------|------|------|
-| Vue.js | 3.2.13 | 前端框架，采用 Options API 风格 |
-| Vue Router | 4.x | 路由管理，支持懒加载与导航守卫 |
-| Vuex | 4.x | 状态管理，集中管理用户登录态与全局数据 |
-| Element Plus | 2.10.2 | UI 组件库，提供表单、表格、弹窗等组件 |
-| Axios | 1.10.0 | HTTP 客户端，封装请求拦截与响应处理 |
-| ECharts | 5.6.0 | 数据可视化，用于管理端图表展示 |
-| Leaflet | 1.9.4 | 地图组件，用于航线可视化展示 |
-| date-fns | 4.1.0 | 日期处理工具库 |
+| 技术         | 版本   | 说明                                   |
+| ------------ | ------ | -------------------------------------- |
+| Vue.js       | 3.2.13 | 前端框架，采用 Options API 风格        |
+| Vue Router   | 4.x    | 路由管理，支持懒加载与导航守卫         |
+| Vuex         | 4.x    | 状态管理，集中管理用户登录态与全局数据 |
+| Element Plus | 2.10.2 | UI 组件库，提供表单、表格、弹窗等组件  |
+| Axios        | 1.10.0 | HTTP 客户端，封装请求拦截与响应处理    |
+| ECharts      | 5.6.0  | 数据可视化，用于管理端图表展示         |
+| Leaflet      | 1.9.4  | 地图组件，用于航线可视化展示           |
+| date-fns     | 4.1.0  | 日期处理工具库                         |
 
 ### 数据库
-| 环境 | 数据库 | 说明 |
-|------|--------|------|
-| 开发环境 | SQLite | 轻量级，无需额外配置，开箱即用 |
+| 环境     | 数据库     | 说明                               |
+| -------- | ---------- | ---------------------------------- |
+| 开发环境 | SQLite     | 轻量级，无需额外配置，开箱即用     |
 | 生产环境 | PostgreSQL | 高性能、高并发，支持复杂查询与事务 |
 
 ## 📁 项目结构
@@ -202,10 +210,10 @@ npm run build
 
 ### 服务地址
 
-| 服务 | 地址 |
-|------|------|
-| Django 后端 | http://127.0.0.1:8000 |
-| Vue 前端 | http://localhost:8080 |
+| 服务         | 地址                         |
+| ------------ | ---------------------------- |
+| Django 后端  | http://127.0.0.1:8000        |
+| Vue 前端     | http://localhost:8080        |
 | Django Admin | http://127.0.0.1:8000/admin/ |
 
 ## 📖 API 文档
@@ -214,11 +222,11 @@ npm run build
 
 启动后端服务后，可通过以下地址访问自动生成的 API 文档：
 
-| 文档类型 | 地址 | 说明 |
-|---------|------|------|
-| Swagger UI | http://127.0.0.1:8000/api/docs/ | 交互式文档，可直接在页面测试 API |
-| ReDoc | http://127.0.0.1:8000/api/redoc/ | 阅读友好的文档格式 |
-| CoreAPI | http://127.0.0.1:8000/docs/ | DRF 内置文档 |
+| 文档类型   | 地址                             | 说明                             |
+| ---------- | -------------------------------- | -------------------------------- |
+| Swagger UI | http://127.0.0.1:8000/api/docs/  | 交互式文档，可直接在页面测试 API |
+| ReDoc      | http://127.0.0.1:8000/api/redoc/ | 阅读友好的文档格式               |
+| CoreAPI    | http://127.0.0.1:8000/docs/      | DRF 内置文档                     |
 
 ### 认证方式
 
