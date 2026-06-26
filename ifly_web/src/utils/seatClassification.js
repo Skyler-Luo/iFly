@@ -2,7 +2,7 @@
  * 座位分类工具函数
  * 用于在线值机功能中对座位进行分类
  * 
- * Requirements 3.2: 正确区分 available、occupied、current、selected 状态
+ *: 正确区分 available、occupied、current、selected 状态
  */
 
 /**
@@ -59,7 +59,7 @@ export function isCurrentSeat(seatNumber, currentSeat, selectedSeat) {
 /**
  * 获取座位的分类状态
  * 
- * Requirements 3.2: 正确区分 available、occupied、current、selected 状态
+ *: 正确区分 available、occupied、current、selected 状态
  * 
  * 状态优先级（从高到低）：
  * 1. occupied - 已被其他乘客占用

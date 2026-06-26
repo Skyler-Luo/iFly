@@ -8,7 +8,7 @@
 """
 import time
 import signal
-import sys
+
 from django.core.management.base import BaseCommand
 from flight.services import FlightStatusService
 

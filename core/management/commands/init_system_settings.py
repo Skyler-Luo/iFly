@@ -1,7 +1,6 @@
 """
 初始化系统设置管理命令
 
-满足 Requirements 1.1-1.3, 2.1-2.4
 """
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -26,10 +25,8 @@ class Command(BaseCommand):
         
         try:
             with transaction.atomic():
-                # 初始化站点设置 - 满足 Requirements 1.1-1.3
                 site_settings_created = self.init_site_settings(force)
                 
-                # 初始化业务规则 - 满足 Requirements 2.1-2.4
                 business_settings_created = self.init_business_rules(force)
                 
             total_created = site_settings_created + business_settings_created
@@ -53,13 +50,11 @@ class Command(BaseCommand):
         """
         初始化站点设置
         
-        满足 Requirements 1.1-1.3:
         - 1.1: 站点名称、Logo URL、Favicon
         - 1.2: 联系邮箱、电话、地址
         - 1.3: 版权信息、ICP备案号
         """
         site_defaults = [
-            # Requirement 1.1 - 站点基本信息
             {
                 'key': 'site_name',
                 'value': 'iFly 飞机订票系统',
@@ -75,7 +70,6 @@ class Command(BaseCommand):
                 'value': '/favicon.ico',
                 'description': 'Favicon 图标 URL'
             },
-            # Requirement 1.2 - 联系方式
             {
                 'key': 'contact_email',
                 'value': 'support@ifly.example.com',
@@ -91,7 +85,6 @@ class Command(BaseCommand):
                 'value': '北京市朝阳区xxx大厦',
                 'description': '联系地址'
             },
-            # Requirement 1.3 - 版权信息
             {
                 'key': 'copyright_text',
                 'value': '© 2024 iFly. All rights reserved.',
@@ -123,32 +116,27 @@ class Command(BaseCommand):
         """
         初始化业务规则设置
         
-        满足 Requirements 2.1-2.4:
         - 2.1: 订单支付超时时间（默认30分钟）
         - 2.2: 退款费率
         - 2.3: 改签费率
         - 2.4: 值机开放时间
         """
         business_defaults = [
-            # Requirement 2.1 - 支付超时
             {
                 'key': 'payment_timeout',
                 'value': '30',
                 'description': '订单支付超时时间（分钟）'
             },
-            # Requirement 2.2 - 退款费率
             {
                 'key': 'refund_fee_rate',
                 'value': '0.05',
                 'description': '退款手续费率（0-1之间的小数）'
             },
-            # Requirement 2.3 - 改签费率
             {
                 'key': 'reschedule_fee_rate',
                 'value': '0.1',
                 'description': '改签手续费率（0-1之间的小数）'
             },
-            # Requirement 2.4 - 值机开放时间
             {
                 'key': 'checkin_hours',
                 'value': '24',

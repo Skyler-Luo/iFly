@@ -1,8 +1,5 @@
 /**
- * **Feature: online-checkin, Property 12: 登机时间计算**
- * **Validates: Requirements 5.4**
  * 
- * Property: For any flight, the boarding time should equal departure time minus 30 minutes.
  */
 
 /* eslint-env jest */
@@ -25,7 +22,7 @@ const dateTimeArb = fc.record({
 
 describe('Property 12: 登机时间计算', () => {
   /**
-   * Property Test: 登机时间应等于起飞时间减去30分钟
+   * 登机时间应等于起飞时间减去30分钟
    */
   test('登机时间应等于起飞时间减去30分钟', () => {
     fc.assert(
@@ -47,7 +44,7 @@ describe('Property 12: 登机时间计算', () => {
   })
 
   /**
-   * Property Test: 登机时间应是有效的 Date 对象
+   * 登机时间应是有效的 Date 对象
    */
   test('登机时间应是有效的 Date 对象', () => {
     fc.assert(
@@ -67,7 +64,7 @@ describe('Property 12: 登机时间计算', () => {
   })
 
   /**
-   * Property Test: 登机时间应早于起飞时间
+   * 登机时间应早于起飞时间
    */
   test('登机时间应早于起飞时间', () => {
     fc.assert(
@@ -85,7 +82,7 @@ describe('Property 12: 登机时间计算', () => {
   })
 
   /**
-   * Property Test: 字符串输入应正确处理
+   * 字符串输入应正确处理
    */
   test('ISO 字符串输入应正确处理', () => {
     fc.assert(
@@ -108,7 +105,7 @@ describe('Property 12: 登机时间计算', () => {
   })
 
   /**
-   * Property Test: 跨午夜场景应正确处理
+   * 跨午夜场景应正确处理
    */
   test('凌晨起飞时登机时间应正确计算（可能跨越到前一天）', () => {
     // 测试 00:15 起飞的航班
@@ -122,7 +119,7 @@ describe('Property 12: 登机时间计算', () => {
   })
 
   /**
-   * Property Test: 跨年场景应正确处理
+   * 跨年场景应正确处理
    */
   test('跨年场景应正确处理', () => {
     // 测试 2026-01-01 00:15 起飞的航班
@@ -138,21 +135,21 @@ describe('Property 12: 登机时间计算', () => {
   })
 
   /**
-   * Property Test: null 输入应返回 null
+   * null 输入应返回 null
    */
   test('null 输入应返回 null', () => {
     expect(calculateBoardingTime(null)).toBeNull()
   })
 
   /**
-   * Property Test: undefined 输入应返回 null
+   * undefined 输入应返回 null
    */
   test('undefined 输入应返回 null', () => {
     expect(calculateBoardingTime(undefined)).toBeNull()
   })
 
   /**
-   * Property Test: 无效字符串应返回 null
+   * 无效字符串应返回 null
    */
   test('无效字符串应返回 null', () => {
     expect(calculateBoardingTime('invalid-date')).toBeNull()
@@ -160,7 +157,7 @@ describe('Property 12: 登机时间计算', () => {
   })
 
   /**
-   * Property Test: 非日期类型应返回 null
+   * 非日期类型应返回 null
    */
   test('非日期类型应返回 null', () => {
     expect(calculateBoardingTime(123)).toBeNull()
@@ -169,7 +166,7 @@ describe('Property 12: 登机时间计算', () => {
   })
 
   /**
-   * Property Test: formatBoardingTime 应返回格式化的时间字符串
+   * formatBoardingTime 应返回格式化的时间字符串
    */
   test('formatBoardingTime 应返回格式化的时间字符串', () => {
     const departure = new Date(2026, 0, 15, 8, 30) // 08:30
@@ -180,7 +177,7 @@ describe('Property 12: 登机时间计算', () => {
   })
 
   /**
-   * Property Test: formatBoardingTime 对无效输入应返回空字符串
+   * formatBoardingTime 对无效输入应返回空字符串
    */
   test('formatBoardingTime 对无效输入应返回空字符串', () => {
     expect(formatBoardingTime(null)).toBe('')
@@ -189,7 +186,7 @@ describe('Property 12: 登机时间计算', () => {
   })
 
   /**
-   * Property Test: 典型航班时间示例
+   * 典型航班时间示例
    */
   test('典型航班时间示例', () => {
     // 08:30 起飞 -> 08:00 登机

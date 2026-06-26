@@ -4,10 +4,7 @@
 提供航班状态自动更新、通知发送等业务逻辑。
 """
 import logging
-from datetime import timedelta
 from django.utils import timezone
-from django.db import transaction
-from django.db.models import Q
 
 from .models import Flight
 

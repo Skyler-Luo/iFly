@@ -1,6 +1,4 @@
 /**
- * **Feature: online-checkin, Property 5: 座位分类正确性**
- * **Validates: Requirements 3.2**
  * 
  * Property: For any seat and its occupation status, the seat classification function 
  * should correctly return one of: occupied, selected, current, available
@@ -33,7 +31,7 @@ const occupiedSeatsArb = fc.array(seatNumberArb, { minLength: 0, maxLength: 20 }
 
 describe('Property 5: 座位分类正确性', () => {
   /**
-   * Property Test: 座位分类函数应返回四种状态之一
+   * 座位分类函数应返回四种状态之一
    */
   test('座位分类函数应返回四种有效状态之一', () => {
     fc.assert(
@@ -61,7 +59,7 @@ describe('Property 5: 座位分类正确性', () => {
   })
 
   /**
-   * Property Test: 已占用座位应返回 occupied 状态（除非是当前座位）
+   * 已占用座位应返回 occupied 状态（除非是当前座位）
    */
   test('已占用座位应返回 occupied 状态（除非是当前座位）', () => {
     fc.assert(
@@ -92,7 +90,7 @@ describe('Property 5: 座位分类正确性', () => {
   })
 
   /**
-   * Property Test: 选中的座位应返回 selected 状态（如果未被占用）
+   * 选中的座位应返回 selected 状态（如果未被占用）
    */
   test('选中的座位应返回 selected 状态（如果未被占用）', () => {
     fc.assert(
@@ -116,7 +114,7 @@ describe('Property 5: 座位分类正确性', () => {
   })
 
   /**
-   * Property Test: 当前座位在未选择新座位时应返回 current 状态
+   * 当前座位在未选择新座位时应返回 current 状态
    */
   test('当前座位在未选择新座位时应返回 current 状态', () => {
     fc.assert(
@@ -141,7 +139,7 @@ describe('Property 5: 座位分类正确性', () => {
   })
 
   /**
-   * Property Test: 当前座位被选中时应返回 selected 状态
+   * 当前座位被选中时应返回 selected 状态
    */
   test('当前座位被选中时应返回 selected 状态', () => {
     fc.assert(
@@ -166,7 +164,7 @@ describe('Property 5: 座位分类正确性', () => {
   })
 
   /**
-   * Property Test: 未占用、未选中、非当前座位应返回 available 状态
+   * 未占用、未选中、非当前座位应返回 available 状态
    */
   test('未占用、未选中、非当前座位应返回 available 状态', () => {
     fc.assert(
@@ -194,7 +192,7 @@ describe('Property 5: 座位分类正确性', () => {
   })
 
   /**
-   * Property Test: 状态优先级 - occupied > selected > current > available
+   * 状态优先级 - occupied > selected > current > available
    */
   test('状态优先级应正确：occupied > selected > current > available', () => {
     fc.assert(
@@ -223,7 +221,7 @@ describe('Property 5: 座位分类正确性', () => {
   })
 
   /**
-   * Property Test: 当前座位不应被视为占用
+   * 当前座位不应被视为占用
    */
   test('当前座位不应被视为占用', () => {
     fc.assert(
@@ -233,7 +231,6 @@ describe('Property 5: 座位分类正确性', () => {
           // 座位在占用列表中，但也是当前座位
           const occupiedSeats = [seatNumber]
           const currentSeat = seatNumber
-          const selectedSeat = null
           
           const isOccupied = isSeatOccupied(seatNumber, occupiedSeats, currentSeat)
           
@@ -246,7 +243,7 @@ describe('Property 5: 座位分类正确性', () => {
   })
 
   /**
-   * Property Test: isSeatSelected 函数正确性
+   * isSeatSelected 函数正确性
    */
   test('isSeatSelected 函数应正确判断座位是否被选中', () => {
     fc.assert(
@@ -266,7 +263,7 @@ describe('Property 5: 座位分类正确性', () => {
   })
 
   /**
-   * Property Test: isCurrentSeat 函数正确性
+   * isCurrentSeat 函数正确性
    */
   test('isCurrentSeat 函数应正确判断是否为当前座位', () => {
     fc.assert(

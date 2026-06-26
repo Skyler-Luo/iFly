@@ -1,8 +1,5 @@
 /**
- * **Feature: online-checkin, Property 4: 证件号码脱敏**
- * **Validates: Requirements 2.5**
  * 
- * Property: For any ID number with length > 8, the masked result should:
  * - Preserve the first 4 characters
  * - Preserve the last 4 characters
  * - Replace middle characters with asterisks
@@ -38,7 +35,7 @@ const shortIdNumberArb = fc.array(idCharArb, { minLength: 1, maxLength: 8 })
 
 describe('Property 4: 证件号码脱敏', () => {
   /**
-   * Property Test: 长证件号码脱敏后长度应与原长度相同
+   * 长证件号码脱敏后长度应与原长度相同
    */
   test('长证件号码脱敏后长度应与原长度相同', () => {
     fc.assert(
@@ -56,7 +53,7 @@ describe('Property 4: 证件号码脱敏', () => {
   })
 
   /**
-   * Property Test: 长证件号码脱敏后前4位应保持不变
+   * 长证件号码脱敏后前4位应保持不变
    */
   test('长证件号码脱敏后前4位应保持不变', () => {
     fc.assert(
@@ -74,7 +71,7 @@ describe('Property 4: 证件号码脱敏', () => {
   })
 
   /**
-   * Property Test: 长证件号码脱敏后后4位应保持不变
+   * 长证件号码脱敏后后4位应保持不变
    */
   test('长证件号码脱敏后后4位应保持不变', () => {
     fc.assert(
@@ -92,7 +89,7 @@ describe('Property 4: 证件号码脱敏', () => {
   })
 
   /**
-   * Property Test: 长证件号码脱敏后中间部分应全为星号
+   * 长证件号码脱敏后中间部分应全为星号
    */
   test('长证件号码脱敏后中间部分应全为星号', () => {
     fc.assert(
@@ -112,7 +109,7 @@ describe('Property 4: 证件号码脱敏', () => {
   })
 
   /**
-   * Property Test: 长证件号码脱敏后中间星号数量应正确
+   * 长证件号码脱敏后中间星号数量应正确
    */
   test('长证件号码脱敏后中间星号数量应正确', () => {
     fc.assert(
@@ -132,7 +129,7 @@ describe('Property 4: 证件号码脱敏', () => {
   })
 
   /**
-   * Property Test: 短证件号码（长度<=8）应全部用星号替代
+   * 短证件号码（长度<=8）应全部用星号替代
    */
   test('短证件号码应全部用星号替代', () => {
     fc.assert(
@@ -156,7 +153,7 @@ describe('Property 4: 证件号码脱敏', () => {
   })
 
   /**
-   * Property Test: 空字符串应返回空字符串
+   * 空字符串应返回空字符串
    */
   test('空字符串应返回空字符串', () => {
     const masked = maskIdNumber('')
@@ -164,7 +161,7 @@ describe('Property 4: 证件号码脱敏', () => {
   })
 
   /**
-   * Property Test: null 或 undefined 应返回空字符串
+   * null 或 undefined 应返回空字符串
    */
   test('null 或 undefined 应返回空字符串', () => {
     expect(maskIdNumber(null)).toBe('')
@@ -172,7 +169,7 @@ describe('Property 4: 证件号码脱敏', () => {
   })
 
   /**
-   * Property Test: 非字符串类型应返回空字符串
+   * 非字符串类型应返回空字符串
    */
   test('非字符串类型应返回空字符串', () => {
     expect(maskIdNumber(123456789)).toBe('')
@@ -181,7 +178,7 @@ describe('Property 4: 证件号码脱敏', () => {
   })
 
   /**
-   * Property Test: 脱敏函数应是幂等的（对已脱敏的结果再次脱敏不会改变结构）
+   * 脱敏函数应是幂等的（对已脱敏的结果再次脱敏不会改变结构）
    * 注意：这不是严格的幂等性，因为星号会被保留
    */
   test('脱敏后的结果应包含星号', () => {
@@ -201,7 +198,7 @@ describe('Property 4: 证件号码脱敏', () => {
   })
 
   /**
-   * Property Test: 典型身份证号码脱敏示例
+   * 典型身份证号码脱敏示例
    */
   test('典型身份证号码脱敏示例', () => {
     // 18位身份证

@@ -1,8 +1,8 @@
-"""管理后台分析模块测试 (Requirements 7.1, 7.2)"""
+"""管理后台分析模块测试"""
 from datetime import timedelta
 from decimal import Decimal
 
-from django.test import TestCase
+
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase, APIClient
@@ -54,7 +54,7 @@ class AnalyticsAPITest(APITestCase):
         self.client = APIClient()
 
     def test_analytics_overview_admin(self):
-        """测试管理员访问分析概览 (Requirements 7.1)"""
+        """测试管理员访问分析概览"""
         self.client.force_authenticate(user=self.admin)
         url = reverse('analytics-overview')
         response = self.client.get(url)
@@ -70,7 +70,7 @@ class AnalyticsAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_flight_analytics_admin(self):
-        """测试管理员访问航班分析 (Requirements 7.2)"""
+        """测试管理员访问航班分析"""
         self.client.force_authenticate(user=self.admin)
         url = reverse('flight-analytics')
         response = self.client.get(url)
@@ -79,7 +79,7 @@ class AnalyticsAPITest(APITestCase):
         self.assertIn('avg_occupancy_rate', response.data)
 
     def test_revenue_analytics_admin(self):
-        """测试管理员访问收入分析 (Requirements 7.1)"""
+        """测试管理员访问收入分析"""
         self.client.force_authenticate(user=self.admin)
         url = reverse('revenue-analytics')
         response = self.client.get(url)

@@ -100,7 +100,7 @@ export default {
   display: none;
 }
 
-/* 目的地部分 - 使用设计系统变量 (Requirements: 2.1, 2.3) */
+/* 目的地部分 - 使用设计系统变量 */
 .destinations-section {
   margin-bottom: var(--section-margin-bottom, 75px);
   padding: var(--section-padding-y, 60px) var(--section-padding-x, 20px);
@@ -206,7 +206,7 @@ export default {
   text-overflow: ellipsis;
 }
 
-/* 评价部分 - 使用设计系统变量 (Requirements: 2.1, 2.3) */
+/* 评价部分 - 使用设计系统变量 */
 .testimonials-section {
   margin-bottom: var(--section-margin-bottom, 75px);
   padding: var(--section-padding-y, 60px) var(--section-padding-x, 20px);
@@ -307,7 +307,7 @@ export default {
   font-size: 0.9em;
 }
 
-/* FAQ部分 - 使用设计系统变量 (Requirements: 2.1, 2.3) */
+/* FAQ部分 - 使用设计系统变量 */
 .faq-section {
   margin-bottom: var(--section-margin-bottom, 75px);
   padding: var(--section-padding-y, 60px) var(--section-padding-x, 20px);
@@ -444,7 +444,7 @@ export default {
   display: none;
 }
 
-/* 平滑渐变背景叠加层 (Requirements: 1.1) */
+/* 平滑渐变背景叠加层 */
 
 .banner-overlay {
   display: none;
@@ -641,7 +641,7 @@ export default {
   text-shadow: 0 0 8px rgba(30, 136, 229, 0.6);
 }
 
-/* 特点部分 - 使用设计系统变量 (Requirements: 2.1, 2.3) */
+/* 特点部分 - 使用设计系统变量 */
 .section {
   margin-bottom: var(--section-margin-bottom, 75px);
   max-width: 1200px;
@@ -656,7 +656,7 @@ export default {
   display: none;
 }
 
-/* 区块标题统一样式 (Requirements: 2.2, 2.4) */
+/* 区块标题统一样式 */
 .section-title {
   text-align: center;
   margin-bottom: var(--section-title-margin-bottom, 35px);
@@ -852,7 +852,7 @@ export default {
   line-height: 1.6;
 }
 
-/* 优惠部分 - 使用设计系统变量 (Requirements: 2.1, 2.3) */
+/* 优惠部分 - 使用设计系统变量 */
 .promo-section {
   margin-bottom: var(--section-margin-bottom, 75px);
   padding: var(--section-padding-y, 60px) var(--section-padding-x, 20px);

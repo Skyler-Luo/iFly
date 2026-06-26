@@ -2,7 +2,7 @@
 商业智能分析服务模块。
 
 本模块提供多维度数据分析、透视表生成和趋势分析功能。
-满足 Requirements 3, 4, 5。
+
 """
 import csv
 import io
@@ -25,7 +25,6 @@ from flight.models import Flight
 
 class MultiDimensionAnalytics:
     """
-    多维度分析引擎 - 满足 Requirement 3。
 
     支持按时间、航线、舱位、用户分群等维度进行数据分析，
     计算收入、订单数、平均票价、上座率等关键指标。
@@ -48,7 +47,7 @@ class MultiDimensionAnalytics:
         time_granularity: str = 'month',
     ) -> Dict:
         """
-        执行多维度分析 - 满足 Requirements 3.1-3.7。
+        执行多维度分析 - 
 
         Args:
             dimensions: 分析维度列表 ['time', 'route', 'cabin_class', 'user_segment']
@@ -62,7 +61,6 @@ class MultiDimensionAnalytics:
         """
         queryset = Order.objects.filter(status='paid')
 
-        # 日期范围过滤 - 满足 Requirement 3.7
         if start_date:
             queryset = queryset.filter(created_at__gte=start_date)
         if end_date:
@@ -74,13 +72,11 @@ class MultiDimensionAnalytics:
 
         for dim in dimensions:
             if dim == 'time':
-                # 时间维度 - 满足 Requirement 3.1
                 trunc_func = self.TIME_DIMENSIONS.get(time_granularity, TruncMonth)
                 annotations['time_period'] = trunc_func('created_at')
                 group_fields.append('time_period')
 
             elif dim == 'route':
-                # 航线维度 - 满足 Requirement 3.2
                 # 需要通过 tickets 关联到 flight
                 group_fields.extend([
                     'tickets__flight__departure_city',
@@ -88,15 +84,12 @@ class MultiDimensionAnalytics:
                 ])
 
             elif dim == 'cabin_class':
-                # 舱位维度 - 满足 Requirement 3.3
                 group_fields.append('tickets__cabin_class')
 
             elif dim == 'user_segment':
-                # 用户分群维度 - 满足 Requirement 3.4
                 annotations['user_segment'] = self._get_user_segment_case()
                 group_fields.append('user_segment')
 
-        # 计算指标 - 满足 Requirement 3.6
         metric_annotations = {}
         if 'revenue' in metrics:
             metric_annotations['revenue'] = Sum('total_price')
@@ -107,7 +100,6 @@ class MultiDimensionAnalytics:
         if 'ticket_count' in metrics:
             metric_annotations['ticket_count'] = Count('tickets__id')
 
-        # 执行聚合查询 - 满足 Requirement 3.5 (交叉表)
         if annotations:
             queryset = queryset.annotate(**annotations)
 
@@ -164,7 +156,6 @@ class MultiDimensionAnalytics:
         end_date: Optional[datetime] = None,
     ) -> Dict:
         """
-        计算上座率 - 满足 Requirement 3.6 中的 load_factor 指标。
 
         Returns:
             包含上座率数据的字典
@@ -193,7 +184,6 @@ class MultiDimensionAnalytics:
 
 class PivotTableEngine:
     """
-    数据透视表引擎 - 满足 Requirement 4。
 
     支持动态配置行维度、列维度和聚合方式，生成透视表数据并导出为 CSV。
     """
@@ -223,18 +213,14 @@ class PivotTableEngine:
         end_date: Optional[datetime] = None,
     ) -> Dict:
         """
-        生成透视表数据 - 满足 Requirements 4.1-4.4。
+        生成透视表数据 - 
 
         Args:
-            row_dimensions: 行维度 - 满足 Requirement 4.1
-            col_dimensions: 列维度 - 满足 Requirement 4.2
             value_metric: 值指标字段
-            aggregation: 聚合方式 (sum/count/avg) - 满足 Requirement 4.3
             start_date: 开始日期
             end_date: 结束日期
 
         Returns:
-            透视表数据结构 - 满足 Requirement 4.4
         """
         queryset = Order.objects.filter(status='paid')
 
@@ -280,7 +266,6 @@ class PivotTableEngine:
                 value=agg_func(value_field)
             )
 
-        # 构建透视表结构 - 满足 Requirement 4.4
         pivot_data = self._build_pivot_structure(
             list(result), mapped_row_dims, mapped_col_dims
         )
@@ -343,7 +328,6 @@ class PivotTableEngine:
 
     def export_csv(self, pivot_data: Dict) -> str:
         """
-        导出为 CSV 格式 - 满足 Requirement 4.5。
 
         Args:
             pivot_data: 透视表数据（来自 generate 方法的 data 字段）
@@ -378,7 +362,6 @@ class PivotTableEngine:
 
 class TrendAnalyzer:
     """
-    趋势分析器 - 满足 Requirement 5。
 
     提供移动平均计算、同比分析、异常检测和季节性模式识别功能。
     """
@@ -390,7 +373,6 @@ class TrendAnalyzer:
         window_size: int = 7,
     ) -> List[Dict]:
         """
-        计算移动平均 - 满足 Requirement 5.1。
 
         Args:
             data: 时间序列数据列表
@@ -437,7 +419,6 @@ class TrendAnalyzer:
         value_field: str,
     ) -> List[Dict]:
         """
-        计算同比数据 - 满足 Requirement 5.3。
 
         Args:
             current_data: 当期数据列表
@@ -490,7 +471,6 @@ class TrendAnalyzer:
         threshold: float = 2.0,
     ) -> List[Dict]:
         """
-        检测异常值 - 满足 Requirement 5.5。
 
         使用 Z-score 方法，标记偏离均值超过 threshold 个标准差的数据点。
 
@@ -538,7 +518,6 @@ class TrendAnalyzer:
             
             is_anomaly = abs(z_score) > threshold
 
-            # 置信度 - 满足 Requirement 5.4
             # 使用四舍五入后的 z_score 确保一致性
             if abs(z_score) > 3:
                 confidence = 'high'
@@ -562,7 +541,6 @@ class TrendAnalyzer:
         value_field: str,
     ) -> Dict:
         """
-        识别季节性模式 - 满足 Requirement 5.2。
 
         按月份分组计算平均值，识别高峰和低谷月份。
 
@@ -648,7 +626,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 class CollaborativeFilteringEngine:
     """
-    协同过滤推荐引擎 - 满足 Requirements 1-3, 5。
+    协同过滤推荐引擎 - 
 
     基于用户-用户协同过滤算法，通过分析用户历史订票行为，
     找到相似用户群体，并基于相似用户的购买记录为目标用户推荐航线。
@@ -671,7 +649,6 @@ class CollaborativeFilteringEngine:
         total_amount: float
     ) -> float:
         """
-        计算隐式评分 - 满足 Requirement 1.3, 1.4。
 
         使用对数平滑公式避免极端值影响：
         rating = log(1 + order_count) + 0.1 * log(1 + total_amount / 1000)
@@ -687,7 +664,6 @@ class CollaborativeFilteringEngine:
 
     def build_user_route_matrix(self) -> Dict[int, Dict[str, float]]:
         """
-        构建用户-航线评分矩阵 - 满足 Requirement 1.1, 1.2。
 
         从 Order/Ticket/Flight 数据构建评分矩阵。
 
@@ -734,7 +710,6 @@ class CollaborativeFilteringEngine:
         matrix: Dict[int, Dict[str, float]]
     ) -> List[Tuple[int, float]]:
         """
-        计算目标用户与其他用户的余弦相似度 - 满足 Requirement 2.1-2.4。
 
         Args:
             user_id: 目标用户 ID
@@ -753,7 +728,6 @@ class CollaborativeFilteringEngine:
             if other_user_id == user_id:
                 continue
 
-            # 检查用户是否有足够的订单记录 - 满足 Requirement 2.3
             if len(other_routes) < self.min_orders:
                 continue
 
@@ -785,7 +759,6 @@ class CollaborativeFilteringEngine:
         common_routes = set(vec1.keys()) & set(vec2.keys())
 
         if not common_routes:
-            # 无共同航线，相似度为 0 - 满足 Requirement 2.2
             return 0.0
 
         # 计算点积
@@ -808,7 +781,6 @@ class CollaborativeFilteringEngine:
         limit: int = 5
     ) -> List[Dict]:
         """
-        为用户生成航线推荐 - 满足 Requirement 3.1-3.4, 3.6, 5.1-5.4。
 
         Args:
             user_id: 目标用户 ID
@@ -833,7 +805,6 @@ class CollaborativeFilteringEngine:
         # 获取用户已购买的航线
         user_routes: Set[str] = set(matrix[user_id].keys())
 
-        # 计算相似用户 - 满足 Requirement 5.1, 5.2
         similar_users = self.calculate_user_similarity(user_id, matrix)
 
         # 限制相似用户数量
@@ -850,7 +821,6 @@ class CollaborativeFilteringEngine:
         for other_user_id, similarity in top_similar_users:
             other_routes = matrix[other_user_id]
             for route, rating in other_routes.items():
-                # 排除用户已购买的航线 - 满足 Requirement 3.3
                 if route not in user_routes:
                     route_scores[route]['weighted_sum'] += similarity * rating
                     route_scores[route]['similarity_sum'] += similarity
@@ -863,7 +833,6 @@ class CollaborativeFilteringEngine:
                 confidence = min(scores['similarity_sum'], 1.0)
                 predictions.append((route, predicted_score, confidence))
 
-        # 按预测评分降序排列 - 满足 Requirement 3.4
         predictions.sort(key=lambda x: x[1], reverse=True)
 
         # 归一化评分到 [0, 1] 范围
@@ -880,7 +849,6 @@ class CollaborativeFilteringEngine:
                 # 所有评分相同时，统一设为 1.0
                 predictions = [(route, 1.0, conf) for route, score, conf in predictions]
 
-        # 过滤已取消航班的航线 - 满足 Requirement 5.3
         valid_routes = self._get_valid_routes()
 
         # 生成推荐结果
@@ -899,7 +867,6 @@ class CollaborativeFilteringEngine:
                 'reason': '基于相似用户的购买偏好'
             })
 
-            # 限制返回数量 - 满足 Requirement 3.6
             if len(recommendations) >= limit:
                 break
 
@@ -923,7 +890,6 @@ class CollaborativeFilteringEngine:
 
 class PopularRouteService:
     """
-    热门航线服务 - 满足 Requirement 3.5, 5.3。
 
     用于冷启动场景，基于订票量统计热门航线。
     """
@@ -944,7 +910,6 @@ class PopularRouteService:
             - reason: 推荐理由
         """
         # 统计已支付订单中各航线的订票量
-        # 排除已取消航班 - 满足 Requirement 5.3
         route_stats = Ticket.objects.filter(
             order__status='paid',
             status='valid'

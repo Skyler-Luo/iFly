@@ -1,7 +1,5 @@
 /**
  * 倒计时格式化工具属性测试
- * Property 4: 倒计时格式正确性
- * Validates: Requirements 5.1, 5.5
  */
 import fc from 'fast-check'
 import { formatCountdown, parseCountdown } from '@/utils/countdownFormatter'
@@ -45,7 +43,6 @@ describe('countdownFormatter', () => {
       expect(formatCountdown('60')).toBe('--:--')
     })
 
-    // Property 4: 倒计时格式正确性 - 属性测试
     describe('Property 4: 倒计时格式正确性', () => {
       it('should format any positive seconds correctly (MM:SS format)', () => {
         fc.assert(

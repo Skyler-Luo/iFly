@@ -171,8 +171,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         GET /api/bookings/orders/{id}/remaining-time/
         
         返回订单的剩余支付时间（秒），仅对待支付状态的订单有效。
-        
-        Requirements: 3.7
         """
         order = self.get_object()
         
@@ -543,8 +541,6 @@ class TicketViewSet(viewsets.ReadOnlyModelViewSet):
         GET /api/bookings/tickets/{id}/available-flights/
         
         返回与原航班相同航线、尚未起飞且有可用座位的航班列表。
-        
-        Requirements: 1.1
         """
         ticket = self.get_object()
         
@@ -585,8 +581,6 @@ class TicketViewSet(viewsets.ReadOnlyModelViewSet):
         }
         
         返回改签差价信息，包括原票价、新票价、差价、手续费、需支付金额或可退金额。
-        
-        Requirements: 1.2, 1.3, 1.4
         """
         from flight.models import Flight
         
@@ -690,8 +684,6 @@ class TicketViewSet(viewsets.ReadOnlyModelViewSet):
         }
         
         执行改签操作，将原机票改签到目标航班的指定座位。
-        
-        Requirements: 1.5, 1.6, 1.7, 1.8, 1.9
         """
         from flight.models import Flight
         from .serializers import RescheduleLogSerializer

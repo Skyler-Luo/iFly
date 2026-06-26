@@ -31,7 +31,7 @@ class MessageModelTest(TestCase):
 
 
 class MessageAPITest(APITestCase):
-    """消息API测试 (Requirements 3.1)"""
+    """消息API测试"""
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
@@ -69,7 +69,7 @@ class MessageAPITest(APITestCase):
         self.assertEqual(len(response.data['results']), 3)
 
     def test_filter_messages_by_type(self):
-        """测试按类型筛选消息 (Requirements 3.2)"""
+        """测试按类型筛选消息"""
         url = reverse('messages-list')
         
         # 筛选系统消息
@@ -85,7 +85,7 @@ class MessageAPITest(APITestCase):
         self.assertEqual(response.data['results'][0]['type'], 'order')
 
     def test_mark_message_as_read(self):
-        """测试标记消息为已读 (Requirements 3.3)"""
+        """测试标记消息为已读"""
         url = reverse('messages-read', args=[self.message1.id])
         response = self.client.post(url, {'is_read': True})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -94,7 +94,7 @@ class MessageAPITest(APITestCase):
         self.assertTrue(self.message1.is_read)
 
     def test_mark_all_as_read(self):
-        """测试全部标记为已读 (Requirements 3.4)"""
+        """测试全部标记为已读"""
         url = reverse('messages-read-all')
         response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -111,7 +111,7 @@ class MessageAPITest(APITestCase):
         self.assertEqual(response.data['count'], 2)  # message1 和 message2 未读
 
     def test_delete_multiple_messages(self):
-        """测试批量删除消息 (Requirements 3.5)"""
+        """测试批量删除消息"""
         url = reverse('messages-delete-multiple')
         response = self.client.post(url, {
             'message_ids': [self.message1.id, self.message2.id]

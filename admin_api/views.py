@@ -185,7 +185,6 @@ class SiteSettingsView(APIView):
     """
     站点设置 API
     
-    满足 Requirements 1.1-1.5:
     - 1.1: 配置站点名称、Logo URL、Favicon
     - 1.2: 配置联系邮箱、电话、地址
     - 1.3: 配置版权文本、ICP备案号
@@ -222,7 +221,6 @@ class BusinessRulesView(APIView):
     """
     业务规则设置 API
     
-    满足 Requirements 2.1-2.5:
     - 2.1: 配置订单支付超时时间（默认30分钟）
     - 2.2: 配置退款费率
     - 2.3: 配置改签费率
@@ -245,7 +243,6 @@ class BusinessRulesView(APIView):
         PUT /api/admin/settings/business/
         
         更新业务规则设置
-        变更会自动记录到历史中（满足 Requirement 2.5）
         """
         result = SettingsService.update_business_rules(request.data, request.user)
         return Response({'message': '业务规则已更新'})
@@ -256,7 +253,6 @@ class SettingsHistoryView(APIView):
     """
     设置变更历史查询 API
     
-    满足 Requirement 2.5:
     - 记录业务规则变更的管理员用户和时间戳
     - 支持按分类过滤历史记录
     """

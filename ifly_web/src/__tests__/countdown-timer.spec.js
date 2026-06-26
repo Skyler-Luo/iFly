@@ -1,7 +1,5 @@
 /**
  * CountdownTimer 组件逻辑属性测试
- * Property 3: 倒计时样式一致性
- * Validates: Requirements 5.2, 5.3, 6.2
  * 
  * 注意：此测试文件测试组件的核心逻辑函数，而非直接测试 Vue 组件
  */

@@ -2,7 +2,6 @@
 数据分析模块属性测试
 
 使用 Hypothesis 进行属性测试，验证数据可视化 API 的聚合正确性。
-Feature: analytics-cleanup
 """
 import uuid
 from decimal import Decimal
@@ -30,9 +29,6 @@ TEST_REST_FRAMEWORK = {
 class DataVisualizationPropertyTest(HypothesisTestCase):
     """
     DataVisualization API 属性测试
-    
-    Property 1: 数据可视化聚合正确性
-    Validates: Requirements 2.1, 2.2, 2.3
     """
     
     def get_or_create_admin(self):
@@ -108,13 +104,9 @@ class DataVisualizationPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_1_cabin_distribution_aggregation(self, economy_count, business_count, first_count):
         """
-        Property 1: 数据可视化聚合正确性 - 舱位分布
         
-        *For any* 数据库中的 Ticket 数据集，DataVisualization API 返回的舱位分布
+        对于任何 数据库中的 Ticket 数据集，DataVisualization API 返回的舱位分布
         应与直接数据库聚合查询结果一致。
-        
-        **Feature: analytics-cleanup, Property 1: 数据可视化聚合正确性**
-        **Validates: Requirements 2.1**
         """
         # 清理测试数据
         Ticket.objects.all().delete()
@@ -189,13 +181,9 @@ class DataVisualizationPropertyTest(HypothesisTestCase):
         self, price_0_500, price_500_1000, price_1000_1500, price_1500_2000, price_2000_plus
     ):
         """
-        Property 1: 数据可视化聚合正确性 - 票价区间分布
         
-        *For any* 数据库中的 Ticket 数据集，DataVisualization API 返回的票价区间分布
+        对于任何 数据库中的 Ticket 数据集，DataVisualization API 返回的票价区间分布
         应与直接数据库聚合查询结果一致。
-        
-        **Feature: analytics-cleanup, Property 1: 数据可视化聚合正确性**
-        **Validates: Requirements 2.2**
         """
         # 清理测试数据
         Ticket.objects.all().delete()
@@ -252,13 +240,9 @@ class DataVisualizationPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_1_payment_methods_aggregation(self, alipay_count, wechat_count, bank_count):
         """
-        Property 1: 数据可视化聚合正确性 - 支付方式分布
         
-        *For any* 数据库中的 Order 数据集，DataVisualization API 返回的支付方式分布
+        对于任何 数据库中的 Order 数据集，DataVisualization API 返回的支付方式分布
         应与直接数据库聚合查询结果一致。
-        
-        **Feature: analytics-cleanup, Property 1: 数据可视化聚合正确性**
-        **Validates: Requirements 2.3**
         """
         # 清理测试数据
         Ticket.objects.all().delete()
@@ -316,12 +300,8 @@ class DataVisualizationPropertyTest(HypothesisTestCase):
     
     def test_property_1_empty_data_returns_empty_arrays(self):
         """
-        Property 1: 数据可视化聚合正确性 - 空数据
         
         当数据库无数据时，API 应返回空数组而非模拟数据。
-        
-        **Feature: analytics-cleanup, Property 1: 数据可视化聚合正确性**
-        **Validates: Requirements 2.4**
         """
         # 清理所有测试数据
         Ticket.objects.all().delete()
@@ -354,9 +334,6 @@ class DataVisualizationPropertyTest(HypothesisTestCase):
 class UserAnalyticsPropertyTest(HypothesisTestCase):
     """
     UserAnalytics API 属性测试
-    
-    Property 2: 用户年龄分布计算正确性
-    Validates: Requirements 3.1, 3.3
     """
     
     def get_or_create_admin(self):
@@ -419,13 +396,9 @@ class UserAnalyticsPropertyTest(HypothesisTestCase):
         self, under_18_count, age_18_25_count, age_26_35_count, age_36_50_count, over_50_count
     ):
         """
-        Property 2: 用户年龄分布计算正确性
         
-        *For any* 数据库中的 Passenger 数据集，UserAnalytics API 返回的年龄分布
+        对于任何 数据库中的 Passenger 数据集，UserAnalytics API 返回的年龄分布
         应与根据 birth_date 计算的实际年龄分布一致。
-        
-        **Feature: analytics-cleanup, Property 2: 用户年龄分布计算正确性**
-        **Validates: Requirements 3.1**
         """
         from accounts.models import Passenger
         
@@ -488,12 +461,8 @@ class UserAnalyticsPropertyTest(HypothesisTestCase):
     
     def test_property_2_empty_data_returns_zero_counts(self):
         """
-        Property 2: 用户年龄分布计算正确性 - 空数据
         
         当数据库无乘客数据时，API 应返回所有年龄区间计数为 0。
-        
-        **Feature: analytics-cleanup, Property 2: 用户年龄分布计算正确性**
-        **Validates: Requirements 3.4**
         """
         from accounts.models import Passenger
         
@@ -529,13 +498,9 @@ class UserAnalyticsPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_2_user_growth_calculation(self, months_with_users):
         """
-        Property 2: 用户增长趋势计算正确性
         
-        *For any* 数据库中的 User 数据集，UserAnalytics API 返回的用户增长趋势
+        对于任何 数据库中的 User 数据集，UserAnalytics API 返回的用户增长趋势
         应与根据 date_joined 聚合计算的结果一致。
-        
-        **Feature: analytics-cleanup, Property 2: 用户年龄分布计算正确性**
-        **Validates: Requirements 3.3**
         """
         import datetime
         
@@ -603,9 +568,6 @@ class UserAnalyticsPropertyTest(HypothesisTestCase):
 class CustomerSegmentsPropertyTest(HypothesisTestCase):
     """
     CustomerSegments API 属性测试
-    
-    Property 3: 客户分群计算正确性
-    Validates: Requirements 4.1, 4.2, 4.3
     """
     
     # 分群阈值常量（与 CustomerSegments API 保持一致）
@@ -669,16 +631,11 @@ class CustomerSegmentsPropertyTest(HypothesisTestCase):
         self, high_value_spends, medium_value_spends, low_value_spends
     ):
         """
-        Property 3: 客户分群计算正确性
         
-        *For any* 数据库中的 Order 数据集，CustomerSegments API 返回的客户分群应满足：
         - 高价值客户的消费总额 >= 3000 元
         - 中价值客户的消费总额在 1000-3000 元之间
         - 低价值客户的消费总额 < 1000 元
         - 三个群体的用户数量之和等于总用户数
-        
-        **Feature: analytics-cleanup, Property 3: 客户分群计算正确性**
-        **Validates: Requirements 4.1, 4.2, 4.3**
         """
         # 清理测试数据
         Order.objects.all().delete()
@@ -765,12 +722,8 @@ class CustomerSegmentsPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_3_high_value_threshold(self, high_value_spends):
         """
-        Property 3: 客户分群计算正确性 - 高价值阈值验证
         
-        *For any* 消费总额 >= 3000 元的用户，应被归类为高价值客户。
-        
-        **Feature: analytics-cleanup, Property 3: 客户分群计算正确性**
-        **Validates: Requirements 4.1, 4.2**
+        对于任何 消费总额 >= 3000 元的用户，应被归类为高价值客户。
         """
         # 清理测试数据
         Order.objects.all().delete()
@@ -813,12 +766,8 @@ class CustomerSegmentsPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_3_medium_value_threshold(self, medium_value_spends):
         """
-        Property 3: 客户分群计算正确性 - 中价值阈值验证
         
-        *For any* 消费总额在 1000-3000 元之间的用户，应被归类为中价值客户。
-        
-        **Feature: analytics-cleanup, Property 3: 客户分群计算正确性**
-        **Validates: Requirements 4.1, 4.2**
+        对于任何 消费总额在 1000-3000 元之间的用户，应被归类为中价值客户。
         """
         # 清理测试数据
         Order.objects.all().delete()
@@ -866,12 +815,8 @@ class CustomerSegmentsPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_3_low_value_threshold(self, low_value_spends):
         """
-        Property 3: 客户分群计算正确性 - 低价值阈值验证
         
-        *For any* 消费总额 < 1000 元的用户，应被归类为低价值客户。
-        
-        **Feature: analytics-cleanup, Property 3: 客户分群计算正确性**
-        **Validates: Requirements 4.1, 4.2**
+        对于任何 消费总额 < 1000 元的用户，应被归类为低价值客户。
         """
         # 清理测试数据
         Order.objects.all().delete()
@@ -906,12 +851,8 @@ class CustomerSegmentsPropertyTest(HypothesisTestCase):
     
     def test_property_3_empty_data_returns_zero_counts(self):
         """
-        Property 3: 客户分群计算正确性 - 空数据
         
         当数据库无订单数据时，API 应返回所有分群计数为 0。
-        
-        **Feature: analytics-cleanup, Property 3: 客户分群计算正确性**
-        **Validates: Requirements 4.3**
         """
         # 清理所有订单数据
         Order.objects.all().delete()
@@ -965,12 +906,8 @@ class CustomerSegmentsPropertyTest(HypothesisTestCase):
         self, high_value_spends, medium_value_spends, low_value_spends
     ):
         """
-        Property 3: 客户分群计算正确性 - 百分比计算
         
-        *For any* 数据库中的 Order 数据集，各分群的百分比之和应约等于 100%。
-        
-        **Feature: analytics-cleanup, Property 3: 客户分群计算正确性**
-        **Validates: Requirements 4.3**
+        对于任何 数据库中的 Order 数据集，各分群的百分比之和应约等于 100%。
         """
         # 清理测试数据
         Order.objects.all().delete()
@@ -1014,9 +951,6 @@ class CustomerSegmentsPropertyTest(HypothesisTestCase):
 class FlightVisualizationPropertyTest(HypothesisTestCase):
     """
     FlightVisualization API 属性测试
-    
-    Property 4: 航班上座率计算正确性
-    Validates: Requirements 5.1, 5.3
     """
     
     def get_or_create_admin(self):
@@ -1057,13 +991,9 @@ class FlightVisualizationPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_4_flight_load_calculation(self, capacity, occupancy_rate):
         """
-        Property 4: 航班上座率计算正确性
         
-        *For any* 数据库中的 Flight 数据，FlightVisualization API 返回的上座率
+        对于任何 数据库中的 Flight 数据，FlightVisualization API 返回的上座率
         应等于 (capacity - available_seats) / capacity * 100。
-        
-        **Feature: analytics-cleanup, Property 4: 航班上座率计算正确性**
-        **Validates: Requirements 5.1**
         """
         # 清理测试数据
         Flight.objects.all().delete()
@@ -1119,13 +1049,9 @@ class FlightVisualizationPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_4_route_map_real_data(self, route_configs):
         """
-        Property 4: 航班上座率计算正确性 - 航线地图真实数据
         
-        *For any* 数据库中的 Flight 数据，FlightVisualization API 返回的航线地图
+        对于任何 数据库中的 Flight 数据，FlightVisualization API 返回的航线地图
         应包含真实的航线和航班数量。
-        
-        **Feature: analytics-cleanup, Property 4: 航班上座率计算正确性**
-        **Validates: Requirements 5.3**
         """
         # 清理测试数据
         Flight.objects.all().delete()
@@ -1174,12 +1100,8 @@ class FlightVisualizationPropertyTest(HypothesisTestCase):
     
     def test_property_4_empty_data_returns_empty_arrays(self):
         """
-        Property 4: 航班上座率计算正确性 - 空数据
         
         当数据库无航班数据时，API 应返回空数组。
-        
-        **Feature: analytics-cleanup, Property 4: 航班上座率计算正确性**
-        **Validates: Requirements 5.1, 5.3**
         """
         # 清理所有航班数据
         Flight.objects.all().delete()
@@ -1217,12 +1139,8 @@ class FlightVisualizationPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_4_multiple_flights_same_route(self, capacities, available_seats_ratios):
         """
-        Property 4: 航班上座率计算正确性 - 同航线多航班平均上座率
         
-        *For any* 同一航线的多个航班，API 返回的上座率应为所有航班上座率的平均值。
-        
-        **Feature: analytics-cleanup, Property 4: 航班上座率计算正确性**
-        **Validates: Requirements 5.1**
+        对于任何 同一航线的多个航班，API 返回的上座率应为所有航班上座率的平均值。
         """
         # 清理测试数据
         Flight.objects.all().delete()
@@ -1276,12 +1194,7 @@ class FlightVisualizationPropertyTest(HypothesisTestCase):
     
     def test_property_4_on_time_data_removed(self):
         """
-        Property 4: 航班上座率计算正确性 - 准点率数据已删除
-        
         验证 API 返回中不再包含模拟的准点率数据。
-        
-        **Feature: analytics-cleanup, Property 4: 航班上座率计算正确性**
-        **Validates: Requirements 5.2**
         """
         admin = self.get_or_create_admin()
         
@@ -1307,9 +1220,6 @@ class FlightVisualizationPropertyTest(HypothesisTestCase):
 class PivotDataPropertyTest(HypothesisTestCase):
     """
     PivotData API 属性测试
-    
-    Property 5: 透视表聚合正确性
-    Validates: Requirements 8.1, 8.2
     """
     
     def get_or_create_admin(self):
@@ -1387,13 +1297,9 @@ class PivotDataPropertyTest(HypothesisTestCase):
         self, beijing_tickets, shanghai_tickets, guangzhou_tickets
     ):
         """
-        Property 5: 透视表聚合正确性 - 城市维度销售额
         
-        *For any* 数据库中的 Flight 和 Ticket 数据，PivotData API 按城市维度返回的
+        对于任何 数据库中的 Flight 和 Ticket 数据，PivotData API 按城市维度返回的
         销售额聚合数据应与直接数据库查询结果一致。
-        
-        **Feature: analytics-cleanup, Property 5: 透视表聚合正确性**
-        **Validates: Requirements 8.1**
         """
         # 清理测试数据
         Ticket.objects.all().delete()
@@ -1480,13 +1386,9 @@ class PivotDataPropertyTest(HypothesisTestCase):
         self, alipay_orders, wechat_orders, bank_orders
     ):
         """
-        Property 5: 透视表聚合正确性 - 支付方式维度
         
-        *For any* 数据库中的 Order 数据，PivotData API 按支付方式维度返回的
+        对于任何 数据库中的 Order 数据，PivotData API 按支付方式维度返回的
         聚合数据应与直接数据库查询结果一致。
-        
-        **Feature: analytics-cleanup, Property 5: 透视表聚合正确性**
-        **Validates: Requirements 8.2**
         """
         # 清理测试数据
         Ticket.objects.all().delete()
@@ -1558,13 +1460,9 @@ class PivotDataPropertyTest(HypothesisTestCase):
         self, alipay_amounts, wechat_amounts
     ):
         """
-        Property 5: 透视表聚合正确性 - 支付方式销售额
         
-        *For any* 数据库中的 Order 数据，PivotData API 按支付方式维度返回的
+        对于任何 数据库中的 Order 数据，PivotData API 按支付方式维度返回的
         销售额应与直接数据库聚合查询结果一致。
-        
-        **Feature: analytics-cleanup, Property 5: 透视表聚合正确性**
-        **Validates: Requirements 8.2**
         """
         # 清理测试数据
         Ticket.objects.all().delete()
@@ -1618,12 +1516,8 @@ class PivotDataPropertyTest(HypothesisTestCase):
     
     def test_property_5_unsupported_dimension_returns_400(self):
         """
-        Property 5: 透视表聚合正确性 - 不支持的维度返回 400 错误
         
         当请求不支持的维度时，API 应返回 400 错误。
-        
-        **Feature: analytics-cleanup, Property 5: 透视表聚合正确性**
-        **Validates: Requirements 8.3, 8.4**
         """
         admin = self.get_or_create_admin()
         
@@ -1644,12 +1538,7 @@ class PivotDataPropertyTest(HypothesisTestCase):
     
     def test_property_5_supported_dimensions_only_city_and_payment_method(self):
         """
-        Property 5: 透视表聚合正确性 - 只支持 city 和 paymentMethod 维度
-        
         验证 API 只支持 city 和 paymentMethod 两个维度。
-        
-        **Feature: analytics-cleanup, Property 5: 透视表聚合正确性**
-        **Validates: Requirements 8.3, 8.4**
         """
         admin = self.get_or_create_admin()
         
@@ -1666,12 +1555,8 @@ class PivotDataPropertyTest(HypothesisTestCase):
     
     def test_property_5_empty_data_returns_empty_array(self):
         """
-        Property 5: 透视表聚合正确性 - 空数据返回空数组
         
         当数据库无数据时，API 应返回空数组。
-        
-        **Feature: analytics-cleanup, Property 5: 透视表聚合正确性**
-        **Validates: Requirements 8.1, 8.2**
         """
         # 清理所有测试数据
         Ticket.objects.all().delete()
@@ -1698,9 +1583,6 @@ class PivotDataPropertyTest(HypothesisTestCase):
 class SystemLogPropertyTest(HypothesisTestCase):
     """
     SystemLog API 属性测试
-    
-    Property 6: 日志筛选功能正确性
-    Validates: Requirements 6.2, 6.3
     """
     
     def get_or_create_admin(self):
@@ -1763,13 +1645,9 @@ class SystemLogPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_6_level_filter_correctness(self, info_count, warning_count, error_count):
         """
-        Property 6: 日志筛选功能正确性 - 级别筛选
         
-        *For any* 日志文件中的日志记录，SystemLog API 按级别筛选返回的日志
+        对于任何 日志文件中的日志记录，SystemLog API 按级别筛选返回的日志
         应只包含指定级别的记录。
-        
-        **Feature: analytics-cleanup, Property 6: 日志筛选功能正确性**
-        **Validates: Requirements 6.2**
         """
         from analytics.views import SystemLog
         
@@ -1839,13 +1717,9 @@ class SystemLogPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_6_date_range_filter_correctness(self, dates_in_range, dates_before_range, dates_after_range):
         """
-        Property 6: 日志筛选功能正确性 - 时间范围筛选
         
-        *For any* 日志文件中的日志记录，SystemLog API 按时间范围筛选返回的日志
+        对于任何 日志文件中的日志记录，SystemLog API 按时间范围筛选返回的日志
         应只包含指定时间范围内的记录。
-        
-        **Feature: analytics-cleanup, Property 6: 日志筛选功能正确性**
-        **Validates: Requirements 6.3**
         """
         from analytics.views import SystemLog
         
@@ -1919,12 +1793,8 @@ class SystemLogPropertyTest(HypothesisTestCase):
     
     def test_property_6_file_not_exists_returns_empty_with_message(self):
         """
-        Property 6: 日志筛选功能正确性 - 文件不存在
         
         当日志文件不存在时，API 应返回空数组和友好提示。
-        
-        **Feature: analytics-cleanup, Property 6: 日志筛选功能正确性**
-        **Validates: Requirements 6.5**
         """
         from analytics.views import SystemLog
         
@@ -1955,12 +1825,7 @@ class SystemLogPropertyTest(HypothesisTestCase):
     
     def test_property_6_default_limit_is_100(self):
         """
-        Property 6: 日志筛选功能正确性 - 默认数量限制
-        
         验证 API 默认返回最近 100 条日志。
-        
-        **Feature: analytics-cleanup, Property 6: 日志筛选功能正确性**
-        **Validates: Requirements 6.4**
         """
         from analytics.views import SystemLog
         
@@ -2003,12 +1868,8 @@ class SystemLogPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_6_custom_limit(self, limit):
         """
-        Property 6: 日志筛选功能正确性 - 自定义数量限制
         
-        *For any* 指定的 limit 参数，API 返回的日志数量应不超过该限制。
-        
-        **Feature: analytics-cleanup, Property 6: 日志筛选功能正确性**
-        **Validates: Requirements 6.4**
+        对于任何 指定的 limit 参数，API 返回的日志数量应不超过该限制。
         """
         from analytics.views import SystemLog
         
@@ -2064,13 +1925,8 @@ class SystemLogPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_6_combined_level_and_date_filter(self, info_count, warning_count):
         """
-        Property 6: 日志筛选功能正确性 - 组合筛选
         
-        *For any* 日志文件，同时应用级别和时间范围筛选时，
-        返回的日志应同时满足两个条件。
-        
-        **Feature: analytics-cleanup, Property 6: 日志筛选功能正确性**
-        **Validates: Requirements 6.2, 6.3**
+        对于任何 日志文件，同时应用级别和时间范围筛选时，
         """
         from analytics.views import SystemLog
         
@@ -2127,7 +1983,6 @@ class SystemLogPropertyTest(HypothesisTestCase):
                 f"组合筛选后 INFO 日志数量不匹配: 期望 {info_count}, 实际 {len(filtered_logs)}"
             )
             
-            # 验证所有返回的日志都满足两个条件
             for log in filtered_logs:
                 self.assertEqual(log['level'], 'INFO')
                 log_date = log['timestamp'][:10]
@@ -2145,11 +2000,6 @@ class SystemLogPropertyTest(HypothesisTestCase):
 class MultiDimensionAggregationPropertyTest(HypothesisTestCase):
     """
     多维度分析聚合属性测试
-    
-    Property 4: 多维度聚合不变性
-    Validates: Requirements 3.1-3.6
-    
-    Feature: system-enhancements
     """
     
     def get_or_create_admin(self):
@@ -2227,13 +2077,9 @@ class MultiDimensionAggregationPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_4_revenue_aggregation_invariant(self, order_prices):
         """
-        Property 4: 多维度聚合不变性 - 收入聚合
         
-        *For any* 数据集和维度组合，按维度分组聚合后的收入总和
+        对于任何 数据集和维度组合，按维度分组聚合后的收入总和
         应等于原始数据集的收入总和。
-        
-        **Feature: system-enhancements, Property 4: 多维度聚合不变性**
-        **Validates: Requirements 3.1, 3.6**
         """
         from analytics.services import MultiDimensionAnalytics
         
@@ -2284,13 +2130,9 @@ class MultiDimensionAggregationPropertyTest(HypothesisTestCase):
         self, economy_count, business_count, first_count
     ):
         """
-        Property 4: 多维度聚合不变性 - 订单数聚合
         
-        *For any* 数据集，按舱位维度分组聚合后的订单数总和
+        对于任何 数据集，按舱位维度分组聚合后的订单数总和
         应等于原始数据集的订单总数。
-        
-        **Feature: system-enhancements, Property 4: 多维度聚合不变性**
-        **Validates: Requirements 3.3, 3.6**
         """
         from analytics.services import MultiDimensionAnalytics
         
@@ -2353,13 +2195,9 @@ class MultiDimensionAggregationPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_4_route_dimension_aggregation_invariant(self, route_configs):
         """
-        Property 4: 多维度聚合不变性 - 航线维度聚合
         
-        *For any* 数据集，按航线维度分组聚合后的收入总和
+        对于任何 数据集，按航线维度分组聚合后的收入总和
         应等于原始数据集的收入总和。
-        
-        **Feature: system-enhancements, Property 4: 多维度聚合不变性**
-        **Validates: Requirements 3.2, 3.6**
         """
         from analytics.services import MultiDimensionAnalytics
         
@@ -2418,13 +2256,9 @@ class MultiDimensionAggregationPropertyTest(HypothesisTestCase):
         self, time_granularity, order_count
     ):
         """
-        Property 4: 多维度聚合不变性 - 时间粒度聚合
         
-        *For any* 时间粒度（日、周、月、季度、年），按该粒度聚合后的
+        对于任何 时间粒度（日、周、月、季度、年），按该粒度聚合后的
         收入总和应等于原始数据集的收入总和。
-        
-        **Feature: system-enhancements, Property 4: 多维度聚合不变性**
-        **Validates: Requirements 3.1, 3.6**
         """
         from analytics.services import MultiDimensionAnalytics
         
@@ -2479,13 +2313,9 @@ class MultiDimensionAggregationPropertyTest(HypothesisTestCase):
         self, dimensions, order_count
     ):
         """
-        Property 4: 多维度聚合不变性 - 多维度交叉表聚合
         
-        *For any* 维度组合，按多维度交叉聚合后的收入总和
+        对于任何 维度组合，按多维度交叉聚合后的收入总和
         应等于原始数据集的收入总和。
-        
-        **Feature: system-enhancements, Property 4: 多维度聚合不变性**
-        **Validates: Requirements 3.5, 3.6**
         """
         from analytics.services import MultiDimensionAnalytics
         
@@ -2539,12 +2369,8 @@ class MultiDimensionAggregationPropertyTest(HypothesisTestCase):
     
     def test_property_4_empty_data_returns_zero_aggregation(self):
         """
-        Property 4: 多维度聚合不变性 - 空数据
         
         当数据库无订单数据时，聚合结果应为空或零。
-        
-        **Feature: system-enhancements, Property 4: 多维度聚合不变性**
-        **Validates: Requirements 3.6**
         """
         from analytics.services import MultiDimensionAnalytics
         
@@ -2584,11 +2410,6 @@ class MultiDimensionAggregationPropertyTest(HypothesisTestCase):
 class DateRangeFilterPropertyTest(HypothesisTestCase):
     """
     日期范围过滤属性测试
-    
-    Property 5: 日期范围过滤正确性
-    Validates: Requirements 3.7
-    
-    Feature: system-enhancements
     """
     
     def get_or_create_admin(self):
@@ -2670,13 +2491,9 @@ class DateRangeFilterPropertyTest(HypothesisTestCase):
         self, days_before_range, days_in_range, days_after_range
     ):
         """
-        Property 5: 日期范围过滤正确性 - 仅包含范围内订单
         
-        *For any* 日期范围 [start_date, end_date]，分析结果应仅包含
+        对于任何 日期范围 [start_date, end_date]，分析结果应仅包含
         created_at 在该范围内的订单数据。
-        
-        **Feature: system-enhancements, Property 5: 日期范围过滤正确性**
-        **Validates: Requirements 3.7**
         """
         from analytics.services import MultiDimensionAnalytics
         
@@ -2750,13 +2567,9 @@ class DateRangeFilterPropertyTest(HypothesisTestCase):
         self, orders_in_range, orders_out_of_range
     ):
         """
-        Property 5: 日期范围过滤正确性 - 排除范围外订单
         
-        *For any* 日期范围，分析结果的订单数应等于范围内的订单数，
+        对于任何 日期范围，分析结果的订单数应等于范围内的订单数，
         不包含范围外的订单。
-        
-        **Feature: system-enhancements, Property 5: 日期范围过滤正确性**
-        **Validates: Requirements 3.7**
         """
         from analytics.services import MultiDimensionAnalytics
         
@@ -2825,12 +2638,8 @@ class DateRangeFilterPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_5_start_date_boundary_inclusive(self, range_days):
         """
-        Property 5: 日期范围过滤正确性 - 开始日期边界包含
         
-        *For any* 日期范围，start_date 当天的订单应被包含在结果中。
-        
-        **Feature: system-enhancements, Property 5: 日期范围过滤正确性**
-        **Validates: Requirements 3.7**
+        对于任何 日期范围，start_date 当天的订单应被包含在结果中。
         """
         from analytics.services import MultiDimensionAnalytics
         
@@ -2882,12 +2691,8 @@ class DateRangeFilterPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_5_end_date_boundary_inclusive(self, range_days):
         """
-        Property 5: 日期范围过滤正确性 - 结束日期边界包含
         
-        *For any* 日期范围，end_date 当天的订单应被包含在结果中。
-        
-        **Feature: system-enhancements, Property 5: 日期范围过滤正确性**
-        **Validates: Requirements 3.7**
+        对于任何 日期范围，end_date 当天的订单应被包含在结果中。
         """
         from analytics.services import MultiDimensionAnalytics
         
@@ -2939,12 +2744,8 @@ class DateRangeFilterPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_5_no_date_filter_includes_all_orders(self, total_orders):
         """
-        Property 5: 日期范围过滤正确性 - 无日期过滤包含所有订单
         
-        *For any* 数据集，当不指定日期范围时，分析结果应包含所有订单。
-        
-        **Feature: system-enhancements, Property 5: 日期范围过滤正确性**
-        **Validates: Requirements 3.7**
+        对于任何 数据集，当不指定日期范围时，分析结果应包含所有订单。
         """
         from analytics.services import MultiDimensionAnalytics
         
@@ -2988,12 +2789,8 @@ class DateRangeFilterPropertyTest(HypothesisTestCase):
     
     def test_property_5_empty_date_range_returns_empty_result(self):
         """
-        Property 5: 日期范围过滤正确性 - 空日期范围返回空结果
         
         当日期范围内无订单时，分析结果应为空或聚合值为零。
-        
-        **Feature: system-enhancements, Property 5: 日期范围过滤正确性**
-        **Validates: Requirements 3.7**
         """
         from analytics.services import MultiDimensionAnalytics
         
@@ -3055,11 +2852,6 @@ class DateRangeFilterPropertyTest(HypothesisTestCase):
 class PivotTablePropertyTest(HypothesisTestCase):
     """
     PivotTableEngine 属性测试
-    
-    Property 6: 透视表行列一致性
-    Validates: Requirements 4.1, 4.2, 4.3, 4.4
-    
-    Feature: system-enhancements
     """
     
     def get_or_create_admin(self):
@@ -3142,13 +2934,9 @@ class PivotTablePropertyTest(HypothesisTestCase):
         business_shanghai_guangzhou,
     ):
         """
-        Property 6: 透视表行列一致性
         
-        *For any* pivot table configuration, the sum of all row totals should equal 
+        对于任何 pivot table configuration, the sum of all row totals should equal 
         the sum of all column totals, and both should equal the grand total.
-        
-        **Feature: system-enhancements, Property 6: 透视表行列一致性**
-        **Validates: Requirements 4.1, 4.2, 4.3, 4.4**
         """
         from analytics.services import PivotTableEngine
         
@@ -3256,14 +3044,10 @@ class PivotTablePropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_6_pivot_count_aggregation_consistency(self, order_counts):
         """
-        Property 6: 透视表行列一致性 - 计数聚合
         
-        *For any* pivot table with count aggregation, the sum of all cell counts
+        对于任何 pivot table with count aggregation, the sum of all cell counts
         should equal the total number of unique price values (since PivotTableEngine
         uses COUNT DISTINCT on the value field).
-        
-        **Feature: system-enhancements, Property 6: 透视表行列一致性**
-        **Validates: Requirements 4.3**
         """
         from analytics.services import PivotTableEngine
         
@@ -3325,13 +3109,9 @@ class PivotTablePropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_6_pivot_avg_aggregation_bounds(self, economy_count, business_count):
         """
-        Property 6: 透视表行列一致性 - 平均值聚合边界
         
-        *For any* pivot table with avg aggregation, the average value should be
+        对于任何 pivot table with avg aggregation, the average value should be
         between the minimum and maximum individual values.
-        
-        **Feature: system-enhancements, Property 6: 透视表行列一致性**
-        **Validates: Requirements 4.3**
         """
         from analytics.services import PivotTableEngine
         
@@ -3389,12 +3169,8 @@ class PivotTablePropertyTest(HypothesisTestCase):
     
     def test_property_6_empty_data_returns_valid_structure(self):
         """
-        Property 6: 透视表行列一致性 - 空数据返回有效结构
         
         当数据库无数据时，透视表应返回有效的空结构。
-        
-        **Feature: system-enhancements, Property 6: 透视表行列一致性**
-        **Validates: Requirements 4.4**
         """
         from analytics.services import PivotTableEngine
         
@@ -3440,11 +3216,6 @@ class PivotTablePropertyTest(HypothesisTestCase):
 class CSVExportRoundTripPropertyTest(HypothesisTestCase):
     """
     CSV 导出 Round-trip 属性测试
-    
-    Property 7: CSV 导出 Round-trip
-    Validates: Requirements 4.5
-    
-    Feature: system-enhancements, Property 7: CSV 导出 Round-trip
     """
     
     @given(
@@ -3477,13 +3248,9 @@ class CSVExportRoundTripPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_7_csv_export_round_trip(self, row_values, col_values, matrix_values):
         """
-        Property 7: CSV 导出 Round-trip
         
-        *For any* pivot table data, exporting to CSV and parsing back should produce
+        对于任何 pivot table data, exporting to CSV and parsing back should produce
         equivalent data structure (rows, columns, and matrix values).
-        
-        **Feature: system-enhancements, Property 7: CSV 导出 Round-trip**
-        **Validates: Requirements 4.5**
         """
         import csv
         import io
@@ -3570,14 +3337,10 @@ class CSVExportRoundTripPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_7_csv_structure_consistency(self, num_rows, num_cols):
         """
-        Property 7: CSV 导出结构一致性
         
-        *For any* pivot table with N rows and M columns, the exported CSV should have:
+        对于任何 pivot table with N rows and M columns, the exported CSV should have:
         - 1 header row + N data rows = N+1 total rows
         - 1 label column + M data columns = M+1 total columns
-        
-        **Feature: system-enhancements, Property 7: CSV 导出 Round-trip**
-        **Validates: Requirements 4.5**
         """
         import csv
         import io
@@ -3626,12 +3389,8 @@ class CSVExportRoundTripPropertyTest(HypothesisTestCase):
     
     def test_property_7_empty_pivot_data(self):
         """
-        Property 7: CSV 导出空数据处理
         
         当透视表数据为空时，CSV 导出应正确处理。
-        
-        **Feature: system-enhancements, Property 7: CSV 导出 Round-trip**
-        **Validates: Requirements 4.5**
         """
         import csv
         import io
@@ -3669,13 +3428,9 @@ class CSVExportRoundTripPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_7_chinese_characters_round_trip(self, special_chars):
         """
-        Property 7: CSV 导出中文字符 Round-trip
         
-        *For any* pivot table containing Chinese characters, exporting to CSV and
+        对于任何 pivot table containing Chinese characters, exporting to CSV and
         parsing back should preserve the Chinese characters correctly.
-        
-        **Feature: system-enhancements, Property 7: CSV 导出 Round-trip**
-        **Validates: Requirements 4.5**
         """
         import csv
         import io
@@ -3731,9 +3486,6 @@ class CSVExportRoundTripPropertyTest(HypothesisTestCase):
 class TrendAnalyzerPropertyTest(HypothesisTestCase):
     """
     TrendAnalyzer 属性测试
-    
-    Property 8: 移动平均计算正确性
-    Validates: Requirements 5.1
     """
     
     @given(
@@ -3747,13 +3499,9 @@ class TrendAnalyzerPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_8_moving_average_correctness(self, values, window_size):
         """
-        Property 8: 移动平均计算正确性
         
-        *For any* time series data and window size, the moving average at each point
+        对于任何 time series data and window size, the moving average at each point
         should equal the arithmetic mean of the values in the window.
-        
-        **Feature: system-enhancements, Property 8: 移动平均计算正确性**
-        **Validates: Requirements 5.1**
         """
         from analytics.services import TrendAnalyzer
         
@@ -3796,12 +3544,8 @@ class TrendAnalyzerPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_8_empty_data_handling(self, window_size):
         """
-        Property 8: 移动平均空数据处理
         
-        *For any* window size, when input data is empty, the result should be empty.
-        
-        **Feature: system-enhancements, Property 8: 移动平均计算正确性**
-        **Validates: Requirements 5.1**
+        对于任何 window size, when input data is empty, the result should be empty.
         """
         from analytics.services import TrendAnalyzer
         
@@ -3817,13 +3561,9 @@ class TrendAnalyzerPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_8_single_value_equals_itself(self, value, window_size):
         """
-        Property 8: 单值移动平均等于自身
         
-        *For any* single data point and any window size, the moving average
+        对于任何 single data point and any window size, the moving average
         should equal the value itself.
-        
-        **Feature: system-enhancements, Property 8: 移动平均计算正确性**
-        **Validates: Requirements 5.1**
         """
         from analytics.services import TrendAnalyzer
         
@@ -3848,13 +3588,9 @@ class TrendAnalyzerPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_8_constant_series_invariant(self, constant_value, num_points, window_size):
         """
-        Property 8: 常数序列移动平均不变性
         
-        *For any* constant time series, the moving average at every point
+        对于任何 constant time series, the moving average at every point
         should equal the constant value.
-        
-        **Feature: system-enhancements, Property 8: 移动平均计算正确性**
-        **Validates: Requirements 5.1**
         """
         from analytics.services import TrendAnalyzer
         
@@ -3883,13 +3619,9 @@ class TrendAnalyzerPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_8_window_size_one_equals_original(self, values):
         """
-        Property 8: 窗口大小为1时移动平均等于原值
         
-        *For any* time series, when window size is 1, the moving average
+        对于任何 time series, when window size is 1, the moving average
         at each point should equal the original value.
-        
-        **Feature: system-enhancements, Property 8: 移动平均计算正确性**
-        **Validates: Requirements 5.1**
         """
         from analytics.services import TrendAnalyzer
         
@@ -3917,13 +3649,9 @@ class TrendAnalyzerPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_8_preserves_original_data(self, values, window_size):
         """
-        Property 8: 移动平均保留原始数据
         
-        *For any* time series, the result should preserve all original fields
+        对于任何 time series, the result should preserve all original fields
         from the input data.
-        
-        **Feature: system-enhancements, Property 8: 移动平均计算正确性**
-        **Validates: Requirements 5.1**
         """
         from analytics.services import TrendAnalyzer
         
@@ -3958,9 +3686,6 @@ class TrendAnalyzerPropertyTest(HypothesisTestCase):
 class YearOverYearPropertyTest(HypothesisTestCase):
     """
     TrendAnalyzer 同比计算属性测试
-    
-    Property 9: 同比计算正确性
-    Validates: Requirements 5.3
     """
     
     @given(
@@ -3978,13 +3703,9 @@ class YearOverYearPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_9_yoy_rate_formula_correctness(self, current_values, previous_values):
         """
-        Property 9: 同比增长率公式正确性
         
-        *For any* current and previous period data, the year-over-year rate
+        对于任何 current and previous period data, the year-over-year rate
         should equal (current - previous) / previous * 100.
-        
-        **Feature: system-enhancements, Property 9: 同比计算正确性**
-        **Validates: Requirements 5.3**
         """
         from analytics.services import TrendAnalyzer
         
@@ -4047,13 +3768,9 @@ class YearOverYearPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_9_yoy_with_zero_previous_value(self, current_values):
         """
-        Property 9: 上期值为零时的同比计算
         
-        *For any* current data with zero previous value, the year-over-year rate
+        对于任何 current data with zero previous value, the year-over-year rate
         should be 100 if current > 0, else 0.
-        
-        **Feature: system-enhancements, Property 9: 同比计算正确性**
-        **Validates: Requirements 5.3**
         """
         from analytics.services import TrendAnalyzer
         
@@ -4093,13 +3810,9 @@ class YearOverYearPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_9_yoy_same_value_is_zero(self, value):
         """
-        Property 9: 当期与上期相同时同比为零
         
-        *For any* data where current value equals previous value,
+        对于任何 data where current value equals previous value,
         the year-over-year rate should be 0.
-        
-        **Feature: system-enhancements, Property 9: 同比计算正确性**
-        **Validates: Requirements 5.3**
         """
         from analytics.services import TrendAnalyzer
         
@@ -4125,13 +3838,9 @@ class YearOverYearPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_9_yoy_double_is_100_percent(self, current_value, previous_value):
         """
-        Property 9: 当期是上期两倍时同比为100%
         
-        *For any* data where current value is double the previous value,
+        对于任何 data where current value is double the previous value,
         the year-over-year rate should be 100%.
-        
-        **Feature: system-enhancements, Property 9: 同比计算正确性**
-        **Validates: Requirements 5.3**
         """
         from analytics.services import TrendAnalyzer
         
@@ -4159,13 +3868,9 @@ class YearOverYearPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_9_yoy_half_is_negative_50_percent(self, current_value, previous_value):
         """
-        Property 9: 当期是上期一半时同比为-50%
         
-        *For any* data where current value is half the previous value,
+        对于任何 data where current value is half the previous value,
         the year-over-year rate should be -50%.
-        
-        **Feature: system-enhancements, Property 9: 同比计算正确性**
-        **Validates: Requirements 5.3**
         """
         from analytics.services import TrendAnalyzer
         
@@ -4196,13 +3901,9 @@ class YearOverYearPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_9_yoy_preserves_original_data(self, values):
         """
-        Property 9: 同比计算保留原始数据
         
-        *For any* input data, the result should preserve all original fields
+        对于任何 input data, the result should preserve all original fields
         from the current data.
-        
-        **Feature: system-enhancements, Property 9: 同比计算正确性**
-        **Validates: Requirements 5.3**
         """
         from analytics.services import TrendAnalyzer
         
@@ -4248,13 +3949,9 @@ class YearOverYearPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_9_yoy_partial_period_match(self, num_current, num_previous):
         """
-        Property 9: 部分期间匹配的同比计算
         
-        *For any* current and previous data with partial period overlap,
+        对于任何 current and previous data with partial period overlap,
         the result should correctly handle matched and unmatched periods.
-        
-        **Feature: system-enhancements, Property 9: 同比计算正确性**
-        **Validates: Requirements 5.3**
         """
         from analytics.services import TrendAnalyzer
         
@@ -4302,9 +3999,6 @@ class YearOverYearPropertyTest(HypothesisTestCase):
 class AnomalyDetectionPropertyTest(HypothesisTestCase):
     """
     TrendAnalyzer 异常检测属性测试
-    
-    Property 10: 异常检测阈值一致性
-    Validates: Requirements 5.5
     """
     
     @given(
@@ -4318,13 +4012,9 @@ class AnomalyDetectionPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_10_anomaly_detection_threshold_consistency(self, values, threshold):
         """
-        Property 10: 异常检测阈值一致性
         
-        *For any* 数据集和阈值，detect_anomalies 返回的 is_anomaly 标记应与
+        对于任何 数据集和阈值，detect_anomalies 返回的 is_anomaly 标记应与
         |z_score| > threshold 的判断一致。
-        
-        **Feature: system-enhancements, Property 10: 异常检测阈值一致性**
-        **Validates: Requirements 5.5**
         """
         from analytics.services import TrendAnalyzer
         from statistics import mean, stdev
@@ -4378,15 +4068,11 @@ class AnomalyDetectionPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_10_confidence_levels_consistency(self, values):
         """
-        Property 10: 置信度级别一致性
         
-        *For any* 数据集，detect_anomalies 返回的 confidence 级别应与 z_score 范围一致：
+        对于任何 数据集，detect_anomalies 返回的 confidence 级别应与 z_score 范围一致：
         - |z_score| > 3: 'high'
         - |z_score| > 2: 'medium'
         - 其他: 'low'
-        
-        **Feature: system-enhancements, Property 10: 异常检测阈值一致性**
-        **Validates: Requirements 5.5**
         """
         from analytics.services import TrendAnalyzer
         
@@ -4422,12 +4108,8 @@ class AnomalyDetectionPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_10_empty_data_handling(self, window_size):
         """
-        Property 10: 空数据处理
         
-        *For any* 空数据集，detect_anomalies 应返回空列表。
-        
-        **Feature: system-enhancements, Property 10: 异常检测阈值一致性**
-        **Validates: Requirements 5.5**
+        对于任何 空数据集，detect_anomalies 应返回空列表。
         """
         from analytics.services import TrendAnalyzer
         
@@ -4442,13 +4124,9 @@ class AnomalyDetectionPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_10_single_data_point_handling(self, value):
         """
-        Property 10: 单数据点处理
         
-        *For any* 单个数据点，由于无法计算标准差，z_score 应为 0，
+        对于任何 单个数据点，由于无法计算标准差，z_score 应为 0，
         is_anomaly 应为 False，confidence 应为 'low'。
-        
-        **Feature: system-enhancements, Property 10: 异常检测阈值一致性**
-        **Validates: Requirements 5.5**
         """
         from analytics.services import TrendAnalyzer
         
@@ -4469,13 +4147,9 @@ class AnomalyDetectionPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_10_constant_values_no_anomalies(self, constant_value, num_points):
         """
-        Property 10: 常数序列无异常
         
-        *For any* 所有值相同的数据集，标准差为 0，所有数据点的 z_score 应为 0，
+        对于任何 所有值相同的数据集，标准差为 0，所有数据点的 z_score 应为 0，
         不应有任何异常标记。
-        
-        **Feature: system-enhancements, Property 10: 异常检测阈值一致性**
-        **Validates: Requirements 5.5**
         """
         from analytics.services import TrendAnalyzer
         
@@ -4513,12 +4187,8 @@ class AnomalyDetectionPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_10_original_data_preserved(self, values):
         """
-        Property 10: 原始数据保留
         
-        *For any* 数据集，detect_anomalies 返回的结果应保留原始数据的所有字段。
-        
-        **Feature: system-enhancements, Property 10: 异常检测阈值一致性**
-        **Validates: Requirements 5.5**
+        对于任何 数据集，detect_anomalies 返回的结果应保留原始数据的所有字段。
         """
         from analytics.services import TrendAnalyzer
         
@@ -4556,10 +4226,7 @@ class AnomalyDetectionPropertyTest(HypothesisTestCase):
 
 
 
-# ============================================================================
 # 协同过滤推荐引擎属性测试
-# Feature: route-recommendation
-# ============================================================================
 
 @override_settings(REST_FRAMEWORK=TEST_REST_FRAMEWORK)
 class CollaborativeFilteringPropertyTest(HypothesisTestCase):
@@ -4567,7 +4234,6 @@ class CollaborativeFilteringPropertyTest(HypothesisTestCase):
     CollaborativeFilteringEngine 属性测试
     
     验证协同过滤推荐引擎的正确性属性。
-    Feature: route-recommendation
     """
     
     def get_or_create_user(self, suffix=''):
@@ -4631,14 +4297,10 @@ class CollaborativeFilteringPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_1_implicit_rating_monotonicity(self, count1, count2, amount1, amount2):
         """
-        Property 1: 隐式评分单调递增性
         
-        *For any* 两组订票数据 (count1, amount1) 和 (count2, amount2)，
+        对于任何 两组订票数据 (count1, amount1) 和 (count2, amount2)，
         如果 count1 <= count2 且 amount1 <= amount2（至少一个严格小于），
         则 calculate_implicit_rating(count1, amount1) < calculate_implicit_rating(count2, amount2)
-        
-        **Feature: route-recommendation, Property 1: 隐式评分单调递增性**
-        **Validates: Requirements 1.3, 1.4**
         """
         from analytics.services import CollaborativeFilteringEngine
         
@@ -4694,13 +4356,9 @@ class CollaborativeFilteringPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_2_cosine_similarity_range(self, ratings1, ratings2):
         """
-        Property 2: 余弦相似度范围约束
         
-        *For any* 两个用户的航线评分向量，calculate_user_similarity 返回的相似度值
+        对于任何 两个用户的航线评分向量，calculate_user_similarity 返回的相似度值
         应在 [0, 1] 范围内（由于评分非负，相似度不会为负）
-        
-        **Feature: route-recommendation, Property 2: 余弦相似度范围约束**
-        **Validates: Requirements 2.1**
         """
         from analytics.services import CollaborativeFilteringEngine
         
@@ -4735,13 +4393,9 @@ class CollaborativeFilteringPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_3_no_common_routes_zero_similarity(self, routes1, routes2):
         """
-        Property 3: 无共同航线相似度为零
         
-        *For any* 两个用户，如果他们购买的航线集合完全不相交，
+        对于任何 两个用户，如果他们购买的航线集合完全不相交，
         则他们之间的相似度应为 0
-        
-        **Feature: route-recommendation, Property 3: 无共同航线相似度为零**
-        **Validates: Requirements 2.2**
         """
         from analytics.services import CollaborativeFilteringEngine
         
@@ -4762,13 +4416,9 @@ class CollaborativeFilteringPropertyTest(HypothesisTestCase):
     
     def test_property_4_recommendations_exclude_purchased_routes(self):
         """
-        Property 4: 推荐结果排除已购航线
         
-        *For any* 用户和其推荐结果列表，推荐的航线集合与用户已购买的航线集合
+        对于任何 用户和其推荐结果列表，推荐的航线集合与用户已购买的航线集合
         应完全不相交
-        
-        **Feature: route-recommendation, Property 4: 推荐结果排除已购航线**
-        **Validates: Requirements 3.3**
         """
         from analytics.services import CollaborativeFilteringEngine
         
@@ -4809,13 +4459,8 @@ class CollaborativeFilteringPropertyTest(HypothesisTestCase):
     
     def test_property_5_recommendations_sorted_descending(self):
         """
-        Property 5: 推荐结果降序排列
         
-        *For any* 推荐结果列表，对于列表中任意相邻的两个推荐 (r[i], r[i+1])，
-        应满足 r[i].predicted_score >= r[i+1].predicted_score
-        
-        **Feature: route-recommendation, Property 5: 推荐结果降序排列**
-        **Validates: Requirements 3.4**
+        对于任何 推荐结果列表，对于列表中任意相邻的两个推荐 (r[i], r[i+1])，
         """
         from analytics.services import CollaborativeFilteringEngine
         
@@ -4865,12 +4510,8 @@ class CollaborativeFilteringPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_6_recommendation_count_constraint(self, limit):
         """
-        Property 6: 推荐数量约束
         
-        *For any* limit 参数值 n，generate_recommendations 返回的推荐数量应 <= n
-        
-        **Feature: route-recommendation, Property 6: 推荐数量约束**
-        **Validates: Requirements 3.1, 3.6, 4.3**
+        对于任何 limit 参数值 n，generate_recommendations 返回的推荐数量应 <= n
         """
         from analytics.services import CollaborativeFilteringEngine
         
@@ -4911,13 +4552,9 @@ class CollaborativeFilteringPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_9_similar_users_count_constraint(self, top_k):
         """
-        Property 9: 相似用户数量约束
         
-        *For any* 推荐计算，使用的相似用户数量应 <= top_k_users 配置值，
+        对于任何 推荐计算，使用的相似用户数量应 <= top_k_users 配置值，
         且当可用相似用户不足时应使用所有可用用户
-        
-        **Feature: route-recommendation, Property 9: 相似用户数量约束**
-        **Validates: Requirements 5.1, 5.2**
         """
         from analytics.services import CollaborativeFilteringEngine
         
@@ -4968,10 +4605,6 @@ class CollaborativeFilteringPropertyTest(HypothesisTestCase):
 class RouteRecommendationAPIPropertyTest(HypothesisTestCase):
     """
     RouteRecommendationView API 属性测试
-
-    Property 7: 冷启动用户获得热门推荐
-    Property 8: API 响应格式完整性
-    Validates: Requirements 3.5, 4.2, 4.4, 4.5
     """
 
     def get_or_create_admin(self):
@@ -5045,12 +4678,8 @@ class RouteRecommendationAPIPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_7_cold_start_user_gets_popular_recommendations(self, limit):
         """
-        Property 7: 冷启动用户获得热门推荐
-
-        *For any* 没有历史订单的用户，调用推荐接口应返回 recommendation_type='popular' 的热门航线推荐。
-
-        **Feature: route-recommendation, Property 7: 冷启动用户获得热门推荐**
-        **Validates: Requirements 3.5, 4.4**
+        
+        对于任何 没有历史订单的用户，调用推荐接口应返回 recommendation_type='popular' 的热门航线推荐。
         """
         # 清理测试数据
         Ticket.objects.all().delete()
@@ -5094,12 +4723,7 @@ class RouteRecommendationAPIPropertyTest(HypothesisTestCase):
 
     def test_property_7_unauthenticated_user_gets_popular_recommendations(self):
         """
-        Property 7: 未登录用户获得热门推荐
-
         未登录用户调用推荐接口应返回 recommendation_type='popular' 的热门航线推荐。
-
-        **Feature: route-recommendation, Property 7: 冷启动用户获得热门推荐**
-        **Validates: Requirements 4.4**
         """
         # 清理测试数据
         Ticket.objects.all().delete()
@@ -5130,13 +4754,9 @@ class RouteRecommendationAPIPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_8_api_response_format_completeness(self, limit):
         """
-        Property 8: API 响应格式完整性
-
-        *For any* 推荐 API 响应，每个推荐项应包含 route、departure_city、arrival_city、
+        
+        对于任何 推荐 API 响应，每个推荐项应包含 route、departure_city、arrival_city、
         predicted_score（或 booking_count）、reason 字段，且响应应包含 recommendation_type 字段。
-
-        **Feature: route-recommendation, Property 8: API 响应格式完整性**
-        **Validates: Requirements 4.2, 4.5**
         """
         # 清理测试数据
         Ticket.objects.all().delete()
@@ -5233,12 +4853,8 @@ class RouteRecommendationAPIPropertyTest(HypothesisTestCase):
 
     def test_property_8_api_response_with_collaborative_recommendations(self):
         """
-        Property 8: API 响应格式完整性 - 协同过滤推荐
-
+        
         当用户有历史订单且存在相似用户时，应返回协同过滤推荐。
-
-        **Feature: route-recommendation, Property 8: API 响应格式完整性**
-        **Validates: Requirements 4.2, 4.5**
         """
         # 清理测试数据
         Ticket.objects.all().delete()
@@ -5293,12 +4909,8 @@ class RouteRecommendationAPIPropertyTest(HypothesisTestCase):
     @settings(max_examples=50)
     def test_property_8_api_handles_invalid_limit_gracefully(self, invalid_limit):
         """
-        Property 8: API 响应格式完整性 - 无效 limit 参数处理
-
+        
         当 limit 参数无效时，API 应使用默认值 5 并正常返回。
-
-        **Feature: route-recommendation, Property 8: API 响应格式完整性**
-        **Validates: Requirements 4.3**
         """
         # 清理测试数据
         Ticket.objects.all().delete()

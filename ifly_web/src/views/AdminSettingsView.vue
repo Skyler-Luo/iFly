@@ -3,7 +3,7 @@
     <h1 class="title">系统设置</h1>
 
     <el-tabs v-model="activeTab" @tab-change="handleTabChange" class="settings-tabs">
-      <!-- 站点信息标签页 - Requirements 6.1, 1.1-1.5 -->
+      <!-- 站点信息标签页 -->
       <el-tab-pane label="站点信息" name="site">
         <el-form
           ref="siteFormRef"
@@ -64,7 +64,7 @@
         </el-form>
       </el-tab-pane>
 
-      <!-- 业务规则标签页 - Requirements 6.1, 2.1-2.4 -->
+      <!-- 业务规则标签页 -->
       <el-tab-pane label="业务规则" name="business">
         <el-form
           ref="businessFormRef"
@@ -128,7 +128,7 @@
         </el-form>
       </el-tab-pane>
 
-      <!-- 变更历史标签页 - Requirements 2.5 -->
+      <!-- 变更历史标签页 -->
       <el-tab-pane label="变更历史" name="history">
         <div class="history-filters">
           <el-select v-model="historyFilter.category" placeholder="选择分类" clearable>
@@ -168,7 +168,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 export default {
   name: 'AdminSettingsView',
   data() {
-    // URL 验证器 - Requirements 1.5, 6.4
+    // URL 验证器
     const validateUrl = (rule, value, callback) => {
       if (!value) {
         callback()
@@ -188,7 +188,7 @@ export default {
       saving: false,
       historyLoading: false,
 
-      // 站点设置 - Requirements 1.1-1.4
+      // 站点设置
       siteSettings: {
         site_name: '',
         logo_url: '',
@@ -201,7 +201,7 @@ export default {
       },
       originalSiteSettings: null,
 
-      // 站点设置验证规则 - Requirements 1.5, 6.4
+      // 站点设置验证规则
       siteRules: {
         site_name: [
           { required: true, message: '请输入站点名称', trigger: 'blur' }
@@ -217,7 +217,7 @@ export default {
         ]
       },
 
-      // 业务规则 - Requirements 2.1-2.4
+      // 业务规则
       businessRules: {
         payment_timeout_minutes: 30,
         refund_fee_rate: 0.05,
@@ -255,7 +255,7 @@ export default {
   },
 
   methods: {
-    // 标签页切换处理 - Requirements 6.2
+    // 标签页切换处理
     async handleTabChange(tabName) {
       if (tabName === 'site') {
         await this.loadSiteSettings()
@@ -266,7 +266,7 @@ export default {
       }
     },
 
-    // 加载站点设置 - Requirements 6.2
+    // 加载站点设置
     async loadSiteSettings() {
       this.loading = true
       try {
@@ -281,7 +281,7 @@ export default {
       }
     },
 
-    // 加载业务规则 - Requirements 6.2
+    // 加载业务规则
     async loadBusinessRules() {
       this.loading = true
       try {
@@ -296,7 +296,7 @@ export default {
       }
     },
 
-    // 保存站点设置 - Requirements 6.3, 6.4
+    // 保存站点设置
     async saveSiteSettings() {
       try {
         await this.$refs.siteFormRef.validate()
@@ -318,7 +318,7 @@ export default {
       }
     },
 
-    // 保存业务规则 - Requirements 6.3, 6.5
+    // 保存业务规则
     async saveBusinessRules() {
       try {
         await this.$refs.businessFormRef.validate()
@@ -327,7 +327,7 @@ export default {
         return
       }
 
-      // 确认对话框 - Requirements 6.5
+      // 确认对话框
       try {
         await ElMessageBox.confirm(
           '业务规则的修改将立即生效，确定要保存吗？',
@@ -369,7 +369,7 @@ export default {
       }
     },
 
-    // 加载变更历史 - Requirements 2.5
+    // 加载变更历史
     async loadSettingsHistory() {
       this.historyLoading = true
       try {

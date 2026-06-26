@@ -2,7 +2,6 @@
 Core 模块服务层。
 
 包含系统设置服务，提供站点信息和业务规则的管理功能。
-满足 Requirements 1.1-1.5, 2.1-2.5
 """
 import re
 from typing import Optional
@@ -14,7 +13,6 @@ class SettingsService:
     系统设置服务类
     
     提供站点设置和业务规则的读取、更新功能。
-    满足 Requirements 1, 2
     """
     
     @staticmethod
@@ -22,7 +20,6 @@ class SettingsService:
         """
         获取站点设置
         
-        满足 Requirements 1.1-1.3:
         - 1.1: 站点名称、Logo URL、Favicon
         - 1.2: 联系邮箱、电话、地址
         - 1.3: 版权文本、ICP备案号
@@ -46,7 +43,6 @@ class SettingsService:
         """
         获取业务规则设置
         
-        满足 Requirements 2.1-2.4:
         - 2.1: 订单支付超时时间（默认30分钟）
         - 2.2: 退款费率
         - 2.3: 改签费率
@@ -76,7 +72,6 @@ class SettingsService:
         """
         更新站点设置
         
-        满足 Requirements 1.4, 1.5:
         - 1.4: 设置更新后立即生效，无需重启
         - 1.5: 验证 Logo 和 Favicon 的 URL 格式
         
@@ -89,7 +84,6 @@ class SettingsService:
         """
         errors = {}
         
-        # URL 格式验证 - 满足 Requirement 1.5
         url_fields = ['logo_url', 'favicon_url']
         for url_field in url_fields:
             if url_field in data and data[url_field]:
@@ -99,7 +93,6 @@ class SettingsService:
         if errors:
             return {'success': False, 'errors': errors}
         
-        # 更新设置 - 满足 Requirement 1.4 (立即生效)
         for key, value in data.items():
             SystemSettings.set_value('site', key, str(value), user)
         
@@ -110,7 +103,6 @@ class SettingsService:
         """
         更新业务规则设置
         
-        满足 Requirement 2.5:
         - 更新时自动记录变更历史（通过 SystemSettings.set_value 实现）
         
         Args:
@@ -130,7 +122,6 @@ class SettingsService:
         
         for field, db_key in field_mapping.items():
             if field in data:
-                # set_value 会自动记录变更历史 - 满足 Requirement 2.5
                 SystemSettings.set_value('business', db_key, str(data[field]), user)
         
         return {'success': True}
@@ -140,7 +131,6 @@ class SettingsService:
         """
         验证 URL 格式
         
-        满足 Requirement 1.5:
         - 支持 http://, https:// 协议
         - 支持相对路径 (以 / 开头)
         - 空字符串视为有效（允许清空 URL）
@@ -166,7 +156,6 @@ class SettingsService:
         """
         获取设置变更历史
         
-        满足 Requirement 2.5:
         - 记录变更的管理员用户和时间戳
         
         Args:

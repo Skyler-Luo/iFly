@@ -2,8 +2,6 @@
 在线值机功能集成测试
 
 测试完整值机流程：验证 → 选座 → 确认 → 登机牌
-Feature: online-checkin
-Requirements: 1.1-1.6, 3.1-3.7, 4.1-4.6, 5.1-5.7, 6.1-6.5
 """
 import datetime
 from decimal import Decimal
@@ -23,7 +21,6 @@ class CheckinEndToEndTest(TestCase):
     端到端值机流程测试
     
     测试完整值机流程：验证 → 选座 → 确认 → 登机牌
-    Requirements: 1.1-1.6, 3.1-3.7, 4.1-4.6, 5.1-5.7
     """
     
     def setUp(self):
@@ -86,14 +83,12 @@ class CheckinEndToEndTest(TestCase):
         2. 获取座位图（选座）
         3. 办理值机（确认）
         4. 验证登机牌信息
-        
-        Requirements: 1.1-1.6, 3.1-3.7, 4.1-4.6, 5.1-5.7
         """
         # 步骤 1: 获取值机信息
         response = self.client.get(f'/api/bookings/tickets/{self.ticket.id}/checkin_info/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
-        # 验证值机信息完整性 (Requirements 2.1-2.5)
+        # 验证值机信息完整性
         checkin_info = response.data
         self.assertEqual(checkin_info['ticket_id'], self.ticket.id)
         self.assertEqual(checkin_info['passenger_name'], '张三')
@@ -105,7 +100,7 @@ class CheckinEndToEndTest(TestCase):
         self.assertFalse(checkin_info['checked_in'])
         self.assertTrue(checkin_info['can_change_seat'])
         
-        # 验证证件号码已脱敏 (Requirements 2.5)
+        # 验证证件号码已脱敏
         self.assertIn('*', checkin_info['passenger_id_number'])
         self.assertEqual(checkin_info['passenger_id_number'][:4], '1101')
         self.assertEqual(checkin_info['passenger_id_number'][-4:], '1234')
@@ -115,7 +110,7 @@ class CheckinEndToEndTest(TestCase):
         response = self.client.get(f'/api/flights/{flight_id}/seats/', {'cabin_class': 'economy'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
-        # 验证座位图信息 (Requirements 3.1, 3.6)
+        # 验证座位图信息
         seat_data = response.data
         self.assertEqual(seat_data['flight_id'], flight_id)
         self.assertEqual(seat_data['cabin_class'], 'economy')
@@ -133,11 +128,11 @@ class CheckinEndToEndTest(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
-        # 验证值机成功 (Requirements 4.3-4.6)
+        # 验证值机成功
         self.assertTrue(response.data['success'])
         self.assertEqual(response.data['message'], '值机成功')
         
-        # 步骤 4: 验证登机牌信息 (Requirements 5.1-5.5)
+        # 步骤 4: 验证登机牌信息
         boarding_pass = response.data['boarding_pass']
         
         # 验证登机牌必要字段
@@ -164,8 +159,6 @@ class CheckinEndToEndTest(TestCase):
     def test_checkin_without_seat_change(self):
         """
         测试不更换座位的值机流程
-        
-        Requirements: 4.3-4.6, 5.1-5.5
         """
         # 直接办理值机，不更换座位
         response = self.client.post(
@@ -189,8 +182,6 @@ class CheckinEndToEndTest(TestCase):
     def test_checkin_flow_with_multiple_passengers(self):
         """
         测试多乘客值机流程
-        
-        Requirements: 1.1-1.6, 4.1-4.6
         """
         # 创建第二张机票
         ticket2 = Ticket.objects.create(
@@ -235,7 +226,6 @@ class CheckinErrorScenariosTest(TestCase):
     值机错误场景测试
     
     测试各种错误情况的处理
-    Requirements: 6.1-6.5
     """
     
     def setUp(self):
@@ -277,8 +267,6 @@ class CheckinErrorScenariosTest(TestCase):
     def test_checkin_invalid_ticket_id(self):
         """
         测试无效机票 ID
-        
-        Requirements: 6.2
         """
         response = self.client.get('/api/bookings/tickets/99999/checkin_info/')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -286,8 +274,6 @@ class CheckinErrorScenariosTest(TestCase):
     def test_checkin_refunded_ticket(self):
         """
         测试已退票的机票
-        
-        Requirements: 1.2
         """
         order = Order.objects.create(
             user=self.user,
@@ -313,8 +299,6 @@ class CheckinErrorScenariosTest(TestCase):
     def test_checkin_used_ticket(self):
         """
         测试已使用的机票
-        
-        Requirements: 1.2
         """
         order = Order.objects.create(
             user=self.user,
@@ -340,8 +324,6 @@ class CheckinErrorScenariosTest(TestCase):
     def test_checkin_already_checked_in(self):
         """
         测试已值机的机票
-        
-        Requirements: 1.3
         """
         order = Order.objects.create(
             user=self.user,
@@ -369,8 +351,6 @@ class CheckinErrorScenariosTest(TestCase):
     def test_checkin_before_window(self):
         """
         测试值机窗口期前
-        
-        Requirements: 1.4
         """
         # 创建起飞时间在 48 小时后的航班
         future_flight = Flight.objects.create(
@@ -411,8 +391,6 @@ class CheckinErrorScenariosTest(TestCase):
     def test_checkin_after_window(self):
         """
         测试值机窗口期后
-        
-        Requirements: 1.5
         """
         # 创建起飞时间在 30 分钟后的航班
         soon_flight = Flight.objects.create(
@@ -453,8 +431,6 @@ class CheckinErrorScenariosTest(TestCase):
     def test_checkin_seat_conflict(self):
         """
         测试座位冲突
-        
-        Requirements: 4.1, 4.2
         """
         # 创建第一个用户的机票并占用座位 15C
         order1 = Order.objects.create(
@@ -502,8 +478,6 @@ class CheckinErrorScenariosTest(TestCase):
     def test_checkin_unauthorized_access(self):
         """
         测试无权访问其他用户的机票
-        
-        Requirements: 6.3
         """
         # 创建其他用户的机票
         order = Order.objects.create(
@@ -530,8 +504,6 @@ class CheckinErrorScenariosTest(TestCase):
     def test_checkin_unauthenticated(self):
         """
         测试未认证用户访问
-        
-        Requirements: 6.3
         """
         # 创建未认证的客户端
         unauthenticated_client = APIClient()
@@ -559,8 +531,6 @@ class CheckinErrorScenariosTest(TestCase):
 class SeatMapIntegrationTest(TestCase):
     """
     座位图集成测试
-    
-    Requirements: 3.1-3.7
     """
     
     def setUp(self):
@@ -595,8 +565,6 @@ class SeatMapIntegrationTest(TestCase):
     def test_seat_map_shows_occupied_seats(self):
         """
         测试座位图显示已占用座位
-        
-        Requirements: 3.2
         """
         # 创建一些已占用的座位
         order = Order.objects.create(
@@ -630,8 +598,6 @@ class SeatMapIntegrationTest(TestCase):
     def test_seat_map_cabin_class_filtering(self):
         """
         测试座位图舱位过滤
-        
-        Requirements: 3.6
         """
         # 测试头等舱
         response = self.client.get(f'/api/flights/{self.flight.id}/seats/', {'cabin_class': 'first'})
@@ -654,8 +620,6 @@ class SeatMapIntegrationTest(TestCase):
     def test_seat_map_structure(self):
         """
         测试座位图结构
-        
-        Requirements: 3.1, 3.7
         """
         response = self.client.get(f'/api/flights/{self.flight.id}/seats/', {'cabin_class': 'economy'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)

@@ -91,7 +91,6 @@ class SystemSettings(models.Model):
     """
     系统设置模型 - 键值对存储
     
-    满足 Requirements 1.1-1.5, 2.1-2.5
     """
     CATEGORY_CHOICES = [
         ('site', '站点信息'),
@@ -137,7 +136,6 @@ class SystemSettings(models.Model):
         """
         设置配置值，同时记录变更历史
         
-        满足 Requirement 2.5 - 记录变更历史
         """
         # 获取旧值（如果存在）
         try:
@@ -176,7 +174,6 @@ class SettingsHistory(models.Model):
     """
     设置变更历史模型
     
-    满足 Requirement 2.5 - 记录业务规则变更历史
     """
     setting = models.ForeignKey(
         SystemSettings, 

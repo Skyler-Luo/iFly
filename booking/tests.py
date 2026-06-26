@@ -214,7 +214,7 @@ class TicketAPITest(APITestCase):
         self.assertEqual(self.flight.available_seats, 100)
 
     def test_filter_tickets_by_status(self):
-        """测试按状态筛选机票 (Requirements 4.2)"""
+        """测试按状态筛选机票"""
         url = reverse('ticket-list')
 
         # 筛选未使用的机票

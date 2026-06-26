@@ -330,14 +330,14 @@ const api = {
       getPaymentSettings: () => apiClient.get('/admin/settings/payment/'),
       updatePaymentSettings: data =>
         apiClient.put('/admin/settings/payment/', data),
-      // 站点设置 - Requirements 6.2, 6.3
+      // 站点设置
       getSiteSettings: () => apiClient.get('/admin/settings/site/'),
       updateSiteSettings: data => apiClient.put('/admin/settings/site/', data),
-      // 业务规则设置 - Requirements 6.2, 6.3
+      // 业务规则设置
       getBusinessRules: () => apiClient.get('/admin/settings/business/'),
       updateBusinessRules: data =>
         apiClient.put('/admin/settings/business/', data),
-      // 设置变更历史 - Requirements 6.2, 6.3
+      // 设置变更历史
       getSettingsHistory: params =>
         apiClient.get('/admin/settings/history/', { params })
     },
@@ -389,25 +389,25 @@ const api = {
         apiClient.get('/analytics/business-intelligence/route-analytics/', {
           params
         }),
-      // 多维度分析 - Requirements 7.3
+      // 多维度分析
       getMultiDimensionData: params =>
         apiClient.get('/analytics/business-intelligence/multi-dimension/', {
           params
         }),
-      // 多维度分析 POST 接口 - Requirements 3.1-3.7, 7.3
+      // 多维度分析 POST 接口
       getMultiDimensionAnalysis: data =>
         apiClient.post('/analytics/business-intelligence/multi-dimension/', data),
 
-      // 透视表 - Requirements 4.1-4.5, 7.3
+      // 透视表
       getPivotData: data =>
         apiClient.post('/analytics/pivot-data/', data),
-      // 透视表导出 CSV - Requirements 4.5, 7.6
+      // 透视表导出 CSV
       exportPivotData: data =>
         apiClient.post('/analytics/pivot-data/export/', data, {
           responseType: 'blob'
         }),
 
-      // 趋势分析 - Requirements 5.1-5.5, 7.3
+      // 趋势分析
       getTrends: params =>
         apiClient.get('/analytics/business-intelligence/trends/', { params }),
 

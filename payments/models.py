@@ -3,7 +3,7 @@
 
 定义支付记录相关的数据模型，包括支付方式、支付状态等。
 """
-from django.conf import settings
+
 from django.db import models
 
 from booking.models import Order

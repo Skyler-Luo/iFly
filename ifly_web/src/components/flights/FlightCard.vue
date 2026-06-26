@@ -162,7 +162,7 @@ export default {
 </script>
 
 <style scoped>
-/* 航班卡片样式 - 使用设计系统变量 (Requirements: 3.2, 3.3, 3.4) */
+/* 航班卡片样式 - 使用设计系统变量 */
 .flight-card {
     background: var(--color-bg-primary, #ffffff);
     /* 圆角统一为 8-16px 范围 (使用 12px) */
@@ -186,7 +186,7 @@ export default {
     cursor: pointer;
 }
 
-/* 悬停效果 - 边框高亮和背景色变化 (Requirements: 3.2) */
+/* 悬停效果 - 边框高亮和背景色变化 */
 .flight-card:hover {
     transform: var(--card-hover-transform, translateY(-4px));
     box-shadow: var(--card-shadow-hover, 0 8px 24px rgba(0, 0, 0, 0.12)),
@@ -197,7 +197,7 @@ export default {
     background-color: var(--color-cloud-white, #f8fcff);
 }
 
-/* 点击/激活状态视觉反馈 (Requirements: 3.4) */
+/* 点击/激活状态视觉反馈 */
 .flight-card:active {
     transform: var(--card-active-transform, translateY(-2px)) scale(0.99);
     box-shadow: var(--card-shadow-active, 0 2px 8px rgba(0, 0, 0, 0.1));
@@ -248,7 +248,7 @@ export default {
     display: flex;
 }
 
-/* 标签样式 - 使用设计系统变量 (Requirements: 3.3) */
+/* 标签样式 - 使用设计系统变量 */
 .tag-warning,
 .tag-success {
     padding: 4px 10px;
@@ -379,7 +379,7 @@ export default {
     font-size: 12px;
 }
 
-/* 航班详情区域 - 使用设计系统变量 (Requirements: 3.3) */
+/* 航班详情区域 - 使用设计系统变量 */
 .flight-details {
     padding: 20px 0 0;
     border-top: 1px dashed var(--color-border-light, #ebeef5);
@@ -481,7 +481,7 @@ export default {
     margin-top: 15px;
 }
 
-/* 特殊状态样式 - 增强视觉效果 (Requirements: 3.2, 3.3) */
+/* 特殊状态样式 - 增强视觉效果 */
 .flight-card.low-seats {
     border-left: 4px solid var(--color-warning, #e6a23c);
     /* 低座位状态的微妙背景提示 */

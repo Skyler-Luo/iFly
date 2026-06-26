@@ -2,7 +2,6 @@
 航班座位图 API 属性测试
 
 使用 Hypothesis 进行属性测试，验证座位图 API 的正确性。
-Feature: online-checkin
 """
 import datetime
 import uuid
@@ -21,9 +20,6 @@ from flight.models import Flight
 class SeatMapAPIPropertyTest(HypothesisTestCase):
     """
     座位图 API 属性测试
-    
-    Property 7: 舱位座位范围
-    Validates: Requirements 3.6
     """
     
     # 定义舱位对应的行范围
@@ -70,13 +66,8 @@ class SeatMapAPIPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_7_cabin_seat_range(self, cabin_class):
         """
-        Property 7: 舱位座位范围
-        
-        *For any* 舱位等级，座位图应只显示该舱位对应的行范围：
+        对于任何 舱位等级，座位图应只显示该舱位对应的行范围：
         头等舱 1-3 排，商务舱 4-9 排，经济舱 10-30 排。
-        
-        **Feature: online-checkin, Property 7: 舱位座位范围**
-        **Validates: Requirements 3.6**
         """
         user = self.get_or_create_user()
         client = APIClient()
@@ -131,12 +122,8 @@ class SeatMapAPIPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_7_occupied_seats_filtered_by_cabin(self, cabin_class, occupied_row, occupied_col):
         """
-        Property 7: 舱位座位范围 - 已占用座位过滤
         
-        *For any* 舱位等级，返回的已占用座位列表应只包含该舱位范围内的座位。
-        
-        **Feature: online-checkin, Property 7: 舱位座位范围**
-        **Validates: Requirements 3.6**
+        对于任何 舱位等级，返回的已占用座位列表应只包含该舱位范围内的座位。
         """
         user = self.get_or_create_user()
         client = APIClient()

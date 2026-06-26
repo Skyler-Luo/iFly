@@ -1,9 +1,5 @@
 /**
  * 改签费用显示属性测试
- * Property 2: 差价显示正确性
- * Validates: Requirements 3.3, 3.4
- */
-
 /* eslint-env jest */
 
 const fc = require('fast-check')
@@ -17,7 +13,7 @@ const fc = require('fast-check')
  */
 function calculateFeePreview(originalPrice, newPrice, rescheduleFee = 50) {
   const priceDifference = newPrice - originalPrice
-  
+
   return {
     originalPrice,
     newPrice,
@@ -159,7 +155,7 @@ describe('Property 2: 差价显示正确性', () => {
           (originalPrice, priceDiff, fee) => {
             const newPrice = originalPrice + priceDiff
             const preview = calculateFeePreview(originalPrice, newPrice, fee)
-            
+
             if (preview.priceDifference > 0) {
               const displayAmount = getDifferenceDisplayAmount(preview)
               expect(displayAmount).toBe(preview.totalToPay)
@@ -180,7 +176,7 @@ describe('Property 2: 差价显示正确性', () => {
           (originalPrice, priceDiff, fee) => {
             const newPrice = originalPrice - priceDiff
             const preview = calculateFeePreview(originalPrice, newPrice, fee)
-            
+
             if (preview.priceDifference < 0) {
               const displayAmount = getDifferenceDisplayAmount(preview)
               expect(displayAmount).toBe(preview.refundAmount)
@@ -233,14 +229,14 @@ describe('Property 2: 差价显示正确性', () => {
           fc.integer({ min: 0, max: 200 }),
           (originalPrice, newPrice, fee) => {
             const preview = calculateFeePreview(originalPrice, newPrice, fee)
-            
+
             expect(preview).toHaveProperty('originalPrice')
             expect(preview).toHaveProperty('newPrice')
             expect(preview).toHaveProperty('priceDifference')
             expect(preview).toHaveProperty('rescheduleFee')
             expect(preview).toHaveProperty('totalToPay')
             expect(preview).toHaveProperty('refundAmount')
-            
+
             // 验证数值类型
             expect(typeof preview.originalPrice).toBe('number')
             expect(typeof preview.newPrice).toBe('number')

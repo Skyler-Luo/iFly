@@ -161,7 +161,7 @@ class PassengerAPITest(APITestCase):
 
 
 class UserProfileAPITest(APITestCase):
-    """测试用户个人资料API (Requirements 5.1)"""
+    """测试用户个人资料API"""
     
     def setUp(self):
         self.user = User.objects.create_user(
@@ -199,7 +199,7 @@ class UserProfileAPITest(APITestCase):
         self.assertEqual(self.user.real_name, '张三')
 
     def test_change_password(self):
-        """测试修改密码 (Requirements 5.2)"""
+        """测试修改密码"""
         url = reverse('change-password')
         data = {
             'old_password': 'testpassword123',
@@ -215,7 +215,7 @@ class UserProfileAPITest(APITestCase):
         self.assertTrue(self.user.check_password('newpassword456'))
 
     def test_change_password_wrong_old_password(self):
-        """测试修改密码时旧密码错误 (Requirements 5.4)"""
+        """测试修改密码时旧密码错误"""
         url = reverse('change-password')
         data = {
             'old_password': 'wrongpassword',

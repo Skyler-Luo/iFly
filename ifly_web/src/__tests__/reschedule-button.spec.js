@@ -1,9 +1,5 @@
 /**
  * 改签按钮显示属性测试
- * Property 1: 改签按钮显示条件
- * Validates: Requirements 1.1, 1.2, 1.3
- */
-
 /* eslint-env jest */
 
 const fc = require('fast-check')
@@ -58,7 +54,7 @@ function canReschedule(ticket, order) {
 function createTicket(status, hoursUntilDeparture) {
   const now = new Date()
   const departureTime = new Date(now.getTime() + hoursUntilDeparture * 60 * 60 * 1000)
-  
+
   return {
     id: 1,
     status,
@@ -220,20 +216,16 @@ describe('Property 1: 改签按钮显示条件', () => {
 
   describe('组合条件测试', () => {
     it('should require all conditions to be met', () => {
-      // 所有条件都满足
       const validTicket = createTicket(TICKET_STATUS.VALID, 24)
       const paidOrder = createOrder(ORDER_STATUS.PAID)
       expect(canReschedule(validTicket, paidOrder)).toBe(true)
 
-      // 机票状态不满足
       const usedTicket = createTicket(TICKET_STATUS.USED, 24)
       expect(canReschedule(usedTicket, paidOrder)).toBe(false)
 
-      // 订单状态不满足
       const pendingOrder = createOrder(ORDER_STATUS.PENDING)
       expect(canReschedule(validTicket, pendingOrder)).toBe(false)
 
-      // 时间不满足
       const soonTicket = createTicket(TICKET_STATUS.VALID, 1)
       expect(canReschedule(soonTicket, paidOrder)).toBe(false)
     })

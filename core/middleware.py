@@ -1,7 +1,5 @@
 from .models import SystemLog
-from django.urls import is_valid_path
 from django.utils import timezone
-import json
 import logging
 from django.http import JsonResponse
 from django.contrib.auth import get_user_model

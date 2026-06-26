@@ -17,7 +17,7 @@ router.register(r'orders', AdminOrderViewSet, basename='admin-order')
 
 urlpatterns = [
     path('', include(router.urls)),
-    # 系统设置 API - 满足 Requirements 1, 2
+    # 系统设置 API
     path('settings/site/', SiteSettingsView.as_view(), name='admin-site-settings'),
     path('settings/business/', BusinessRulesView.as_view(), name='admin-business-rules'),
     path('settings/history/', SettingsHistoryView.as_view(), name='admin-settings-history'),

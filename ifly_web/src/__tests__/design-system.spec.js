@@ -1,17 +1,3 @@
-/**
- * **Feature: frontend-beautification, Property 5: 卡片圆角范围**
- * **Validates: Requirements 3.3**
- * 
- * Property: For any card component, its border-radius value should be within 8-16px range
- * 
- * **Feature: frontend-beautification, Property 4: 卡片过渡时间范围**
- * **Validates: Requirements 3.1**
- * 
- * Property: For any card component, its CSS transition duration should be within 200-400ms range
- */
-
-/* eslint-env jest */
-
 const fc = require('fast-check')
 
 // 设计规范常量 - 从 design.md 提取
@@ -80,7 +66,7 @@ function isValidCardTransitionDuration(duration) {
 
 describe('Property 5: 卡片圆角范围', () => {
   /**
-   * Property Test: 所有卡片圆角 CSS 变量值应在 8-16px 范围内
+   * 所有卡片圆角 CSS 变量值应在 8-16px 范围内
    */
   test('所有卡片圆角 CSS 变量值应在 8-16px 范围内', () => {
     const cardBorderRadiusVars = [
@@ -95,10 +81,10 @@ describe('Property 5: 卡片圆角范围', () => {
         (varName) => {
           const value = cssVariables[varName]
           const pxValue = parsePxValue(value)
-          
+
           expect(pxValue).not.toBeNaN()
           expect(isValidCardBorderRadius(pxValue)).toBe(true)
-          
+
           return !isNaN(pxValue) && isValidCardBorderRadius(pxValue)
         }
       ),
@@ -107,7 +93,7 @@ describe('Property 5: 卡片圆角范围', () => {
   })
 
   /**
-   * Property Test: 任意生成的卡片圆角值，验证函数应正确判断其有效性
+   * 任意生成的卡片圆角值，验证函数应正确判断其有效性
    */
   test('验证函数应正确判断卡片圆角有效性', () => {
     fc.assert(
@@ -116,7 +102,7 @@ describe('Property 5: 卡片圆角范围', () => {
         (borderRadius) => {
           const isValid = isValidCardBorderRadius(borderRadius)
           const expectedValid = borderRadius >= 8 && borderRadius <= 16
-          
+
           expect(isValid).toBe(expectedValid)
           return isValid === expectedValid
         }
@@ -126,7 +112,7 @@ describe('Property 5: 卡片圆角范围', () => {
   })
 
   /**
-   * Property Test: 边界值测试 - 8px 和 16px 应该是有效的
+   * 边界值测试 - 8px 和 16px 应该是有效的
    */
   test('边界值 8px 和 16px 应该是有效的卡片圆角', () => {
     fc.assert(
@@ -143,7 +129,7 @@ describe('Property 5: 卡片圆角范围', () => {
   })
 
   /**
-   * Property Test: 超出范围的值应该无效
+   * 超出范围的值应该无效
    */
   test('超出范围的圆角值应该无效', () => {
     fc.assert(
@@ -165,19 +151,19 @@ describe('Property 5: 卡片圆角范围', () => {
 
 describe('Property 4: 卡片过渡时间范围', () => {
   /**
-   * Property Test: 卡片过渡时间 CSS 变量值应在 200-400ms 范围内
+   * 卡片过渡时间 CSS 变量值应在 200-400ms 范围内
    */
   test('卡片过渡时间 CSS 变量值应在 200-400ms 范围内', () => {
     const cardTransitionVar = '--card-transition-duration'
     const value = cssVariables[cardTransitionVar]
     const msValue = parseMsValue(value)
-    
+
     expect(msValue).not.toBeNaN()
     expect(isValidCardTransitionDuration(msValue)).toBe(true)
   })
 
   /**
-   * Property Test: 任意生成的过渡时间值，验证函数应正确判断其有效性
+   * 任意生成的过渡时间值，验证函数应正确判断其有效性
    */
   test('验证函数应正确判断卡片过渡时间有效性', () => {
     fc.assert(
@@ -186,7 +172,7 @@ describe('Property 4: 卡片过渡时间范围', () => {
         (duration) => {
           const isValid = isValidCardTransitionDuration(duration)
           const expectedValid = duration >= 200 && duration <= 400
-          
+
           expect(isValid).toBe(expectedValid)
           return isValid === expectedValid
         }
@@ -196,7 +182,7 @@ describe('Property 4: 卡片过渡时间范围', () => {
   })
 
   /**
-   * Property Test: 边界值测试 - 200ms 和 400ms 应该是有效的
+   * 边界值测试 - 200ms 和 400ms 应该是有效的
    */
   test('边界值 200ms 和 400ms 应该是有效的过渡时间', () => {
     fc.assert(
@@ -213,7 +199,7 @@ describe('Property 4: 卡片过渡时间范围', () => {
   })
 
   /**
-   * Property Test: 超出范围的过渡时间应该无效
+   * 超出范围的过渡时间应该无效
    */
   test('超出范围的过渡时间应该无效', () => {
     fc.assert(
@@ -233,12 +219,12 @@ describe('Property 4: 卡片过渡时间范围', () => {
   })
 
   /**
-   * Property Test: 动画持续时间变量中，normal 应该在有效范围内
+   * 动画持续时间变量中，normal 应该在有效范围内
    */
   test('animation-duration-normal 应该在卡片过渡有效范围内', () => {
     const value = cssVariables['--animation-duration-normal']
     const msValue = parseMsValue(value)
-    
+
     expect(msValue).not.toBeNaN()
     expect(isValidCardTransitionDuration(msValue)).toBe(true)
   })
@@ -246,19 +232,10 @@ describe('Property 4: 卡片过渡时间范围', () => {
 
 
 /**
- * **Feature: frontend-beautification, Property 1: 响应式横幅布局适配**
- * **Validates: Requirements 1.3**
  * 
- * Property: For any screen width, the banner area height and search box position 
  * should be correctly adjusted according to predefined breakpoint rules
  */
 
-// 响应式断点配置 - 从 design.md 和 HomeView.vue 提取
-const responsiveBreakpoints = {
-  mobile: 768,
-  tablet: 1024,
-  desktop: 1200
-}
 
 // 横幅高度配置 - 根据不同断点的预期值
 const bannerHeightConfig = {
@@ -269,13 +246,6 @@ const bannerHeightConfig = {
   smallMobile: { maxWidth: 479, minHeight: 450 }
 }
 
-// 搜索框位置配置 - 根据不同断点的预期值
-const searchContainerConfig = {
-  largeDesktop: { minWidth: 1201, bottom: 30, maxWidth: 820 },
-  desktop: { minWidth: 992, maxWidth: 1200, bottom: 25, containerMaxWidth: 760 },
-  tablet: { minWidth: 768, maxWidth: 991, bottom: 20, containerMaxWidth: 680 },
-  mobile: { maxWidth: 767, position: 'relative', width: '95%' }
-}
 
 /**
  * 根据屏幕宽度获取预期的横幅最小高度
@@ -309,41 +279,11 @@ function getExpectedSearchContainerConfig(screenWidth) {
   return { position: 'relative', bottom: null, width: '95%' }
 }
 
-/**
- * 验证横幅高度是否符合断点规则
- * @param {number} screenWidth - 屏幕宽度
- * @param {number} bannerHeight - 横幅高度
- * @returns {boolean}
- */
-function isValidBannerHeight(screenWidth, bannerHeight) {
-  const expectedMinHeight = getExpectedBannerMinHeight(screenWidth)
-  return bannerHeight >= expectedMinHeight
-}
 
-/**
- * 验证搜索框配置是否符合断点规则
- * @param {number} screenWidth - 屏幕宽度
- * @param {object} config - 搜索框配置
- * @returns {boolean}
- */
-function isValidSearchContainerConfig(screenWidth, config) {
-  const expected = getExpectedSearchContainerConfig(screenWidth)
-  
-  // 验证定位方式
-  if (config.position !== expected.position) return false
-  
-  // 桌面端验证 bottom 值
-  if (expected.position === 'absolute') {
-    if (config.bottom !== expected.bottom) return false
-    if (config.maxWidth > expected.maxWidth) return false
-  }
-  
-  return true
-}
 
 describe('Property 1: 响应式横幅布局适配', () => {
   /**
-   * Property Test: 对于任意屏幕宽度，横幅高度应符合预定义的断点规则
+   * 对于任意屏幕宽度，横幅高度应符合预定义的断点规则
    */
   test('横幅高度应根据屏幕宽度正确调整', () => {
     fc.assert(
@@ -351,10 +291,10 @@ describe('Property 1: 响应式横幅布局适配', () => {
         fc.integer({ min: 320, max: 2560 }),
         (screenWidth) => {
           const expectedMinHeight = getExpectedBannerMinHeight(screenWidth)
-          
+
           // 验证预期高度是合理的正数
           expect(expectedMinHeight).toBeGreaterThan(0)
-          
+
           // 验证高度随屏幕变大而增加（或保持）
           if (screenWidth >= 1201) {
             expect(expectedMinHeight).toBe(820)
@@ -367,7 +307,7 @@ describe('Property 1: 响应式横幅布局适配', () => {
           } else {
             expect(expectedMinHeight).toBe(450)
           }
-          
+
           return expectedMinHeight > 0
         }
       ),
@@ -376,7 +316,7 @@ describe('Property 1: 响应式横幅布局适配', () => {
   })
 
   /**
-   * Property Test: 搜索框位置应根据屏幕宽度正确调整
+   * 搜索框位置应根据屏幕宽度正确调整
    */
   test('搜索框位置应根据屏幕宽度正确调整', () => {
     fc.assert(
@@ -384,7 +324,7 @@ describe('Property 1: 响应式横幅布局适配', () => {
         fc.integer({ min: 320, max: 2560 }),
         (screenWidth) => {
           const config = getExpectedSearchContainerConfig(screenWidth)
-          
+
           // 移动端应使用相对定位
           if (screenWidth < 768) {
             expect(config.position).toBe('relative')
@@ -395,7 +335,7 @@ describe('Property 1: 响应式横幅布局适配', () => {
             expect(config.bottom).toBeGreaterThan(0)
             expect(config.maxWidth).toBeGreaterThan(0)
           }
-          
+
           return true
         }
       ),
@@ -404,7 +344,7 @@ describe('Property 1: 响应式横幅布局适配', () => {
   })
 
   /**
-   * Property Test: 断点边界值测试
+   * 断点边界值测试
    */
   test('断点边界值应正确处理', () => {
     const boundaryValues = [
@@ -424,10 +364,10 @@ describe('Property 1: 响应式横幅布局适配', () => {
         ({ width, expectedHeight, expectedPosition }) => {
           const actualHeight = getExpectedBannerMinHeight(width)
           const actualConfig = getExpectedSearchContainerConfig(width)
-          
+
           expect(actualHeight).toBe(expectedHeight)
           expect(actualConfig.position).toBe(expectedPosition)
-          
+
           return actualHeight === expectedHeight && actualConfig.position === expectedPosition
         }
       ),
@@ -436,7 +376,7 @@ describe('Property 1: 响应式横幅布局适配', () => {
   })
 
   /**
-   * Property Test: 横幅高度应随屏幕宽度单调递增（或保持）
+   * 横幅高度应随屏幕宽度单调递增（或保持）
    */
   test('横幅高度应随屏幕宽度单调递增', () => {
     fc.assert(
@@ -446,13 +386,13 @@ describe('Property 1: 响应式横幅布局适配', () => {
         (baseWidth, increment) => {
           const smallerWidth = baseWidth
           const largerWidth = baseWidth + increment
-          
+
           const smallerHeight = getExpectedBannerMinHeight(smallerWidth)
           const largerHeight = getExpectedBannerMinHeight(largerWidth)
-          
+
           // 较大屏幕的高度应该 >= 较小屏幕的高度
           expect(largerHeight).toBeGreaterThanOrEqual(smallerHeight)
-          
+
           return largerHeight >= smallerHeight
         }
       ),
@@ -461,7 +401,7 @@ describe('Property 1: 响应式横幅布局适配', () => {
   })
 
   /**
-   * Property Test: 搜索框最大宽度应随屏幕宽度合理变化
+   * 搜索框最大宽度应随屏幕宽度合理变化
    */
   test('搜索框最大宽度应随屏幕宽度合理变化', () => {
     fc.assert(
@@ -469,11 +409,11 @@ describe('Property 1: 响应式横幅布局适配', () => {
         fc.integer({ min: 768, max: 2560 }),
         (screenWidth) => {
           const config = getExpectedSearchContainerConfig(screenWidth)
-          
+
           // 桌面端搜索框最大宽度应在合理范围内
           expect(config.maxWidth).toBeGreaterThanOrEqual(680)
           expect(config.maxWidth).toBeLessThanOrEqual(820)
-          
+
           // 较大屏幕应有较大的最大宽度
           if (screenWidth >= 1201) {
             expect(config.maxWidth).toBe(820)
@@ -482,7 +422,7 @@ describe('Property 1: 响应式横幅布局适配', () => {
           } else {
             expect(config.maxWidth).toBe(680)
           }
-          
+
           return true
         }
       ),
@@ -493,10 +433,7 @@ describe('Property 1: 响应式横幅布局适配', () => {
 
 
 /**
- * **Feature: frontend-beautification, Property 2: 区块间距一致性**
- * **Validates: Requirements 2.1**
  * 
- * Property: For any content section, its padding and margin should conform to 
  * the standard values defined in the design system (section-padding-y: 60px, section-padding-x: 20px)
  */
 
@@ -523,8 +460,8 @@ const sectionCssVariables = {
  * @returns {boolean}
  */
 function isValidSectionPadding(paddingY, paddingX) {
-  return paddingY === sectionSpacingConfig.paddingY && 
-         paddingX === sectionSpacingConfig.paddingX
+  return paddingY === sectionSpacingConfig.paddingY &&
+    paddingX === sectionSpacingConfig.paddingX
 }
 
 /**
@@ -538,7 +475,7 @@ function isValidSectionMargin(marginBottom) {
 
 describe('Property 2: 区块间距一致性', () => {
   /**
-   * Property Test: 所有区块间距 CSS 变量值应符合设计规范
+   * 所有区块间距 CSS 变量值应符合设计规范
    */
   test('区块间距 CSS 变量值应符合设计规范', () => {
     const sectionSpacingVars = [
@@ -554,10 +491,10 @@ describe('Property 2: 区块间距一致性', () => {
         ({ name, expected }) => {
           const value = sectionCssVariables[name]
           const pxValue = parsePxValue(value)
-          
+
           expect(pxValue).not.toBeNaN()
           expect(pxValue).toBe(expected)
-          
+
           return !isNaN(pxValue) && pxValue === expected
         }
       ),
@@ -566,7 +503,7 @@ describe('Property 2: 区块间距一致性', () => {
   })
 
   /**
-   * Property Test: 任意生成的区块间距值，验证函数应正确判断其有效性
+   * 任意生成的区块间距值，验证函数应正确判断其有效性
    */
   test('验证函数应正确判断区块内边距有效性', () => {
     fc.assert(
@@ -576,7 +513,7 @@ describe('Property 2: 区块间距一致性', () => {
         (paddingY, paddingX) => {
           const isValid = isValidSectionPadding(paddingY, paddingX)
           const expectedValid = paddingY === 60 && paddingX === 20
-          
+
           expect(isValid).toBe(expectedValid)
           return isValid === expectedValid
         }
@@ -586,7 +523,7 @@ describe('Property 2: 区块间距一致性', () => {
   })
 
   /**
-   * Property Test: 标准区块间距值应该是有效的
+   * 标准区块间距值应该是有效的
    */
   test('标准区块间距值应该是有效的', () => {
     fc.assert(
@@ -603,7 +540,7 @@ describe('Property 2: 区块间距一致性', () => {
   })
 
   /**
-   * Property Test: 非标准区块间距值应该无效
+   * 非标准区块间距值应该无效
    */
   test('非标准区块间距值应该无效', () => {
     fc.assert(
@@ -637,7 +574,7 @@ describe('Property 2: 区块间距一致性', () => {
   })
 
   /**
-   * Property Test: 区块底部外边距应符合设计规范
+   * 区块底部外边距应符合设计规范
    */
   test('区块底部外边距应符合设计规范', () => {
     fc.assert(
@@ -646,7 +583,7 @@ describe('Property 2: 区块间距一致性', () => {
         (marginBottom) => {
           const isValid = isValidSectionMargin(marginBottom)
           const expectedValid = marginBottom === 75
-          
+
           expect(isValid).toBe(expectedValid)
           return isValid === expectedValid
         }
@@ -658,10 +595,7 @@ describe('Property 2: 区块间距一致性', () => {
 
 
 /**
- * **Feature: frontend-beautification, Property 3: 标题样式统一性**
- * **Validates: Requirements 2.2**
  * 
- * Property: For any section title element, its font size, color, and decoration line style 
  * should be consistent with the design specification
  */
 
@@ -724,33 +658,33 @@ function isValidTitleColor(color) {
  * @returns {boolean}
  */
 function isValidTitleDecoration(width, height) {
-  return width === sectionTitleConfig.decorationWidth && 
-         height === sectionTitleConfig.decorationHeight
+  return width === sectionTitleConfig.decorationWidth &&
+    height === sectionTitleConfig.decorationHeight
 }
 
 describe('Property 3: 标题样式统一性', () => {
   /**
-   * Property Test: 标题字体大小 CSS 变量值应符合设计规范
+   * 标题字体大小 CSS 变量值应符合设计规范
    */
   test('标题字体大小 CSS 变量值应符合设计规范', () => {
     const value = titleCssVariables['--section-title-font-size']
     const emValue = parseEmValue(value)
-    
+
     expect(emValue).not.toBeNaN()
     expect(isValidTitleFontSize(value)).toBe(true)
   })
 
   /**
-   * Property Test: 标题颜色 CSS 变量值应符合设计规范
+   * 标题颜色 CSS 变量值应符合设计规范
    */
   test('标题颜色 CSS 变量值应符合设计规范', () => {
     const value = titleCssVariables['--section-title-color']
-    
+
     expect(isValidTitleColor(value)).toBe(true)
   })
 
   /**
-   * Property Test: 任意生成的标题字体大小值，验证函数应正确判断其有效性
+   * 任意生成的标题字体大小值，验证函数应正确判断其有效性
    */
   test('验证函数应正确判断标题字体大小有效性', () => {
     fc.assert(
@@ -765,7 +699,7 @@ describe('Property 3: 标题样式统一性', () => {
         (fontSize) => {
           const isValid = isValidTitleFontSize(fontSize)
           const expectedValid = fontSize === '2.2em'
-          
+
           expect(isValid).toBe(expectedValid)
           return isValid === expectedValid
         }
@@ -775,22 +709,22 @@ describe('Property 3: 标题样式统一性', () => {
   })
 
   /**
-   * Property Test: 标题装饰线尺寸应符合设计规范
+   * 标题装饰线尺寸应符合设计规范
    */
   test('标题装饰线尺寸应符合设计规范', () => {
     const widthValue = titleCssVariables['--section-title-decoration-width']
     const heightValue = titleCssVariables['--section-title-decoration-height']
-    
+
     const width = parsePxValue(widthValue)
     const height = parsePxValue(heightValue)
-    
+
     expect(width).not.toBeNaN()
     expect(height).not.toBeNaN()
     expect(isValidTitleDecoration(width, height)).toBe(true)
   })
 
   /**
-   * Property Test: 任意生成的装饰线尺寸值，验证函数应正确判断其有效性
+   * 任意生成的装饰线尺寸值，验证函数应正确判断其有效性
    */
   test('验证函数应正确判断装饰线尺寸有效性', () => {
     fc.assert(
@@ -800,7 +734,7 @@ describe('Property 3: 标题样式统一性', () => {
         (width, height) => {
           const isValid = isValidTitleDecoration(width, height)
           const expectedValid = width === 70 && height === 3
-          
+
           expect(isValid).toBe(expectedValid)
           return isValid === expectedValid
         }
@@ -810,21 +744,21 @@ describe('Property 3: 标题样式统一性', () => {
   })
 
   /**
-   * Property Test: 标题间距 CSS 变量值应符合设计规范
+   * 标题间距 CSS 变量值应符合设计规范
    */
   test('标题间距 CSS 变量值应符合设计规范', () => {
     const marginBottomValue = titleCssVariables['--section-title-margin-bottom']
     const paddingBottomValue = titleCssVariables['--section-title-padding-bottom']
-    
+
     const marginBottom = parsePxValue(marginBottomValue)
     const paddingBottom = parsePxValue(paddingBottomValue)
-    
+
     expect(marginBottom).toBe(sectionTitleConfig.marginBottom)
     expect(paddingBottom).toBe(sectionTitleConfig.paddingBottom)
   })
 
   /**
-   * Property Test: 所有标题样式 CSS 变量应存在且有效
+   * 所有标题样式 CSS 变量应存在且有效
    */
   test('所有标题样式 CSS 变量应存在且有效', () => {
     const titleStyleVars = Object.keys(titleCssVariables)
@@ -834,10 +768,10 @@ describe('Property 3: 标题样式统一性', () => {
         fc.constantFrom(...titleStyleVars),
         (varName) => {
           const value = titleCssVariables[varName]
-          
+
           expect(value).toBeDefined()
           expect(value).not.toBe('')
-          
+
           return value !== undefined && value !== ''
         }
       ),
@@ -848,10 +782,7 @@ describe('Property 3: 标题样式统一性', () => {
 
 
 /**
- * **Feature: frontend-beautification, Property 6: 按钮渐变背景**
- * **Validates: Requirements 4.1**
  * 
- * Property: For any primary action button, its background style should include a gradient definition,
  * and its padding should conform to the design specification
  */
 
@@ -899,16 +830,16 @@ function hasGradientBackground(background) {
  */
 function hasValidGradientColors(gradient) {
   if (!gradient || typeof gradient !== 'string') return false
-  
+
   // 检查是否包含主色调变量引用或实际颜色值
-  const hasPrimaryColor = gradient.includes('--color-primary') || 
-                          gradient.includes('#1976d2') ||
-                          gradient.includes('rgb(25, 118, 210)')
-  
-  const hasDarkColor = gradient.includes('--color-primary-dark') || 
-                       gradient.includes('#1565c0') ||
-                       gradient.includes('rgb(21, 101, 192)')
-  
+  const hasPrimaryColor = gradient.includes('--color-primary') ||
+    gradient.includes('#1976d2') ||
+    gradient.includes('rgb(25, 118, 210)')
+
+  const hasDarkColor = gradient.includes('--color-primary-dark') ||
+    gradient.includes('#1565c0') ||
+    gradient.includes('rgb(21, 101, 192)')
+
   return hasPrimaryColor || hasDarkColor
 }
 
@@ -919,8 +850,8 @@ function hasValidGradientColors(gradient) {
  * @returns {boolean}
  */
 function isValidButtonPadding(paddingVertical, paddingHorizontal) {
-  return paddingVertical === buttonStyleConfig.padding.vertical && 
-         paddingHorizontal === buttonStyleConfig.padding.horizontal
+  return paddingVertical === buttonStyleConfig.padding.vertical &&
+    paddingHorizontal === buttonStyleConfig.padding.horizontal
 }
 
 /**
@@ -945,7 +876,7 @@ function isValidButtonFontWeight(fontWeight) {
 
 describe('Property 6: 按钮渐变背景', () => {
   /**
-   * Property Test: 主要按钮渐变 CSS 变量应包含渐变定义
+   * 主要按钮渐变 CSS 变量应包含渐变定义
    */
   test('主要按钮渐变 CSS 变量应包含渐变定义', () => {
     const gradientVars = [
@@ -958,10 +889,10 @@ describe('Property 6: 按钮渐变背景', () => {
         fc.constantFrom(...gradientVars),
         (varName) => {
           const value = buttonCssVariables[varName]
-          
+
           expect(value).toBeDefined()
           expect(hasGradientBackground(value)).toBe(true)
-          
+
           return value !== undefined && hasGradientBackground(value)
         }
       ),
@@ -970,7 +901,7 @@ describe('Property 6: 按钮渐变背景', () => {
   })
 
   /**
-   * Property Test: 按钮渐变应包含品牌主色调
+   * 按钮渐变应包含品牌主色调
    */
   test('按钮渐变应包含品牌主色调', () => {
     const gradientVars = [
@@ -983,10 +914,10 @@ describe('Property 6: 按钮渐变背景', () => {
         fc.constantFrom(...gradientVars),
         (varName) => {
           const value = buttonCssVariables[varName]
-          
+
           expect(value).toBeDefined()
           expect(hasValidGradientColors(value)).toBe(true)
-          
+
           return value !== undefined && hasValidGradientColors(value)
         }
       ),
@@ -995,7 +926,7 @@ describe('Property 6: 按钮渐变背景', () => {
   })
 
   /**
-   * Property Test: 任意生成的背景值，验证函数应正确判断是否为渐变
+   * 任意生成的背景值，验证函数应正确判断是否为渐变
    */
   test('验证函数应正确判断背景是否为渐变', () => {
     fc.assert(
@@ -1012,7 +943,7 @@ describe('Property 6: 按钮渐变背景', () => {
         (background) => {
           const isGradient = hasGradientBackground(background)
           const expectedGradient = background.includes('gradient')
-          
+
           expect(isGradient).toBe(expectedGradient)
           return isGradient === expectedGradient
         }
@@ -1022,7 +953,7 @@ describe('Property 6: 按钮渐变背景', () => {
   })
 
   /**
-   * Property Test: 按钮内边距应符合设计规范
+   * 按钮内边距应符合设计规范
    */
   test('按钮内边距应符合设计规范', () => {
     fc.assert(
@@ -1032,7 +963,7 @@ describe('Property 6: 按钮渐变背景', () => {
         (paddingVertical, paddingHorizontal) => {
           const isValid = isValidButtonPadding(paddingVertical, paddingHorizontal)
           const expectedValid = paddingVertical === 12 && paddingHorizontal === 24
-          
+
           expect(isValid).toBe(expectedValid)
           return isValid === expectedValid
         }
@@ -1042,7 +973,7 @@ describe('Property 6: 按钮渐变背景', () => {
   })
 
   /**
-   * Property Test: 标准按钮内边距值应该是有效的
+   * 标准按钮内边距值应该是有效的
    */
   test('标准按钮内边距值应该是有效的', () => {
     fc.assert(
@@ -1059,7 +990,7 @@ describe('Property 6: 按钮渐变背景', () => {
   })
 
   /**
-   * Property Test: 按钮圆角应在有效范围内
+   * 按钮圆角应在有效范围内
    */
   test('按钮圆角应在有效范围内 (6-8px)', () => {
     fc.assert(
@@ -1068,7 +999,7 @@ describe('Property 6: 按钮渐变背景', () => {
         (borderRadius) => {
           const isValid = isValidButtonBorderRadius(borderRadius)
           const expectedValid = borderRadius >= 6 && borderRadius <= 8
-          
+
           expect(isValid).toBe(expectedValid)
           return isValid === expectedValid
         }
@@ -1078,7 +1009,7 @@ describe('Property 6: 按钮渐变背景', () => {
   })
 
   /**
-   * Property Test: 按钮字体粗细应为 semibold (600)
+   * 按钮字体粗细应为 semibold (600)
    */
   test('按钮字体粗细应为 semibold (600)', () => {
     fc.assert(
@@ -1095,7 +1026,7 @@ describe('Property 6: 按钮渐变背景', () => {
         (fontWeight) => {
           const isValid = isValidButtonFontWeight(fontWeight)
           const expectedValid = fontWeight === 600 || fontWeight === 'semibold'
-          
+
           expect(isValid).toBe(expectedValid)
           return isValid === expectedValid
         }
@@ -1105,7 +1036,7 @@ describe('Property 6: 按钮渐变背景', () => {
   })
 
   /**
-   * Property Test: 所有按钮样式 CSS 变量应存在且有效
+   * 所有按钮样式 CSS 变量应存在且有效
    */
   test('所有按钮样式 CSS 变量应存在且有效', () => {
     const buttonStyleVars = Object.keys(buttonCssVariables)
@@ -1115,10 +1046,10 @@ describe('Property 6: 按钮渐变背景', () => {
         fc.constantFrom(...buttonStyleVars),
         (varName) => {
           const value = buttonCssVariables[varName]
-          
+
           expect(value).toBeDefined()
           expect(value).not.toBe('')
-          
+
           return value !== undefined && value !== ''
         }
       ),
@@ -1127,7 +1058,7 @@ describe('Property 6: 按钮渐变背景', () => {
   })
 
   /**
-   * Property Test: 按钮悬停阴影应包含主色调透明度
+   * 按钮悬停阴影应包含主色调透明度
    */
   test('按钮悬停阴影应包含主色调透明度', () => {
     const shadowVars = [
@@ -1140,13 +1071,13 @@ describe('Property 6: 按钮渐变背景', () => {
         fc.constantFrom(...shadowVars),
         (varName) => {
           const value = buttonCssVariables[varName]
-          
+
           expect(value).toBeDefined()
           // 阴影应包含 rgba 颜色值
           expect(value.includes('rgba')).toBe(true)
           // 阴影应包含主色调的 RGB 值 (25, 118, 210)
           expect(value.includes('25, 118, 210')).toBe(true)
-          
+
           return value !== undefined && value.includes('rgba') && value.includes('25, 118, 210')
         }
       ),
@@ -1157,32 +1088,14 @@ describe('Property 6: 按钮渐变背景', () => {
 
 
 /**
- * **Feature: frontend-beautification, Property 7: 移动端单列布局**
- * **Validates: Requirements 5.1**
  * 
- * Property: For any viewport width less than 768px, multi-column grid layouts 
  * should be converted to single-column layouts
  */
 
 // 移动端断点配置
 const mobileBreakpoint = 768
 
-// 布局配置 - 从 responsive.css 提取
-const layoutConfig = {
-  mobile: {
-    maxWidth: 767,
-    gridColumns: 1
-  },
-  tablet: {
-    minWidth: 768,
-    maxWidth: 1024,
-    gridColumns: 2
-  },
-  desktop: {
-    minWidth: 1025,
-    gridColumns: 3
-  }
-}
+
 
 // CSS 类名和对应的桌面端列数
 const multiColumnClasses = {
@@ -1201,7 +1114,7 @@ const multiColumnClasses = {
 function getExpectedGridColumns(screenWidth, className) {
   const config = multiColumnClasses[className]
   if (!config) return 1
-  
+
   if (screenWidth < mobileBreakpoint) {
     return config.mobileColumns
   }
@@ -1230,22 +1143,22 @@ function isValidMobileSingleColumn(screenWidth, columns) {
  */
 function isValidLayoutForBreakpoint(screenWidth, className, actualColumns) {
   const expectedColumns = getExpectedGridColumns(screenWidth, className)
-  
+
   if (screenWidth < mobileBreakpoint) {
     return actualColumns === 1
   }
-  
+
   // 桌面端可以是预期列数或更少（响应式）
   if (typeof expectedColumns === 'number') {
     return actualColumns <= expectedColumns && actualColumns >= 1
   }
-  
+
   return actualColumns >= 1
 }
 
 describe('Property 7: 移动端单列布局', () => {
   /**
-   * Property Test: 对于任意小于 768px 的视口宽度，多列网格布局应转换为单列布局
+   * 对于任意小于 768px 的视口宽度，多列网格布局应转换为单列布局
    */
   test('小于 768px 的视口宽度应使用单列布局', () => {
     fc.assert(
@@ -1254,11 +1167,11 @@ describe('Property 7: 移动端单列布局', () => {
         fc.constantFrom(...Object.keys(multiColumnClasses)),
         (screenWidth, className) => {
           const expectedColumns = getExpectedGridColumns(screenWidth, className)
-          
+
           // 移动端应该是单列
           expect(expectedColumns).toBe(1)
           expect(isValidMobileSingleColumn(screenWidth, 1)).toBe(true)
-          
+
           return expectedColumns === 1
         }
       ),
@@ -1267,7 +1180,7 @@ describe('Property 7: 移动端单列布局', () => {
   })
 
   /**
-   * Property Test: 768px 及以上的视口宽度可以使用多列布局
+   * 768px 及以上的视口宽度可以使用多列布局
    */
   test('768px 及以上的视口宽度可以使用多列布局', () => {
     fc.assert(
@@ -1277,10 +1190,10 @@ describe('Property 7: 移动端单列布局', () => {
         (screenWidth, className) => {
           const expectedColumns = getExpectedGridColumns(screenWidth, className)
           const config = multiColumnClasses[className]
-          
+
           // 桌面端应该是配置的列数
           expect(expectedColumns).toBe(config.desktopColumns)
-          
+
           return expectedColumns === config.desktopColumns
         }
       ),
@@ -1289,7 +1202,7 @@ describe('Property 7: 移动端单列布局', () => {
   })
 
   /**
-   * Property Test: 断点边界值 767px 和 768px 应正确处理
+   * 断点边界值 767px 和 768px 应正确处理
    */
   test('断点边界值应正确处理', () => {
     const boundaryTests = [
@@ -1301,10 +1214,10 @@ describe('Property 7: 移动端单列布局', () => {
       fc.property(
         fc.constantFrom(...boundaryTests),
         fc.constantFrom(...Object.keys(multiColumnClasses)),
-        ({ width, expectedColumns, isMobile }, className) => {
+        ({ width, isMobile }, className) => {
           const actualExpected = getExpectedGridColumns(width, className)
           const config = multiColumnClasses[className]
-          
+
           if (isMobile) {
             expect(actualExpected).toBe(1)
             return actualExpected === 1
@@ -1319,7 +1232,7 @@ describe('Property 7: 移动端单列布局', () => {
   })
 
   /**
-   * Property Test: 验证函数应正确判断移动端单列布局有效性
+   * 验证函数应正确判断移动端单列布局有效性
    */
   test('验证函数应正确判断移动端单列布局有效性', () => {
     fc.assert(
@@ -1328,7 +1241,7 @@ describe('Property 7: 移动端单列布局', () => {
         fc.integer({ min: 1, max: 4 }),
         (screenWidth, columns) => {
           const isValid = isValidMobileSingleColumn(screenWidth, columns)
-          
+
           if (screenWidth < mobileBreakpoint) {
             // 移动端只有单列才有效
             const expectedValid = columns === 1
@@ -1346,7 +1259,7 @@ describe('Property 7: 移动端单列布局', () => {
   })
 
   /**
-   * Property Test: 所有多列布局类在移动端都应转换为单列
+   * 所有多列布局类在移动端都应转换为单列
    */
   test('所有多列布局类在移动端都应转换为单列', () => {
     const classNames = Object.keys(multiColumnClasses)
@@ -1357,10 +1270,10 @@ describe('Property 7: 移动端单列布局', () => {
         fc.integer({ min: 320, max: 767 }),
         (className, screenWidth) => {
           const columns = getExpectedGridColumns(screenWidth, className)
-          
+
           expect(columns).toBe(1)
           expect(isValidLayoutForBreakpoint(screenWidth, className, 1)).toBe(true)
-          
+
           return columns === 1
         }
       ),
@@ -1371,10 +1284,7 @@ describe('Property 7: 移动端单列布局', () => {
 
 
 /**
- * **Feature: frontend-beautification, Property 9: 触摸目标最小尺寸**
- * **Validates: Requirements 5.4**
  * 
- * Property: For any form interactive element (input, button), in mobile viewport 
  * its size should be at least 44x44 pixels
  */
 
@@ -1384,17 +1294,6 @@ const touchTargetConfig = {
   mobileBreakpoint: 768
 }
 
-// 表单元素类型
-const formElementTypes = [
-  'input',
-  'button',
-  'select',
-  'textarea',
-  'a.touch-enhanced',
-  '.el-input__inner',
-  '.el-button',
-  '.el-select .el-input__inner'
-]
 
 /**
  * 验证触摸目标尺寸是否符合最小要求
@@ -1434,7 +1333,7 @@ function getExpectedMinTouchSize(screenWidth) {
 
 describe('Property 9: 触摸目标最小尺寸', () => {
   /**
-   * Property Test: 移动端表单元素尺寸应至少为 44x44 像素
+   * 移动端表单元素尺寸应至少为 44x44 像素
    */
   test('移动端触摸目标应至少为 44x44 像素', () => {
     fc.assert(
@@ -1442,12 +1341,12 @@ describe('Property 9: 触摸目标最小尺寸', () => {
         fc.integer({ min: 320, max: 767 }),
         (screenWidth) => {
           const minSize = getExpectedMinTouchSize(screenWidth)
-          
+
           expect(minSize).toBe(44)
           expect(isValidTouchTargetSize(44, 44)).toBe(true)
           expect(isValidTouchTargetSize(43, 44)).toBe(false)
           expect(isValidTouchTargetSize(44, 43)).toBe(false)
-          
+
           return minSize === 44
         }
       ),
@@ -1456,7 +1355,7 @@ describe('Property 9: 触摸目标最小尺寸', () => {
   })
 
   /**
-   * Property Test: 验证函数应正确判断触摸目标尺寸有效性
+   * 验证函数应正确判断触摸目标尺寸有效性
    */
   test('验证函数应正确判断触摸目标尺寸有效性', () => {
     fc.assert(
@@ -1466,7 +1365,7 @@ describe('Property 9: 触摸目标最小尺寸', () => {
         (width, height) => {
           const isValid = isValidTouchTargetSize(width, height)
           const expectedValid = width >= 44 && height >= 44
-          
+
           expect(isValid).toBe(expectedValid)
           return isValid === expectedValid
         }
@@ -1476,7 +1375,7 @@ describe('Property 9: 触摸目标最小尺寸', () => {
   })
 
   /**
-   * Property Test: 边界值 44px 应该是有效的触摸目标尺寸
+   * 边界值 44px 应该是有效的触摸目标尺寸
    */
   test('边界值 44px 应该是有效的触摸目标尺寸', () => {
     fc.assert(
@@ -1494,7 +1393,7 @@ describe('Property 9: 触摸目标最小尺寸', () => {
   })
 
   /**
-   * Property Test: 小于 44px 的尺寸应该无效
+   * 小于 44px 的尺寸应该无效
    */
   test('小于 44px 的尺寸应该无效', () => {
     fc.assert(
@@ -1512,7 +1411,7 @@ describe('Property 9: 触摸目标最小尺寸', () => {
   })
 
   /**
-   * Property Test: 移动端验证应强制执行最小尺寸要求
+   * 移动端验证应强制执行最小尺寸要求
    */
   test('移动端验证应强制执行最小尺寸要求', () => {
     fc.assert(
@@ -1523,7 +1422,7 @@ describe('Property 9: 触摸目标最小尺寸', () => {
         (screenWidth, elementWidth, elementHeight) => {
           const isValid = isValidMobileTouchTarget(screenWidth, elementWidth, elementHeight)
           const expectedValid = elementWidth >= 44 && elementHeight >= 44
-          
+
           expect(isValid).toBe(expectedValid)
           return isValid === expectedValid
         }
@@ -1533,7 +1432,7 @@ describe('Property 9: 触摸目标最小尺寸', () => {
   })
 
   /**
-   * Property Test: 非移动端不强制要求最小触摸尺寸
+   * 非移动端不强制要求最小触摸尺寸
    */
   test('非移动端不强制要求最小触摸尺寸', () => {
     fc.assert(
@@ -1543,7 +1442,7 @@ describe('Property 9: 触摸目标最小尺寸', () => {
         fc.integer({ min: 20, max: 100 }),
         (screenWidth, elementWidth, elementHeight) => {
           const isValid = isValidMobileTouchTarget(screenWidth, elementWidth, elementHeight)
-          
+
           // 非移动端任何尺寸都有效
           expect(isValid).toBe(true)
           return isValid === true
@@ -1554,13 +1453,13 @@ describe('Property 9: 触摸目标最小尺寸', () => {
   })
 
   /**
-   * Property Test: CSS 变量 --touch-target-min 应为 44px
+   * CSS 变量 --touch-target-min 应为 44px
    */
   test('CSS 变量 --touch-target-min 应为 44px', () => {
     // 模拟从 responsive.css 读取的值
     const touchTargetMinVar = '44px'
     const pxValue = parsePxValue(touchTargetMinVar)
-    
+
     expect(pxValue).toBe(44)
     expect(isValidTouchTargetSize(pxValue, pxValue)).toBe(true)
   })
@@ -1568,10 +1467,7 @@ describe('Property 9: 触摸目标最小尺寸', () => {
 
 
 /**
- * **Feature: frontend-beautification, Property 8: 移动端卡片触摸适配**
- * **Validates: Requirements 5.3**
  * 
- * Property: For any card component in mobile viewport, its size and spacing 
  * should be suitable for touch operation
  */
 
@@ -1608,8 +1504,8 @@ function isValidMobileCardMargin(marginBottom) {
  * @returns {boolean}
  */
 function isValidMobileCardBorderRadius(borderRadius) {
-  return borderRadius >= mobileCardConfig.minBorderRadius && 
-         borderRadius <= mobileCardConfig.maxBorderRadius
+  return borderRadius >= mobileCardConfig.minBorderRadius &&
+    borderRadius <= mobileCardConfig.maxBorderRadius
 }
 
 /**
@@ -1619,15 +1515,15 @@ function isValidMobileCardBorderRadius(borderRadius) {
  */
 function isValidMobileCardConfig(cardConfig) {
   const { padding, marginBottom, borderRadius } = cardConfig
-  
+
   return isValidMobileCardPadding(padding) &&
-         isValidMobileCardMargin(marginBottom) &&
-         isValidMobileCardBorderRadius(borderRadius)
+    isValidMobileCardMargin(marginBottom) &&
+    isValidMobileCardBorderRadius(borderRadius)
 }
 
 describe('Property 8: 移动端卡片触摸适配', () => {
   /**
-   * Property Test: 移动端卡片内边距应至少为 16px
+   * 移动端卡片内边距应至少为 16px
    */
   test('移动端卡片内边距应至少为 16px', () => {
     fc.assert(
@@ -1636,7 +1532,7 @@ describe('Property 8: 移动端卡片触摸适配', () => {
         (padding) => {
           const isValid = isValidMobileCardPadding(padding)
           const expectedValid = padding >= 16
-          
+
           expect(isValid).toBe(expectedValid)
           return isValid === expectedValid
         }
@@ -1646,7 +1542,7 @@ describe('Property 8: 移动端卡片触摸适配', () => {
   })
 
   /**
-   * Property Test: 移动端卡片底部间距应至少为 16px
+   * 移动端卡片底部间距应至少为 16px
    */
   test('移动端卡片底部间距应至少为 16px', () => {
     fc.assert(
@@ -1655,7 +1551,7 @@ describe('Property 8: 移动端卡片触摸适配', () => {
         (marginBottom) => {
           const isValid = isValidMobileCardMargin(marginBottom)
           const expectedValid = marginBottom >= 16
-          
+
           expect(isValid).toBe(expectedValid)
           return isValid === expectedValid
         }
@@ -1665,7 +1561,7 @@ describe('Property 8: 移动端卡片触摸适配', () => {
   })
 
   /**
-   * Property Test: 移动端卡片圆角应在 8-16px 范围内
+   * 移动端卡片圆角应在 8-16px 范围内
    */
   test('移动端卡片圆角应在 8-16px 范围内', () => {
     fc.assert(
@@ -1674,7 +1570,7 @@ describe('Property 8: 移动端卡片触摸适配', () => {
         (borderRadius) => {
           const isValid = isValidMobileCardBorderRadius(borderRadius)
           const expectedValid = borderRadius >= 8 && borderRadius <= 16
-          
+
           expect(isValid).toBe(expectedValid)
           return isValid === expectedValid
         }
@@ -1684,7 +1580,7 @@ describe('Property 8: 移动端卡片触摸适配', () => {
   })
 
   /**
-   * Property Test: 有效的移动端卡片配置应通过验证
+   * 有效的移动端卡片配置应通过验证
    */
   test('有效的移动端卡片配置应通过验证', () => {
     fc.assert(
@@ -1705,7 +1601,7 @@ describe('Property 8: 移动端卡片触摸适配', () => {
   })
 
   /**
-   * Property Test: 无效的移动端卡片配置应不通过验证
+   * 无效的移动端卡片配置应不通过验证
    */
   test('无效的移动端卡片配置应不通过验证', () => {
     fc.assert(
@@ -1747,17 +1643,17 @@ describe('Property 8: 移动端卡片触摸适配', () => {
   })
 
   /**
-   * Property Test: 触摸友好的卡片内边距应为 24px
+   * 触摸友好的卡片内边距应为 24px
    */
   test('触摸友好的卡片内边距应为 24px', () => {
     const touchFriendlyPadding = mobileCardConfig.touchFriendlyPadding
-    
+
     expect(touchFriendlyPadding).toBe(24)
     expect(isValidMobileCardPadding(touchFriendlyPadding)).toBe(true)
   })
 
   /**
-   * Property Test: 标准移动端卡片配置应有效
+   * 标准移动端卡片配置应有效
    */
   test('标准移动端卡片配置应有效', () => {
     // 从 responsive.css 提取的标准配置

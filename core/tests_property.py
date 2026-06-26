@@ -2,11 +2,10 @@
 系统设置模块属性测试
 
 使用 Hypothesis 进行属性测试，验证系统设置功能的正确性。
-Feature: system-enhancements
 """
 import uuid
 
-from django.test import TransactionTestCase
+
 from hypothesis import given, settings, strategies as st
 from hypothesis.extra.django import TestCase as HypothesisTestCase
 
@@ -18,9 +17,6 @@ from core.services import SettingsService
 class SettingsRoundTripPropertyTest(HypothesisTestCase):
     """
     设置存取一致性属性测试
-    
-    Property 1: 设置存取一致性（Round-trip）
-    Validates: Requirements 1.1-1.4, 2.1-2.4
     """
     
     def get_or_create_user(self):
@@ -50,13 +46,9 @@ class SettingsRoundTripPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_1_setting_round_trip(self, category, key, value):
         """
-        Property 1: 设置存取一致性（Round-trip）
         
-        *For any* valid setting key-value pair, storing the value and then 
+        对于任何 valid setting key-value pair, storing the value and then 
         retrieving it should return the same value.
-        
-        **Feature: system-enhancements, Property 1: 设置存取一致性**
-        **Validates: Requirements 1.1, 1.2, 1.3, 1.4, 2.1, 2.2, 2.3, 2.4**
         """
         user = self.get_or_create_user()
         
@@ -89,13 +81,9 @@ class SettingsRoundTripPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_1_setting_update_round_trip(self, category, key, value1, value2):
         """
-        Property 1: 设置存取一致性（Round-trip）- 更新场景
         
-        *For any* setting that is updated multiple times, the retrieved value 
+        对于任何 setting that is updated multiple times, the retrieved value 
         should always equal the most recently stored value.
-        
-        **Feature: system-enhancements, Property 1: 设置存取一致性**
-        **Validates: Requirements 1.4, 2.1, 2.2, 2.3, 2.4**
         """
         user = self.get_or_create_user()
         
@@ -129,13 +117,9 @@ class SettingsRoundTripPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_1_get_value_with_default(self, key, default_value):
         """
-        Property 1: 设置存取一致性 - 默认值场景
         
-        *For any* non-existent setting key, get_value should return the 
+        对于任何 non-existent setting key, get_value should return the 
         specified default value.
-        
-        **Feature: system-enhancements, Property 1: 设置存取一致性**
-        **Validates: Requirements 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 2.4**
         """
         # 使用唯一的 key 确保不存在
         unique_key = f"nonexistent_{uuid.uuid4().hex[:8]}_{key}"
@@ -151,12 +135,7 @@ class SettingsRoundTripPropertyTest(HypothesisTestCase):
     
     def test_property_1_site_settings_service_round_trip(self):
         """
-        Property 1: 设置存取一致性 - SettingsService 站点设置
-        
         验证通过 SettingsService 更新站点设置后，读取应返回相同的值。
-        
-        **Feature: system-enhancements, Property 1: 设置存取一致性**
-        **Validates: Requirements 1.1, 1.2, 1.3, 1.4**
         """
         user = self.get_or_create_user()
         
@@ -187,12 +166,7 @@ class SettingsRoundTripPropertyTest(HypothesisTestCase):
     
     def test_property_1_business_rules_service_round_trip(self):
         """
-        Property 1: 设置存取一致性 - SettingsService 业务规则
-        
         验证通过 SettingsService 更新业务规则后，读取应返回相同的值。
-        
-        **Feature: system-enhancements, Property 1: 设置存取一致性**
-        **Validates: Requirements 2.1, 2.2, 2.3, 2.4**
         """
         user = self.get_or_create_user()
         
@@ -242,13 +216,9 @@ class SettingsRoundTripPropertyTest(HypothesisTestCase):
         self, payment_timeout, refund_rate, reschedule_rate, checkin_hours
     ):
         """
-        Property 1: 设置存取一致性 - 业务规则数值类型
         
-        *For any* valid business rule numeric values, storing and retrieving 
+        对于任何 valid business rule numeric values, storing and retrieving 
         should preserve the values (within floating point precision).
-        
-        **Feature: system-enhancements, Property 1: 设置存取一致性**
-        **Validates: Requirements 2.1, 2.2, 2.3, 2.4**
         """
         user = self.get_or_create_user()
         
@@ -297,11 +267,8 @@ class SettingsRoundTripPropertyTest(HypothesisTestCase):
 class URLValidationPropertyTest(HypothesisTestCase):
     """
     URL 验证正确性属性测试
-    
-    Property 2: URL 验证正确性
-    Validates: Requirements 1.5
-    
-    *For any* string, the URL validator should return True only if the string 
+        
+    对于任何 string, the URL validator should return True only if the string 
     starts with 'http://', 'https://', or '/', and return False otherwise.
     """
     
@@ -309,14 +276,10 @@ class URLValidationPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_2_url_validation_arbitrary_strings(self, url):
         """
-        Property 2: URL 验证正确性 - 任意字符串
         
-        *For any* arbitrary string, validate_url should return True only if:
+        对于任何 arbitrary string, validate_url should return True only if:
         - The string is empty, OR
         - The string starts with 'http://', 'https://', or '/'
-        
-        **Feature: system-enhancements, Property 2: URL 验证正确性**
-        **Validates: Requirements 1.5**
         """
         result = SettingsService.validate_url(url)
         
@@ -368,13 +331,9 @@ class URLValidationPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_2_valid_absolute_urls(self, protocol, domain, path):
         """
-        Property 2: URL 验证正确性 - 有效绝对 URL
         
-        *For any* well-formed absolute URL (http:// or https://), 
+        对于任何 well-formed absolute URL (http:// or https://), 
         validate_url should return True.
-        
-        **Feature: system-enhancements, Property 2: URL 验证正确性**
-        **Validates: Requirements 1.5**
         """
         url = f"{protocol}{domain}{path}"
         result = SettingsService.validate_url(url)
@@ -397,12 +356,8 @@ class URLValidationPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_2_valid_relative_urls(self, path):
         """
-        Property 2: URL 验证正确性 - 有效相对路径
         
-        *For any* path starting with '/', validate_url should return True.
-        
-        **Feature: system-enhancements, Property 2: URL 验证正确性**
-        **Validates: Requirements 1.5**
+        对于任何 path starting with '/', validate_url should return True.
         """
         url = f"/{path}"
         result = SettingsService.validate_url(url)
@@ -428,13 +383,9 @@ class URLValidationPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_2_invalid_urls(self, invalid_prefix):
         """
-        Property 2: URL 验证正确性 - 无效 URL
         
-        *For any* non-empty string that doesn't start with 'http://', 
+        对于任何 non-empty string that doesn't start with 'http://', 
         'https://', or '/', validate_url should return False.
-        
-        **Feature: system-enhancements, Property 2: URL 验证正确性**
-        **Validates: Requirements 1.5**
         """
         result = SettingsService.validate_url(invalid_prefix)
         
@@ -445,12 +396,7 @@ class URLValidationPropertyTest(HypothesisTestCase):
     
     def test_property_2_empty_string(self):
         """
-        Property 2: URL 验证正确性 - 空字符串
-        
         空字符串应该返回 True（允许清空 URL 字段）。
-        
-        **Feature: system-enhancements, Property 2: URL 验证正确性**
-        **Validates: Requirements 1.5**
         """
         result = SettingsService.validate_url('')
         self.assertTrue(result, "空字符串应该返回 True")
@@ -460,12 +406,7 @@ class URLValidationPropertyTest(HypothesisTestCase):
     
     def test_property_2_common_valid_urls(self):
         """
-        Property 2: URL 验证正确性 - 常见有效 URL 示例
-        
         验证常见的有效 URL 格式。
-        
-        **Feature: system-enhancements, Property 2: URL 验证正确性**
-        **Validates: Requirements 1.5**
         """
         valid_urls = [
             'http://example.com',
@@ -487,12 +428,7 @@ class URLValidationPropertyTest(HypothesisTestCase):
     
     def test_property_2_common_invalid_urls(self):
         """
-        Property 2: URL 验证正确性 - 常见无效 URL 示例
-        
         验证常见的无效 URL 格式。
-        
-        **Feature: system-enhancements, Property 2: URL 验证正确性**
-        **Validates: Requirements 1.5**
         """
         invalid_urls = [
             'ftp://example.com',
@@ -515,11 +451,8 @@ class URLValidationPropertyTest(HypothesisTestCase):
 class SettingsHistoryPropertyTest(HypothesisTestCase):
     """
     设置变更历史完整性属性测试
-    
-    Property 3: 设置变更历史完整性
-    Validates: Requirements 2.5
-    
-    *For any* setting update where the value changes, a history record should 
+        
+    对于任何 setting update where the value changes, a history record should 
     be created with the correct old value, new value, and user information.
     """
     
@@ -553,13 +486,9 @@ class SettingsHistoryPropertyTest(HypothesisTestCase):
         self, category, key, old_value, new_value
     ):
         """
-        Property 3: 设置变更历史完整性 - 值变更时创建历史记录
         
-        *For any* setting update where the value changes, a history record 
+        对于任何 setting update where the value changes, a history record 
         should be created.
-        
-        **Feature: system-enhancements, Property 3: 设置变更历史完整性**
-        **Validates: Requirements 2.5**
         """
         # 跳过相同值的情况（不应创建历史记录）
         if old_value == new_value:
@@ -606,13 +535,9 @@ class SettingsHistoryPropertyTest(HypothesisTestCase):
         self, category, key, old_value, new_value
     ):
         """
-        Property 3: 设置变更历史完整性 - 历史记录包含正确的旧值
         
-        *For any* setting update where the value changes, the history record 
+        对于任何 setting update where the value changes, the history record 
         should contain the correct old value.
-        
-        **Feature: system-enhancements, Property 3: 设置变更历史完整性**
-        **Validates: Requirements 2.5**
         """
         # 跳过相同值的情况
         if old_value == new_value:
@@ -656,13 +581,9 @@ class SettingsHistoryPropertyTest(HypothesisTestCase):
         self, category, key, old_value, new_value
     ):
         """
-        Property 3: 设置变更历史完整性 - 历史记录包含正确的新值
         
-        *For any* setting update where the value changes, the history record 
+        对于任何 setting update where the value changes, the history record 
         should contain the correct new value.
-        
-        **Feature: system-enhancements, Property 3: 设置变更历史完整性**
-        **Validates: Requirements 2.5**
         """
         # 跳过相同值的情况
         if old_value == new_value:
@@ -706,13 +627,9 @@ class SettingsHistoryPropertyTest(HypothesisTestCase):
         self, category, key, old_value, new_value
     ):
         """
-        Property 3: 设置变更历史完整性 - 历史记录包含正确的用户信息
         
-        *For any* setting update where the value changes, the history record 
+        对于任何 setting update where the value changes, the history record 
         should contain the correct user who made the change.
-        
-        **Feature: system-enhancements, Property 3: 设置变更历史完整性**
-        **Validates: Requirements 2.5**
         """
         # 跳过相同值的情况
         if old_value == new_value:
@@ -753,13 +670,9 @@ class SettingsHistoryPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_3_no_history_when_value_unchanged(self, category, key, value):
         """
-        Property 3: 设置变更历史完整性 - 值未变更时不创建历史记录
         
-        *For any* setting update where the value remains the same, no history 
+        对于任何 setting update where the value remains the same, no history 
         record should be created.
-        
-        **Feature: system-enhancements, Property 3: 设置变更历史完整性**
-        **Validates: Requirements 2.5**
         """
         user = self.get_or_create_user()
         unique_key = f"{key}_{uuid.uuid4().hex[:8]}"
@@ -804,13 +717,9 @@ class SettingsHistoryPropertyTest(HypothesisTestCase):
         self, category, key, values
     ):
         """
-        Property 3: 设置变更历史完整性 - 多次更新创建多条历史记录
         
-        *For any* sequence of distinct value updates, the number of history 
+        对于任何 sequence of distinct value updates, the number of history 
         records should equal the number of value changes (n-1 for n distinct values).
-        
-        **Feature: system-enhancements, Property 3: 设置变更历史完整性**
-        **Validates: Requirements 2.5**
         """
         user = self.get_or_create_user()
         unique_key = f"{key}_{uuid.uuid4().hex[:8]}"
@@ -836,12 +745,7 @@ class SettingsHistoryPropertyTest(HypothesisTestCase):
     
     def test_property_3_history_ordering(self):
         """
-        Property 3: 设置变更历史完整性 - 历史记录按时间倒序排列
-        
         验证历史记录按 changed_at 倒序排列（最新的在前）。
-        
-        **Feature: system-enhancements, Property 3: 设置变更历史完整性**
-        **Validates: Requirements 2.5**
         """
         user = self.get_or_create_user()
         unique_key = f"test_ordering_{uuid.uuid4().hex[:8]}"
@@ -866,12 +770,7 @@ class SettingsHistoryPropertyTest(HypothesisTestCase):
     
     def test_property_3_service_update_creates_history(self):
         """
-        Property 3: 设置变更历史完整性 - 通过 SettingsService 更新也创建历史
-        
         验证通过 SettingsService 更新业务规则时也会创建历史记录。
-        
-        **Feature: system-enhancements, Property 3: 设置变更历史完整性**
-        **Validates: Requirements 2.5**
         """
         user = self.get_or_create_user()
         

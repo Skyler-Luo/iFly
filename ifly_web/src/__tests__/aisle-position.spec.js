@@ -1,8 +1,5 @@
 /**
- * **Feature: online-checkin, Property 8: 过道位置计算**
- * **Validates: Requirements 3.7**
  * 
- * Property: For any seat column configuration, the aisle should be at the correct position:
  * - 6 columns: aisle after column 3 (index 3)
  * - 4 columns: aisle after column 2 (index 2)
  */
@@ -18,7 +15,7 @@ const {
 
 describe('Property 8: 过道位置计算', () => {
   /**
-   * Property Test: 6 列配置在第 3 列后显示过道
+   * 6 列配置在第 3 列后显示过道
    */
   test('6 列配置应在索引 3 位置显示过道', () => {
     fc.assert(
@@ -38,7 +35,7 @@ describe('Property 8: 过道位置计算', () => {
   })
 
   /**
-   * Property Test: 4 列配置在第 2 列后显示过道
+   * 4 列配置在第 2 列后显示过道
    */
   test('4 列配置应在索引 2 位置显示过道', () => {
     fc.assert(
@@ -58,7 +55,7 @@ describe('Property 8: 过道位置计算', () => {
   })
 
   /**
-   * Property Test: 每种列配置只有一个过道位置
+   * 每种列配置只有一个过道位置
    */
   test('每种列配置应只有一个过道位置', () => {
     fc.assert(
@@ -82,7 +79,7 @@ describe('Property 8: 过道位置计算', () => {
   })
 
   /**
-   * Property Test: getAisleIndex 应返回正确的过道索引
+   * getAisleIndex 应返回正确的过道索引
    */
   test('getAisleIndex 应返回正确的过道索引', () => {
     fc.assert(
@@ -109,7 +106,7 @@ describe('Property 8: 过道位置计算', () => {
   })
 
   /**
-   * Property Test: isAislePosition 和 getAisleIndex 应一致
+   * isAislePosition 和 getAisleIndex 应一致
    */
   test('isAislePosition 和 getAisleIndex 应返回一致的结果', () => {
     fc.assert(
@@ -132,7 +129,7 @@ describe('Property 8: 过道位置计算', () => {
   })
 
   /**
-   * Property Test: 过道位置应在列范围的中间
+   * 过道位置应在列范围的中间
    */
   test('过道位置应大致在列范围的中间', () => {
     fc.assert(
@@ -152,7 +149,7 @@ describe('Property 8: 过道位置计算', () => {
   })
 
   /**
-   * Property Test: 无效输入应返回 false
+   * 无效输入应返回 false
    */
   test('无效输入应返回 false', () => {
     fc.assert(
@@ -174,7 +171,7 @@ describe('Property 8: 过道位置计算', () => {
   })
 
   /**
-   * Property Test: 6 列配置的具体过道位置验证
+   * 6 列配置的具体过道位置验证
    * A(0) B(1) C(2) | D(3) E(4) F(5)
    * 过道在索引 3 之前显示
    */
@@ -202,7 +199,7 @@ describe('Property 8: 过道位置计算', () => {
   })
 
   /**
-   * Property Test: 4 列配置的具体过道位置验证
+   * 4 列配置的具体过道位置验证
    * A(0) B(1) | D(2) E(3)
    * 过道在索引 2 之前显示
    */
@@ -230,7 +227,7 @@ describe('Property 8: 过道位置计算', () => {
   })
 
   /**
-   * Property Test: validateAislePosition 函数正确性
+   * validateAislePosition 函数正确性
    */
   test('validateAislePosition 函数应正确验证过道位置', () => {
     fc.assert(

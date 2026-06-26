@@ -2,7 +2,6 @@
 在线值机功能属性测试
 
 使用 Hypothesis 进行属性测试，验证值机 API 的正确性。
-Feature: online-checkin
 """
 import datetime
 import uuid
@@ -22,10 +21,6 @@ from flight.models import Flight
 class CheckinInfoPropertyTest(HypothesisTestCase):
     """
     checkin_info API 属性测试
-    
-    Property 2: 机票状态验证
-    Property 3: 值机信息完整性
-    Validates: Requirements 1.1, 1.2, 1.3, 2.1-2.4
     """
     
     def get_or_create_user(self):
@@ -83,13 +78,9 @@ class CheckinInfoPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_2_invalid_ticket_status_rejected(self, ticket_status):
         """
-        Property 2: 机票状态验证
         
-        *For any* 机票，只有状态为 valid 且 checked_in 为 False 的机票才能办理值机；
+        对于任何 机票，只有状态为 valid 且 checked_in 为 False 的机票才能办理值机；
         其他状态应返回相应错误。
-        
-        **Feature: online-checkin, Property 2: 机票状态验证**
-        **Validates: Requirements 1.1, 1.2**
         """
         user = self.get_or_create_user()
         client = APIClient()
@@ -107,12 +98,8 @@ class CheckinInfoPropertyTest(HypothesisTestCase):
     
     def test_property_2_already_checked_in_rejected(self):
         """
-        Property 2: 机票状态验证 - 已值机机票
         
-        *For any* 已值机的机票，应返回已值机状态。
-        
-        **Feature: online-checkin, Property 2: 机票状态验证**
-        **Validates: Requirements 1.3**
+        对于任何 已值机的机票，应返回已值机状态。
         """
         user = self.get_or_create_user()
         client = APIClient()
@@ -140,14 +127,10 @@ class CheckinInfoPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_3_checkin_info_completeness(self, passenger_name, passenger_id_number):
         """
-        Property 3: 值机信息完整性
         
-        *For any* 通过值机资格验证的机票，返回的值机信息应包含：
+        对于任何 通过值机资格验证的机票，返回的值机信息应包含：
         乘客姓名、脱敏证件号、机票编号、航班号、航空公司、出发/到达城市、
         起飞/到达时间、舱位等级、当前座位、登机口。
-        
-        **Feature: online-checkin, Property 3: 值机信息完整性**
-        **Validates: Requirements 2.1, 2.2, 2.3, 2.4**
         """
         user = self.get_or_create_user()
         client = APIClient()
@@ -203,9 +186,6 @@ class CheckinInfoPropertyTest(HypothesisTestCase):
 class MaskIdNumberPropertyTest(HypothesisTestCase):
     """
     证件号码脱敏函数属性测试
-    
-    Property 4: 证件号码脱敏
-    Validates: Requirements 2.5
     """
     
     @given(id_number=st.text(
@@ -215,13 +195,9 @@ class MaskIdNumberPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_4_id_masking_preserves_length(self, id_number):
         """
-        Property 4: 证件号码脱敏
         
-        *For any* 长度大于 8 的证件号码，脱敏后应仅显示前 4 位和后 4 位，
+        对于任何 长度大于 8 的证件号码，脱敏后应仅显示前 4 位和后 4 位，
         中间用星号替代；脱敏后长度应与原长度相同。
-        
-        **Feature: online-checkin, Property 4: 证件号码脱敏**
-        **Validates: Requirements 2.5**
         """
         masked = mask_id_number(id_number)
         
@@ -243,12 +219,8 @@ class MaskIdNumberPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_4_short_id_all_masked(self, id_number):
         """
-        Property 4: 证件号码脱敏 - 短证件号
         
-        *For any* 长度小于等于 8 的证件号码，应全部用星号替代。
-        
-        **Feature: online-checkin, Property 4: 证件号码脱敏**
-        **Validates: Requirements 2.5**
+        对于任何 长度小于等于 8 的证件号码，应全部用星号替代。
         """
         if len(id_number) == 0:
             return  # 空字符串跳过
@@ -266,11 +238,6 @@ class MaskIdNumberPropertyTest(HypothesisTestCase):
 class CheckinAPIPropertyTest(HypothesisTestCase):
     """
     checkin API 属性测试
-    
-    Property 9: 座位冲突检测
-    Property 10: 值机状态更新
-    Property 11: 登机牌数据完整性
-    Validates: Requirements 4.1-4.6, 5.1-5.5
     """
     
     def get_or_create_user(self):
@@ -330,13 +297,8 @@ class CheckinAPIPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_9_seat_conflict_detection(self, seat_row, seat_col):
         """
-        Property 9: 座位冲突检测
-        
-        *For any* 值机请求中的新座位，如果该座位已被其他有效机票占用，
+        对于任何 值机请求中的新座位，如果该座位已被其他有效机票占用，
         应返回座位冲突错误。
-        
-        **Feature: online-checkin, Property 9: 座位冲突检测**
-        **Validates: Requirements 4.1, 4.2**
         """
         user = self.get_or_create_user()
         client = APIClient()
@@ -371,14 +333,10 @@ class CheckinAPIPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_10_checkin_status_update(self, seat_row, seat_col):
         """
-        Property 10: 值机状态更新
         
-        *For any* 成功的值机操作，机票的 checked_in 应为 True，
+        对于任何 成功的值机操作，机票的 checked_in 应为 True，
         checked_in_at 应不为空，boarding_pass_number 应被生成，
         座位号应更新为选择的座位。
-        
-        **Feature: online-checkin, Property 10: 值机状态更新**
-        **Validates: Requirements 4.3, 4.4, 4.5, 4.6**
         """
         user = self.get_or_create_user()
         client = APIClient()
@@ -420,14 +378,9 @@ class CheckinAPIPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_11_boarding_pass_completeness(self, passenger_name):
         """
-        Property 11: 登机牌数据完整性
-        
-        *For any* 成功的值机操作，返回的登机牌应包含：
+        对于任何 成功的值机操作，返回的登机牌应包含：
         登机牌编号、乘客姓名、航班号、日期、舱位、出发/到达城市代码、
         起飞/到达时间、座位号、登机口。
-        
-        **Feature: online-checkin, Property 11: 登机牌数据完整性**
-        **Validates: Requirements 5.1, 5.2, 5.3, 5.5**
         """
         user = self.get_or_create_user()
         client = APIClient()
@@ -480,9 +433,6 @@ class CheckinAPIPropertyTest(HypothesisTestCase):
 class BoardingTimePropertyTest(HypothesisTestCase):
     """
     登机时间计算函数属性测试
-    
-    Property 12: 登机时间计算
-    Validates: Requirements 5.4
     """
     
     @given(
@@ -495,12 +445,7 @@ class BoardingTimePropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_12_boarding_time_calculation(self, year, month, day, hour, minute):
         """
-        Property 12: 登机时间计算
-        
-        *For any* 航班，登机时间应等于起飞时间减去 30 分钟。
-        
-        **Feature: online-checkin, Property 12: 登机时间计算**
-        **Validates: Requirements 5.4**
+        对于任何 航班，登机时间应等于起飞时间减去 30 分钟。
         """
         from core.utils import calculate_boarding_time
         
@@ -525,12 +470,7 @@ class BoardingTimePropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_12_boarding_time_across_midnight(self, hour, minute):
         """
-        Property 12: 登机时间计算 - 跨午夜场景
-        
-        *For any* 凌晨起飞的航班，登机时间应正确计算（可能跨越到前一天）。
-        
-        **Feature: online-checkin, Property 12: 登机时间计算**
-        **Validates: Requirements 5.4**
+        对于任何 凌晨起飞的航班，登机时间应正确计算（可能跨越到前一天）。
         """
         from core.utils import calculate_boarding_time
         
@@ -552,12 +492,7 @@ class BoardingTimePropertyTest(HypothesisTestCase):
     
     def test_property_12_boarding_time_none_input(self):
         """
-        Property 12: 登机时间计算 - 空输入
-        
         当输入为 None 时，应返回 None。
-        
-        **Feature: online-checkin, Property 12: 登机时间计算**
-        **Validates: Requirements 5.4**
         """
         from core.utils import calculate_boarding_time
         
@@ -568,9 +503,6 @@ class BoardingTimePropertyTest(HypothesisTestCase):
 class CheckinWindowPropertyTest(HypothesisTestCase):
     """
     值机窗口期属性测试
-    
-    Property 1: 值机窗口期验证
-    Validates: Requirements 1.4, 1.5
     """
     
     def get_or_create_user(self):
@@ -627,13 +559,9 @@ class CheckinWindowPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_1_checkin_before_window_rejected(self, hours_before_departure):
         """
-        Property 1: 值机窗口期验证 - 窗口期前
         
-        *For any* 机票和当前时间，如果当前时间在起飞前 24 小时之前，
+        对于任何 机票和当前时间，如果当前时间在起飞前 24 小时之前，
         值机请求应被拒绝并返回"值机尚未开放"的错误信息。
-        
-        **Feature: online-checkin, Property 1: 值机窗口期验证**
-        **Validates: Requirements 1.4**
         """
         user = self.get_or_create_user()
         client = APIClient()
@@ -657,13 +585,9 @@ class CheckinWindowPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_1_checkin_after_window_rejected(self, minutes_before_departure):
         """
-        Property 1: 值机窗口期验证 - 窗口期后
         
-        *For any* 机票和当前时间，如果当前时间在起飞前 1 小时之后，
+        对于任何 机票和当前时间，如果当前时间在起飞前 1 小时之后，
         值机请求应被拒绝并返回"值机已关闭"的错误信息。
-        
-        **Feature: online-checkin, Property 1: 值机窗口期验证**
-        **Validates: Requirements 1.5**
         """
         user = self.get_or_create_user()
         client = APIClient()
@@ -706,13 +630,8 @@ class CheckinWindowPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_1_checkin_within_window_accepted(self, hours_before_departure):
         """
-        Property 1: 值机窗口期验证 - 窗口期内
-        
-        *For any* 机票和当前时间，如果当前时间在起飞前 24 小时至 1 小时之间，
+        对于任何 机票和当前时间，如果当前时间在起飞前 24 小时至 1 小时之间，
         值机请求应被接受并返回值机信息。
-        
-        **Feature: online-checkin, Property 1: 值机窗口期验证**
-        **Validates: Requirements 1.4, 1.5**
         """
         user = self.get_or_create_user()
         client = APIClient()
@@ -749,9 +668,6 @@ class CheckinWindowPropertyTest(HypothesisTestCase):
 class InventoryBoundsPropertyTest(HypothesisTestCase):
     """
     座位库存边界属性测试
-    
-    Property 4: 座位库存边界不变量
-    Validates: Requirements 2.6, 2.7
     """
     
     def create_flight(self, capacity=100, available_seats=None):
@@ -789,12 +705,8 @@ class InventoryBoundsPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_4_seat_inventory_bounds(self, capacity, operations):
         """
-        Property 4: 座位库存边界不变量
         
-        *For any* 航班，在任何操作后，可用座位数应满足：0 ≤ available_seats ≤ capacity。
-        
-        **Feature: order-enhancement, Property 4: 座位库存边界不变量**
-        **Validates: Requirements 2.6, 2.7**
+        对于任何 航班，在任何操作后，可用座位数应满足：0 ≤ available_seats ≤ capacity。
         """
         from booking.services import InventoryService
         
@@ -828,12 +740,8 @@ class InventoryBoundsPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_4_reserve_never_goes_negative(self, capacity, reserve_count):
         """
-        Property 4: 座位库存边界不变量 - 预留不会导致负数
         
-        *For any* 航班和预留数量，预留操作后可用座位数不应小于 0。
-        
-        **Feature: order-enhancement, Property 4: 座位库存边界不变量**
-        **Validates: Requirements 2.7**
+        对于任何 航班和预留数量，预留操作后可用座位数不应小于 0。
         """
         from booking.services import InventoryService
         
@@ -859,12 +767,8 @@ class InventoryBoundsPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_4_release_never_exceeds_capacity(self, capacity, release_count):
         """
-        Property 4: 座位库存边界不变量 - 释放不会超过容量
         
-        *For any* 航班和释放数量，释放操作后可用座位数不应超过总容量。
-        
-        **Feature: order-enhancement, Property 4: 座位库存边界不变量**
-        **Validates: Requirements 2.6**
+        对于任何 航班和释放数量，释放操作后可用座位数不应超过总容量。
         """
         from booking.services import InventoryService
         
@@ -889,9 +793,6 @@ class InventoryBoundsPropertyTest(HypothesisTestCase):
 class FlightStatusConsistencyPropertyTest(HypothesisTestCase):
     """
     航班状态一致性属性测试
-    
-    Property 6: 航班状态与座位数一致性
-    Validates: Requirements 2.4, 2.5
     """
     
     def create_flight(self, capacity=100, available_seats=None, status='scheduled'):
@@ -921,12 +822,8 @@ class FlightStatusConsistencyPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_6_status_full_when_no_seats(self, capacity):
         """
-        Property 6: 航班状态与座位数一致性 - 座位为零时状态为 full
         
-        *For any* 航班，当 available_seats = 0 时状态应为 'full'。
-        
-        **Feature: order-enhancement, Property 6: 航班状态与座位数一致性**
-        **Validates: Requirements 2.4**
+        对于任何 航班，当 available_seats = 0 时状态应为 'full'。
         """
         from booking.services import InventoryService
         
@@ -955,12 +852,8 @@ class FlightStatusConsistencyPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_6_status_scheduled_when_seats_restored(self, capacity, release_count):
         """
-        Property 6: 航班状态与座位数一致性 - 恢复座位后状态为 scheduled
         
-        *For any* 航班，当 available_seats > 0 且之前为 'full' 时状态应恢复为 'scheduled'。
-        
-        **Feature: order-enhancement, Property 6: 航班状态与座位数一致性**
-        **Validates: Requirements 2.5**
+        对于任何 航班，当 available_seats > 0 且之前为 'full' 时状态应恢复为 'scheduled'。
         """
         from booking.services import InventoryService
         
@@ -997,14 +890,10 @@ class FlightStatusConsistencyPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_6_status_consistency_after_operations(self, capacity, operations):
         """
-        Property 6: 航班状态与座位数一致性 - 操作后状态一致性
         
-        *For any* 航班和一系列操作，操作后航班状态应与可用座位数保持一致：
+        对于任何 航班和一系列操作，操作后航班状态应与可用座位数保持一致：
         - available_seats = 0 时状态为 'full'
         - available_seats > 0 时状态为 'scheduled'（如果之前是 'full'）
-        
-        **Feature: order-enhancement, Property 6: 航班状态与座位数一致性**
-        **Validates: Requirements 2.4, 2.5**
         """
         from booking.services import InventoryService
         
@@ -1039,9 +928,6 @@ class FlightStatusConsistencyPropertyTest(HypothesisTestCase):
 class RemainingTimePropertyTest(HypothesisTestCase):
     """
     剩余支付时间属性测试
-    
-    Property 8: 剩余支付时间计算正确性
-    Validates: Requirements 3.1, 3.7
     """
     
     def get_or_create_user(self):
@@ -1071,13 +957,9 @@ class RemainingTimePropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_8_remaining_time_positive(self, minutes_remaining):
         """
-        Property 8: 剩余支付时间计算正确性 - 正数剩余时间
         
-        *For any* 待支付订单，当 expires_at > current_time 时，
+        对于任何 待支付订单，当 expires_at > current_time 时，
         剩余支付时间应等于 expires_at - current_time（秒）。
-        
-        **Feature: order-enhancement, Property 8: 剩余支付时间计算正确性**
-        **Validates: Requirements 3.1, 3.7**
         """
         from booking.services import TimeoutService
         
@@ -1109,13 +991,9 @@ class RemainingTimePropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_8_remaining_time_zero_when_expired(self, minutes_expired):
         """
-        Property 8: 剩余支付时间计算正确性 - 已超时返回 0
         
-        *For any* 待支付订单，当 current_time > expires_at 时，
+        对于任何 待支付订单，当 current_time > expires_at 时，
         剩余支付时间应返回 0。
-        
-        **Feature: order-enhancement, Property 8: 剩余支付时间计算正确性**
-        **Validates: Requirements 3.1, 3.7**
         """
         from booking.services import TimeoutService
         
@@ -1140,12 +1018,8 @@ class RemainingTimePropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_8_remaining_time_zero_for_non_pending(self, status):
         """
-        Property 8: 剩余支付时间计算正确性 - 非待支付订单返回 0
         
-        *For any* 非待支付状态的订单，剩余支付时间应返回 0。
-        
-        **Feature: order-enhancement, Property 8: 剩余支付时间计算正确性**
-        **Validates: Requirements 3.7**
+        对于任何 非待支付状态的订单，剩余支付时间应返回 0。
         """
         from booking.services import TimeoutService
         
@@ -1170,12 +1044,8 @@ class RemainingTimePropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_8_remaining_time_zero_when_no_expires_at(self, minutes_remaining):
         """
-        Property 8: 剩余支付时间计算正确性 - 无超时时间返回 0
         
-        *For any* 待支付订单，如果没有设置 expires_at，剩余支付时间应返回 0。
-        
-        **Feature: order-enhancement, Property 8: 剩余支付时间计算正确性**
-        **Validates: Requirements 3.7**
+        对于任何 待支付订单，如果没有设置 expires_at，剩余支付时间应返回 0。
         """
         from booking.services import TimeoutService
         
@@ -1198,9 +1068,6 @@ class RemainingTimePropertyTest(HypothesisTestCase):
 class TimeoutCancellationPropertyTest(HypothesisTestCase):
     """
     订单超时取消完整性属性测试
-    
-    Property 7: 订单超时取消完整性
-    Validates: Requirements 3.2, 3.3, 3.4
     """
     
     def get_or_create_user(self):
@@ -1271,12 +1138,8 @@ class TimeoutCancellationPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_7_order_status_canceled(self, ticket_count):
         """
-        Property 7: 订单超时取消完整性 - 订单状态更新
         
-        *For any* 超时的待支付订单，执行超时取消后，订单状态应为"已取消"。
-        
-        **Feature: order-enhancement, Property 7: 订单超时取消完整性**
-        **Validates: Requirements 3.2**
+        对于任何 超时的待支付订单，执行超时取消后，订单状态应为"已取消"。
         """
         from booking.services import TimeoutService
         
@@ -1307,12 +1170,8 @@ class TimeoutCancellationPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_7_tickets_status_canceled(self, ticket_count):
         """
-        Property 7: 订单超时取消完整性 - 机票状态更新
         
-        *For any* 超时的待支付订单，执行超时取消后，所有关联机票状态应为"已取消"。
-        
-        **Feature: order-enhancement, Property 7: 订单超时取消完整性**
-        **Validates: Requirements 3.3**
+        对于任何 超时的待支付订单，执行超时取消后，所有关联机票状态应为"已取消"。
         """
         from booking.services import TimeoutService
         
@@ -1342,12 +1201,8 @@ class TimeoutCancellationPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_7_seats_released(self, ticket_count):
         """
-        Property 7: 订单超时取消完整性 - 座位释放
         
-        *For any* 超时的待支付订单，执行超时取消后，航班座位应恢复。
-        
-        **Feature: order-enhancement, Property 7: 订单超时取消完整性**
-        **Validates: Requirements 3.4**
+        对于任何 超时的待支付订单，执行超时取消后，航班座位应恢复。
         """
         from booking.services import TimeoutService
         
@@ -1382,12 +1237,8 @@ class TimeoutCancellationPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_7_complete_cancellation(self, ticket_count):
         """
-        Property 7: 订单超时取消完整性 - 完整性验证
         
-        *For any* 超时的待支付订单，执行超时取消后，订单状态、机票状态和座位数应同时正确更新。
-        
-        **Feature: order-enhancement, Property 7: 订单超时取消完整性**
-        **Validates: Requirements 3.2, 3.3, 3.4**
+        对于任何 超时的待支付订单，执行超时取消后，订单状态、机票状态和座位数应同时正确更新。
         """
         from booking.services import TimeoutService
         
@@ -1428,12 +1279,8 @@ class TimeoutCancellationPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_7_non_pending_order_not_canceled(self, status):
         """
-        Property 7: 订单超时取消完整性 - 非待支付订单不取消
         
-        *For any* 非待支付状态的订单，即使已超时，也不应被取消。
-        
-        **Feature: order-enhancement, Property 7: 订单超时取消完整性**
-        **Validates: Requirements 3.2**
+        对于任何 非待支付状态的订单，即使已超时，也不应被取消。
         """
         from booking.services import TimeoutService
         
@@ -1464,9 +1311,6 @@ class TimeoutCancellationPropertyTest(HypothesisTestCase):
 class RescheduleFeeCalculationPropertyTest(HypothesisTestCase):
     """
     改签差价计算属性测试
-    
-    Property 1: 改签差价计算正确性
-    Validates: Requirements 1.2, 1.3, 1.4
     """
     
     def get_or_create_user(self):
@@ -1528,12 +1372,8 @@ class RescheduleFeeCalculationPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_1_price_difference_calculation(self, original_price, target_price):
         """
-        Property 1: 改签差价计算正确性 - 差价等于新票价减原票价
         
-        *For any* 原机票和目标航班组合，改签差价应等于目标航班价格减去原机票价格。
-        
-        **Feature: order-enhancement, Property 1: 改签差价计算正确性**
-        **Validates: Requirements 1.2**
+        对于任何 原机票和目标航班组合，改签差价应等于目标航班价格减去原机票价格。
         """
         from booking.services import ReschedulingService
         
@@ -1564,12 +1404,8 @@ class RescheduleFeeCalculationPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_1_positive_difference_requires_payment(self, original_price, price_increase):
         """
-        Property 1: 改签差价计算正确性 - 正差价需补款
         
-        *For any* 改签差价为正数（需补差价）时，总支付金额应等于差价加手续费。
-        
-        **Feature: order-enhancement, Property 1: 改签差价计算正确性**
-        **Validates: Requirements 1.3**
+        对于任何 改签差价为正数（需补差价）时，总支付金额应等于差价加手续费。
         """
         from booking.services import ReschedulingService
         
@@ -1614,12 +1450,8 @@ class RescheduleFeeCalculationPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_1_negative_difference_allows_refund(self, original_price, price_decrease):
         """
-        Property 1: 改签差价计算正确性 - 负差价可退款
         
-        *For any* 改签差价为负数（可退差价）时，退款金额应等于差价绝对值减手续费（如果结果为正）。
-        
-        **Feature: order-enhancement, Property 1: 改签差价计算正确性**
-        **Validates: Requirements 1.4**
+        对于任何 改签差价为负数（可退差价）时，退款金额应等于差价绝对值减手续费（如果结果为正）。
         """
         from booking.services import ReschedulingService
         
@@ -1659,12 +1491,8 @@ class RescheduleFeeCalculationPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_1_reschedule_fee_based_on_original_price(self, original_price):
         """
-        Property 1: 改签差价计算正确性 - 手续费基于原票价
         
-        *For any* 改签操作，手续费应等于原票价的 5%。
-        
-        **Feature: order-enhancement, Property 1: 改签差价计算正确性**
-        **Validates: Requirements 1.2**
+        对于任何 改签操作，手续费应等于原票价的 5%。
         """
         from booking.services import ReschedulingService
         
@@ -1693,9 +1521,6 @@ class RescheduleFeeCalculationPropertyTest(HypothesisTestCase):
 class RescheduleOperationIntegrityPropertyTest(HypothesisTestCase):
     """
     改签操作完整性属性测试
-    
-    Property 2: 改签操作完整性
-    Validates: Requirements 1.5, 1.6
     """
     
     def get_or_create_user(self):
@@ -1759,12 +1584,8 @@ class RescheduleOperationIntegrityPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_2_original_ticket_status_rescheduled(self, original_price, target_price, seat_row, seat_col):
         """
-        Property 2: 改签操作完整性 - 原机票状态变为已改签
         
-        *For any* 成功的改签操作，原机票状态应变为"已改签"。
-        
-        **Feature: order-enhancement, Property 2: 改签操作完整性**
-        **Validates: Requirements 1.5**
+        对于任何 成功的改签操作，原机票状态应变为"已改签"。
         """
         from booking.services import ReschedulingService
         
@@ -1801,12 +1622,8 @@ class RescheduleOperationIntegrityPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_2_new_ticket_created_valid(self, original_price, target_price, seat_row, seat_col):
         """
-        Property 2: 改签操作完整性 - 新机票被创建且状态为有效
         
-        *For any* 成功的改签操作，新机票应被创建且状态为"有效"。
-        
-        **Feature: order-enhancement, Property 2: 改签操作完整性**
-        **Validates: Requirements 1.5**
+        对于任何 成功的改签操作，新机票应被创建且状态为"有效"。
         """
         from booking.services import ReschedulingService
         
@@ -1856,12 +1673,8 @@ class RescheduleOperationIntegrityPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_2_original_flight_seats_increased(self, original_price, target_price, seat_row, seat_col):
         """
-        Property 2: 改签操作完整性 - 原航班座位增加1
         
-        *For any* 成功的改签操作，原航班座位应增加1。
-        
-        **Feature: order-enhancement, Property 2: 改签操作完整性**
-        **Validates: Requirements 1.6**
+        对于任何 成功的改签操作，原航班座位应增加1。
         """
         from booking.services import ReschedulingService
         
@@ -1904,12 +1717,8 @@ class RescheduleOperationIntegrityPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_2_target_flight_seats_decreased(self, original_price, target_price, seat_row, seat_col):
         """
-        Property 2: 改签操作完整性 - 目标航班座位减少1
         
-        *For any* 成功的改签操作，目标航班座位应减少1。
-        
-        **Feature: order-enhancement, Property 2: 改签操作完整性**
-        **Validates: Requirements 1.6**
+        对于任何 成功的改签操作，目标航班座位应减少1。
         """
         from booking.services import ReschedulingService
         
@@ -1952,13 +1761,9 @@ class RescheduleOperationIntegrityPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_2_complete_integrity(self, original_price, target_price, seat_row, seat_col):
         """
-        Property 2: 改签操作完整性 - 完整性验证
         
-        *For any* 成功的改签操作，原机票状态应变为"已改签"，新机票应被创建且状态为"有效"，
+        对于任何 成功的改签操作，原机票状态应变为"已改签"，新机票应被创建且状态为"有效"，
         原航班座位应增加1，目标航班座位应减少1。
-        
-        **Feature: order-enhancement, Property 2: 改签操作完整性**
-        **Validates: Requirements 1.5, 1.6**
         """
         from booking.services import ReschedulingService
         
@@ -2017,9 +1822,6 @@ class RescheduleOperationIntegrityPropertyTest(HypothesisTestCase):
 class RescheduleLogConsistencyPropertyTest(HypothesisTestCase):
     """
     改签记录一致性属性测试
-    
-    Property 3: 改签记录一致性
-    Validates: Requirements 1.9
     """
     
     def get_or_create_user(self):
@@ -2083,12 +1885,8 @@ class RescheduleLogConsistencyPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_3_reschedule_log_created(self, original_price, target_price, seat_row, seat_col):
         """
-        Property 3: 改签记录一致性 - 改签记录被创建
         
-        *For any* 成功的改签操作，应创建一条改签记录。
-        
-        **Feature: order-enhancement, Property 3: 改签记录一致性**
-        **Validates: Requirements 1.9**
+        对于任何 成功的改签操作，应创建一条改签记录。
         """
         from booking.services import ReschedulingService
         from booking.models import RescheduleLog
@@ -2127,12 +1925,8 @@ class RescheduleLogConsistencyPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_3_log_original_ticket_correct(self, original_price, target_price, seat_row, seat_col):
         """
-        Property 3: 改签记录一致性 - 原机票信息正确
         
-        *For any* 成功的改签操作，改签记录中的原机票应与实际原机票一致。
-        
-        **Feature: order-enhancement, Property 3: 改签记录一致性**
-        **Validates: Requirements 1.9**
+        对于任何 成功的改签操作，改签记录中的原机票应与实际原机票一致。
         """
         from booking.services import ReschedulingService
         from booking.models import RescheduleLog
@@ -2178,12 +1972,8 @@ class RescheduleLogConsistencyPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_3_log_new_ticket_correct(self, original_price, target_price, seat_row, seat_col):
         """
-        Property 3: 改签记录一致性 - 新机票信息正确
         
-        *For any* 成功的改签操作，改签记录中的新机票应与实际新机票一致。
-        
-        **Feature: order-enhancement, Property 3: 改签记录一致性**
-        **Validates: Requirements 1.9**
+        对于任何 成功的改签操作，改签记录中的新机票应与实际新机票一致。
         """
         from booking.services import ReschedulingService
         from booking.models import RescheduleLog
@@ -2228,12 +2018,8 @@ class RescheduleLogConsistencyPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_3_log_price_difference_correct(self, original_price, target_price, seat_row, seat_col):
         """
-        Property 3: 改签记录一致性 - 差价信息正确
         
-        *For any* 成功的改签操作，改签记录中的差价应与实际计算的差价一致。
-        
-        **Feature: order-enhancement, Property 3: 改签记录一致性**
-        **Validates: Requirements 1.9**
+        对于任何 成功的改签操作，改签记录中的差价应与实际计算的差价一致。
         """
         from booking.services import ReschedulingService
         from booking.models import RescheduleLog
@@ -2283,12 +2069,8 @@ class RescheduleLogConsistencyPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_3_complete_log_consistency(self, original_price, target_price, seat_row, seat_col):
         """
-        Property 3: 改签记录一致性 - 完整性验证
         
-        *For any* 成功的改签操作，应创建一条改签记录，记录中的原机票、新机票、差价信息应与实际操作一致。
-        
-        **Feature: order-enhancement, Property 3: 改签记录一致性**
-        **Validates: Requirements 1.9**
+        对于任何 成功的改签操作，应创建一条改签记录，记录中的原机票、新机票、差价信息应与实际操作一致。
         """
         from booking.services import ReschedulingService
         from booking.models import RescheduleLog
@@ -2334,9 +2116,6 @@ class RescheduleLogConsistencyPropertyTest(HypothesisTestCase):
 class SeatInventoryAtomicityPropertyTest(HypothesisTestCase):
     """
     座位库存操作原子性属性测试
-    
-    Property 5: 座位库存操作原子性
-    Validates: Requirements 2.1, 2.2, 2.3
     """
     
     def get_or_create_user(self):
@@ -2379,13 +2158,9 @@ class SeatInventoryAtomicityPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_5_order_creation_reserves_seats(self, capacity, ticket_count):
         """
-        Property 5: 座位库存操作原子性 - 订单创建预留座位
         
-        *For any* 订单创建操作，航班座位数的变更应与机票数量一致。
+        对于任何 订单创建操作，航班座位数的变更应与机票数量一致。
         创建 N 张机票后，航班可用座位应减少 N。
-        
-        **Feature: order-enhancement, Property 5: 座位库存操作原子性**
-        **Validates: Requirements 2.1, 2.2**
         """
         from booking.services import InventoryService
         
@@ -2420,13 +2195,9 @@ class SeatInventoryAtomicityPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_5_refund_releases_seats(self, capacity, ticket_count):
         """
-        Property 5: 座位库存操作原子性 - 退票释放座位
         
-        *For any* 退票操作，航班座位数的变更应与机票数量一致。
+        对于任何 退票操作，航班座位数的变更应与机票数量一致。
         退 N 张机票后，航班可用座位应增加 N（不超过容量）。
-        
-        **Feature: order-enhancement, Property 5: 座位库存操作原子性**
-        **Validates: Requirements 2.3**
         """
         from booking.services import InventoryService
         
@@ -2455,13 +2226,9 @@ class SeatInventoryAtomicityPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_5_reserve_then_release_consistency(self, capacity, reserve_count, release_count):
         """
-        Property 5: 座位库存操作原子性 - 预留后释放一致性
         
-        *For any* 先预留后释放的操作序列，最终座位数应等于初始座位数减去预留数加上释放数
+        对于任何 先预留后释放的操作序列，最终座位数应等于初始座位数减去预留数加上释放数
         （在边界范围内）。
-        
-        **Feature: order-enhancement, Property 5: 座位库存操作原子性**
-        **Validates: Requirements 2.1, 2.2, 2.3**
         """
         from booking.services import InventoryService
         
@@ -2501,13 +2268,9 @@ class SeatInventoryAtomicityPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_5_order_cancel_releases_all_tickets(self, capacity, ticket_count):
         """
-        Property 5: 座位库存操作原子性 - 订单取消释放所有机票座位
         
-        *For any* 订单取消操作，应释放该订单所有机票占用的座位。
+        对于任何 订单取消操作，应释放该订单所有机票占用的座位。
         取消包含 N 张机票的订单后，航班可用座位应增加 N。
-        
-        **Feature: order-enhancement, Property 5: 座位库存操作原子性**
-        **Validates: Requirements 2.3**
         """
         from booking.services import InventoryService
         
@@ -2564,12 +2327,8 @@ class SeatInventoryAtomicityPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_5_reserve_fails_when_insufficient(self, capacity, over_reserve_count):
         """
-        Property 5: 座位库存操作原子性 - 座位不足时预留失败
         
-        *For any* 预留数量超过可用座位的操作，应失败且座位数保持不变。
-        
-        **Feature: order-enhancement, Property 5: 座位库存操作原子性**
-        **Validates: Requirements 2.1**
+        对于任何 预留数量超过可用座位的操作，应失败且座位数保持不变。
         """
         from booking.services import InventoryService
         
@@ -2610,13 +2369,9 @@ class SeatInventoryAtomicityPropertyTest(HypothesisTestCase):
     @settings(max_examples=100)
     def test_property_5_multiple_operations_consistency(self, capacity, operations):
         """
-        Property 5: 座位库存操作原子性 - 多次操作一致性
         
-        *For any* 一系列预留和释放操作，每次操作后座位数应正确反映累计变化，
+        对于任何 一系列预留和释放操作，每次操作后座位数应正确反映累计变化，
         且始终保持在 [0, capacity] 范围内。
-        
-        **Feature: order-enhancement, Property 5: 座位库存操作原子性**
-        **Validates: Requirements 2.1, 2.2, 2.3**
         """
         from booking.services import InventoryService
         

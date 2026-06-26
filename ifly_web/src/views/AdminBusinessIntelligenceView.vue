@@ -34,7 +34,7 @@
       </el-col>
     </el-row>
 
-    <!-- 多维度分析 - Requirements 7.1-7.6 -->
+    <!-- 多维度分析 -->
     <el-row :gutter="20" class="mt-20">
       <el-col :span="24">
         <el-card class="bi-card">
@@ -42,7 +42,7 @@
             <h2>多维度数据分析</h2>
           </div>
 
-          <!-- 维度选择器 - Requirements 3.1-3.4, 7.1 -->
+          <!-- 维度选择器 -->
           <div class="dimension-selectors">
             <div class="selector-group">
               <span class="selector-label">分析维度：</span>
@@ -109,7 +109,7 @@
             </el-button>
           </div>
 
-          <!-- 图表类型切换 - Requirements 7.2, 7.4 -->
+          <!-- 图表类型切换 -->
           <div class="chart-type-selector">
             <el-radio-group
               v-model="chartType"
@@ -122,7 +122,7 @@
             </el-radio-group>
           </div>
 
-          <!-- ECharts 图表 - Requirements 7.2 -->
+          <!-- ECharts 图表 -->
           <div class="chart-container" style="height: 400px">
             <div v-if="analysisLoading" class="chart-loading">
               <el-icon class="is-loading"
@@ -144,12 +144,12 @@
             />
           </div>
 
-          <!-- 数据表格 - Requirements 7.5 -->
+          <!-- 数据表格 -->
           <div class="data-table-section" v-if="hasAnalysisData">
             <div class="table-header">
               <h3>分析结果明细</h3>
               <div class="table-actions">
-                <!-- 导出功能 - Requirements 7.6 -->
+                <!-- 导出功能 -->
                 <el-button size="small" @click="exportCSV">
                   <i class="el-icon-download"></i> 导出 CSV
                 </el-button>
@@ -182,7 +182,7 @@
       </el-col>
     </el-row>
 
-    <!-- 趋势分析 - Requirements 5.1-5.5 -->
+    <!-- 趋势分析 -->
     <el-row :gutter="20" class="mt-20">
       <el-col :span="24">
         <el-card class="bi-card">
@@ -252,7 +252,7 @@ export default {
         roi: []
       },
 
-      // 多维度分析 - Requirements 3.1-3.7, 7.1-7.6
+      // 多维度分析
       selectedDimensions: ['time'],
       timeGranularity: 'month',
       dateRange: [],
@@ -262,7 +262,7 @@ export default {
       analysisLoading: false,
       analysisError: null,
 
-      // 趋势分析 - Requirements 5.1-5.5
+      // 趋势分析
       trendsData: [],
       seasonalPatterns: null,
       trendsLoading: false
@@ -336,7 +336,7 @@ export default {
       return this.analysisData && this.analysisData.length > 0
     },
 
-    // 多维度分析图表配置 - Requirements 7.2, 7.4
+    // 多维度分析图表配置
     analysisChartOption() {
       if (!this.hasAnalysisData) {
         return {
@@ -359,7 +359,7 @@ export default {
       }
     },
 
-    // 分析结果表格列配置 - Requirements 7.5
+    // 分析结果表格列配置
     analysisTableColumns() {
       const columns = []
 
@@ -430,7 +430,7 @@ export default {
       return this.trendsData && this.trendsData.length > 0
     },
 
-    // 趋势分析图表配置 - Requirements 5.1-5.5
+    // 趋势分析图表配置
     trendsChartOption() {
       if (!this.hasTrendsData) {
         return {}
@@ -707,7 +707,7 @@ export default {
       }
     },
 
-    // 获取多维度分析数据 - Requirements 3.1-3.7, 7.3
+    // 获取多维度分析数据
     async fetchMultiDimensionAnalysis() {
       if (this.selectedDimensions.length === 0) {
         ElMessage.warning('请至少选择一个分析维度')
@@ -760,7 +760,7 @@ export default {
       // 图表会通过 computed 属性自动更新
     },
 
-    // 获取趋势分析数据 - Requirements 5.1-5.5
+    // 获取趋势分析数据
     async fetchTrends() {
       this.trendsLoading = true
 
@@ -786,7 +786,7 @@ export default {
       }
     },
 
-    // 导出 CSV - Requirements 7.6
+    // 导出 CSV
     exportCSV() {
       if (!this.hasAnalysisData) {
         ElMessage.warning('没有可导出的数据')
@@ -828,7 +828,7 @@ export default {
       ElMessage.success('CSV 导出成功')
     },
 
-    // 导出图表 - Requirements 7.6
+    // 导出图表
     exportChart() {
       const chartRef = this.$refs.analysisChart
       if (!chartRef) {
@@ -925,7 +925,7 @@ export default {
   gap: 10px;
 }
 
-/* 维度选择器样式 - Requirements 7.1 */
+/* 维度选择器样式 */
 .dimension-selectors {
   display: flex;
   flex-wrap: wrap;
@@ -980,7 +980,7 @@ export default {
   height: 100%;
 }
 
-/* 数据表格区域 - Requirements 7.5 */
+/* 数据表格区域 */
 .data-table-section {
   margin-top: 20px;
   padding-top: 20px;

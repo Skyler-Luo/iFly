@@ -43,7 +43,7 @@
   padding: var(--space-sm) var(--space-md);
 }
 
-/* 触摸目标最小尺寸样式 - Requirements 5.4 */
+/* 触摸目标最小尺寸样式 */
 .touch-target {
   min-height: var(--touch-target-min);
   min-width: var(--touch-target-min);
@@ -149,7 +149,7 @@
   grid-template-columns: repeat(4, 1fr);
 }
 
-/* 移动端单列布局转换 - Requirements 5.1 */
+/* 移动端单列布局转换 */
 @media (max-width: 768px) {
   .grid-responsive {
     grid-template-columns: 1fr;
@@ -226,7 +226,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* 移动端卡片尺寸和间距优化 - Requirements 5.3 */
+/* 移动端卡片尺寸和间距优化 */
 @media (max-width: 768px) {
   .card-responsive {
     padding: var(--space-md);

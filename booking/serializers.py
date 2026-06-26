@@ -5,7 +5,7 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
-from accounts.models import Passenger  # 导入乘客模型
+
 from flight.models import Flight  # 导入航班模型
 from .models import Order, Ticket
 from .services import TimeoutService, InventoryService

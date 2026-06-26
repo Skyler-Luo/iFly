@@ -1059,9 +1059,9 @@ class CustomerSegments(APIView):
         )
         
         # 初始化分群数据
-        high_value = {'count': 0, 'total_spend': 0, 'users': []}
-        medium_value = {'count': 0, 'total_spend': 0, 'users': []}
-        low_value = {'count': 0, 'total_spend': 0, 'users': []}
+        high_value = {'count': 0, 'total_spend': 0.0, 'users': []}
+        medium_value = {'count': 0, 'total_spend': 0.0, 'users': []}
+        low_value = {'count': 0, 'total_spend': 0.0, 'users': []}
         
         # 按消费金额分群
         for user_data in user_spending:
@@ -1244,13 +1244,13 @@ class CustomerLoyalty(APIView):
     def _calculate_loyalty_spending(self, user_stats):
         """按忠诚度分组计算消费统计"""
         # 分组：低频(1-2次)、中频(3-5次)、高频(6次以上)
-        low_freq = {'count': 0, 'total_spend': 0}
-        mid_freq = {'count': 0, 'total_spend': 0}
-        high_freq = {'count': 0, 'total_spend': 0}
+        low_freq = {'count': 0, 'total_spend': 0.0}
+        mid_freq = {'count': 0, 'total_spend': 0.0}
+        high_freq = {'count': 0, 'total_spend': 0.0}
         
         for user_data in user_stats:
             order_count = user_data['order_count']
-            spend = float(user_data['total_spend']) if user_data['total_spend'] else 0
+            spend = float(user_data['total_spend']) if user_data['total_spend'] else 0.0
             
             if order_count <= 2:
                 low_freq['count'] += 1
@@ -1721,13 +1721,9 @@ class RealtimeData(APIView):
         })
 
 
-# ============================================================================
-# 多维度分析模块 API - 满足 Requirements 3, 4, 5
-# ============================================================================
 
 class MultiDimensionAnalysisView(APIView):
     """
-    多维度分析 API - 满足 Requirement 3。
     
     POST /api/analytics/business-intelligence/multi-dimension/
     
@@ -1806,7 +1802,6 @@ class MultiDimensionAnalysisView(APIView):
 
 class PivotDataView(APIView):
     """
-    透视表数据 API - 满足 Requirement 4。
     
     POST /api/analytics/pivot-data/
     
@@ -1874,7 +1869,6 @@ class PivotDataView(APIView):
 
 class PivotExportView(APIView):
     """
-    透视表导出 API - 满足 Requirement 4.5。
     
     POST /api/analytics/pivot-data/export/
     
@@ -1936,7 +1930,6 @@ class PivotExportView(APIView):
 
 class TrendsView(APIView):
     """
-    趋势分析 API - 满足 Requirement 5。
     
     GET /api/analytics/business-intelligence/trends/
     
@@ -2007,16 +2000,12 @@ class TrendsView(APIView):
             # 初始化趋势分析器
             analyzer = TrendAnalyzer()
             
-            # 计算移动平均 - 满足 Requirement 5.1
             with_ma = analyzer.calculate_moving_average(data, metric, window_size)
             
-            # 检测异常 - 满足 Requirement 5.5
             with_anomalies = analyzer.detect_anomalies(with_ma, metric, anomaly_threshold)
             
-            # 识别季节性模式 - 满足 Requirement 5.2
             seasonal = analyzer.identify_seasonal_patterns(data, metric)
             
-            # 计算同比数据 - 满足 Requirement 5.3
             # 获取去年同期数据
             yoy_data = []
             if start_date and end_date:
@@ -2038,7 +2027,6 @@ class TrendsView(APIView):
                 
                 yoy_data = analyzer.year_over_year(data, prev_items, metric)
             
-            # 计算整体置信度 - 满足 Requirement 5.4
             anomaly_count = sum(1 for item in with_anomalies if item.get('is_anomaly', False))
             total_count = len(with_anomalies)
             
@@ -2101,7 +2089,6 @@ class TrendsView(APIView):
 
 class RouteRecommendationView(APIView):
     """
-    航线推荐 API - 满足 Requirement 4。
 
     为用户提供个性化航线推荐：
     - 已登录用户：基于协同过滤算法的个性化推荐
